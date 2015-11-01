@@ -10,8 +10,8 @@ namespace Pard
     {
         public List<Production> Productions { get; set; }
 
-        // Algorithm 4.9, p. 231
-        public HashSet<Item.Set> ConstructItemSetSets()
+        // Algorithm 4.10, p. 234
+        public object ConstructTable()
         {
             // Check for unreferenced productions.  Assume any production whose
             // left-hand side is the same as the left-hand side of the first
@@ -43,7 +43,35 @@ namespace Pard
             augmentedGrammar.Productions.Add(new Production(Nonterminal.AugmentedStart, new[] { Productions[0].Lhs }));
             augmentedGrammar.Productions.AddRange(referencedProductions);
 
-            return augmentedGrammar.Items();
+            // Algorithm 4.9, p. 231
+            var items = augmentedGrammar.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
+
+            // Create the action table.
+            var a = from p in items
+                    let x = from g in p.Key.Gotos
+                            let t = g.Key as Terminal
+                            where t != null
+                            select new { Terminal = t, Value = String.Format("s{0}", items[g.Value]) }
+                    let y = from i in p.Key.AsQueryable()
+                            where i.DotPosition == augmentedGrammar.Productions[i.ProductionIndex].Rhs.Count
+                            let t = i.Lookahead
+                            let s = i.ProductionIndex == 0
+                            where !s || t == Terminal.AugmentedEnd
+                            select new { Terminal = t, Value = String.Format(s ? "accept" : "r{0}", i.ProductionIndex) }
+                    select x.Concat(y);
+            // TODO:  this does not account for conflicts.
+            var actions = a.Select(e => e.ToDictionary(p => p.Terminal, p => p.Value)).ToList();
+
+            // Create the goto table.
+            var c = from p in items
+                    select from g in p.Key.Gotos
+                           let n = g.Key as Nonterminal
+                           where n != null
+                           select new { Nonterminal = n, Target = items[g.Value] };
+            // TODO:  this does not account for conflicts.
+            var gotos = c.Select(e => e.ToDictionary(p => p.Nonterminal, p => p.Target)).ToList();
+
+            return new KeyValuePair<List<Dictionary<Terminal, string>>, List<Dictionary<Nonterminal, int>>>(actions, gotos);
         }
 
         // closure(I), p. 232
@@ -109,7 +137,7 @@ namespace Pard
         }
 
         // items(G'), p. 232
-        private HashSet<Item.Set> Items()
+        private List<Item.Set> Items()
         {
             // Create a collection of symbols used in the grammar.
             var symbols = new HashSet<Symbol>(Productions.SelectMany(p => p.Rhs));
@@ -120,8 +148,13 @@ namespace Pard
             // Collect the expanded productions.
             var expandedProductions = CollectExpandedProductions(Productions);
 
+            // Create a list to hold the items added to the closure.  Their
+            // indicies will be the state indicies.
+            var items = new List<Item.Set>();
+
             // C := {closure({[S' → ∙S, $]})};
             var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) }), expandedProductions) });
+            items.Add(c.First());
 
             // repeat
             int count;
@@ -140,6 +173,7 @@ namespace Pard
                         {
                             // add goto(I, X) to C
                             c.Add(g);
+                            items.Add(g);
                         }
 
                         if(g.Any())
@@ -160,7 +194,7 @@ namespace Pard
                 // until no more sets of items can be added to C
             } while(count < c.Count);
 
-            return c;
+            return items;
         }
 
         private static HashSet<Terminal> First(IEnumerable<Symbol> symbols, IEnumerable<Production> expandedProductions)
@@ -209,10 +243,10 @@ namespace Pard
         {
             var expandedProductions = new HashSet<Production>(productions);
 
-            int i;
+            int count;
             do
             {
-                i = expandedProductions.Count;
+                count = expandedProductions.Count;
 
                 // Find all ε productions.  Retrieve their left-hand sides.
                 var epsilonLhss = new HashSet<Nonterminal>(expandedProductions.Where(p => !p.Rhs.Any()).Select(p => p.Lhs));
@@ -229,7 +263,7 @@ namespace Pard
                     expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
                 }
 
-            } while(i < expandedProductions.Count);
+            } while(count < expandedProductions.Count);
 
             return expandedProductions;
         }

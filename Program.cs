@@ -17,7 +17,7 @@ namespace Pard
                 var input = new XmlInput();
                 input.Read(reader, grammar);
             }
-            var itemSetSets = grammar.ConstructItemSetSets();
+            var table = grammar.ConstructTable();
         }
     }
 }
