@@ -141,6 +141,20 @@ namespace Pard
                             // add goto(I, X) to C
                             c.Add(g);
                         }
+
+                        if(g.Any())
+                        {
+                            // Add it as a target state of the source state.
+                            if(!itemSet.Gotos.ContainsKey(symbol))
+                            {
+                                itemSet.Gotos.Add(symbol, g);
+                            }
+                            else if(itemSet.Gotos[symbol] != g)
+                            {
+                                Console.Error.WriteLine("warning: goto conflict between {0} -> {1} and {0} -> {2} on {3}",
+                                    itemSet, itemSet.Gotos[symbol], g, symbol);
+                            }
+                        }
                     }
                 }
                 // until no more sets of items can be added to C

@@ -51,6 +51,7 @@ namespace Pard
         internal class Set
         {
             public int Count { get { return set.Count; } }
+            public readonly Dictionary<Symbol, Set> Gotos = new Dictionary<Symbol, Set>();
 
             private string name = "";
             private HashSet<Item> set;
