@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <rules>
+    <rule name="S">
+      <nonterminal name="C"/>
+      <nonterminal name="C"/>
+    </rule>
+    <rule name="C">
+      <literal name="c"/>
+      <nonterminal name="C"/>
+    </rule>
+    <rule name="C">
+      <literal name="d"/>
+    </rule>
+  </rules>
+</grammar>
