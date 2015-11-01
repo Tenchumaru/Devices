@@ -9,9 +9,9 @@ namespace Pard
     // LR(1) item, p. 230
     class Item
     {
-        public int ProductionIndex { get; private set; }
-        public int DotPosition { get; private set; }
-        public Terminal Lookahead { get; private set; }
+        public readonly int ProductionIndex;
+        public readonly int DotPosition;
+        public readonly Terminal Lookahead;
         private string name = "";
 
         public Item(int productionIndex, int dotPosition, Terminal lookahead)

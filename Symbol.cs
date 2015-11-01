@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Pard
 {
-    class Symbol
+    abstract class Symbol
     {
-        public string Name { get; private set; }
+        public readonly string Name;
 
         public Symbol(string name)
         {
