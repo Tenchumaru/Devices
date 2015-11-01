@@ -51,16 +51,16 @@ namespace Pard
                     let x = from g in p.Key.Gotos
                             let t = g.Key as Terminal
                             where t != null
-                            select new { Terminal = t, Value = String.Format("s{0}", items[g.Value]) }
+                            select new Entry { Terminal = t, Action = Action.Shift, Index = items[g.Value] }
                     let y = from i in p.Key.AsQueryable()
                             where i.DotPosition == augmentedGrammar.Productions[i.ProductionIndex].Rhs.Count
                             let t = i.Lookahead
                             let s = i.ProductionIndex == 0
                             where !s || t == Terminal.AugmentedEnd
-                            select new { Terminal = t, Value = String.Format(s ? "accept" : "r{0}", i.ProductionIndex) }
+                            select new Entry { Terminal = t, Action = s ? Action.Accept : Action.Reduce, Index = i.ProductionIndex }
                     select x.Concat(y);
             // TODO:  this does not account for conflicts.
-            var actions = a.Select(e => e.ToDictionary(p => p.Terminal, p => p.Value)).ToList();
+            var actions = a.Select(e => e.ToDictionary(p => p.Terminal)).ToList();
 
             // Create the goto table.
             var c = from p in items
@@ -71,7 +71,7 @@ namespace Pard
             // TODO:  this does not account for conflicts.
             var gotos = c.Select(e => e.ToDictionary(p => p.Nonterminal, p => p.Target)).ToList();
 
-            return new KeyValuePair<List<Dictionary<Terminal, string>>, List<Dictionary<Nonterminal, int>>>(actions, gotos);
+            return new KeyValuePair<List<Dictionary<Terminal, Entry>>, List<Dictionary<Nonterminal, int>>>(actions, gotos);
         }
 
         // closure(I), p. 232
@@ -267,5 +267,14 @@ namespace Pard
 
             return expandedProductions;
         }
+
+        public class Entry
+        {
+            public Terminal Terminal { get; set; }
+            public Action Action { get; set; }
+            public int Index { get; set; }
+        }
+
+        public enum Action { None, Shift, Reduce, Accept };
     }
 }
