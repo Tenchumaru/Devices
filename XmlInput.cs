@@ -13,9 +13,10 @@ namespace Pard
             var xml = XDocument.Load(reader).Element("grammar");
             var productions = new List<Production>();
             var associativityNames = Enum.GetNames(typeof(Grammar.Associativity)).Select(s => s.ToLowerInvariant()).ToList();
-            var terminalSet = new HashSet<Terminal>();
-            var nonterminalSet = new HashSet<Nonterminal>();
-            foreach(var symbol in xml.Element("symbols").Elements())
+            var knownTerminals = new HashSet<Terminal>();
+            var knownNonterminals = new HashSet<Nonterminal>();
+            var symbols = xml.Element("symbols");
+            foreach(var symbol in symbols != null ? symbols.Elements() : new XElement[0])
             {
                 var name = (string)symbol.Attribute("name");
                 var typeName = (string)symbol.Attribute("type");
@@ -31,28 +32,33 @@ namespace Pard
                 switch(symbol.Name.LocalName)
                 {
                 case "literal":
-                    // TODO: perform unescaping on the value.
-                    terminalSet.Add(new Terminal(Terminal.FormatLiteralName(symbol.Attribute("value").Value), typeName, associativity, precedence));
+                    knownTerminals.Add(new Terminal(Terminal.FormatLiteralName(symbol.Attribute("value").Value), typeName, associativity, precedence));
                     break;
                 case "terminal":
-                    terminalSet.Add(new Terminal(name, typeName, associativity, precedence));
+                    knownTerminals.Add(new Terminal(name, typeName, associativity, precedence));
                     break;
                 case "nonterminal":
-                    nonterminalSet.Add(new Nonterminal(name, typeName));
+                    knownNonterminals.Add(new Nonterminal(name, typeName));
                     break;
                 default:
                     throw new Exception();
                 }
             }
-            var terminals = terminalSet.ToDictionary(t => t.Name);
-            var nonterminals = nonterminalSet.ToDictionary(t => t.Name);
+            var terminals = knownTerminals.ToDictionary(t => t.Name);
+            var nonterminals = knownNonterminals.ToDictionary(t => t.Name);
             foreach(var rule in xml.Element("rules").Elements("rule"))
             {
-                var lhs = nonterminals[(string)rule.Attribute("name")];
+                Nonterminal nonterminal;
+                Terminal terminal;
+                var name = (string)rule.Attribute("name");
+                var lhs = nonterminals.TryGetValue(name, out nonterminal) ? nonterminal : new Nonterminal(name, null);
                 var rhs = from s in rule.Elements()
                           where s.Name != "action"
                           let n = (string)s.Attribute("name") ?? (string)s.Attribute("value")
-                          select s.Name == "nonterminal" ? (Symbol)nonterminals[n] : s.Name == "literal" ? terminals[Terminal.FormatLiteralName(n)] : terminals[n];
+                          let l = Terminal.FormatLiteralName(n)
+                          select s.Name == "nonterminal" ? nonterminals.TryGetValue(name, out nonterminal) ? (Symbol)nonterminal : new Nonterminal(n, null) :
+                          s.Name == "literal" ? terminals.TryGetValue(l, out terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0) :
+                          terminals.TryGetValue(n, out terminal) ? terminal : new Terminal(n, null, Grammar.Associativity.None, 0);
                 var production = new Production(lhs, rhs);
                 productions.Add(production);
             }

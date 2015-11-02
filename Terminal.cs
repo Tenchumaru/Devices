@@ -21,6 +21,7 @@ namespace Pard
 
         public static string FormatLiteralName(string s)
         {
+            // TODO: perform unescaping on the value.
             if(s.Length != 1)
             {
                 throw new ArgumentException(String.Format("invalid literal name: '{0}'", s));

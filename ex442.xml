@@ -1,11 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <grammar>
-  <symbols>
-    <literal value="c"/>
-    <literal value="d"/>
-    <nonterminal name="S"/>
-    <nonterminal name="C"/>
-  </symbols>
   <rules>
     <rule name="S">
       <nonterminal name="C"/>
