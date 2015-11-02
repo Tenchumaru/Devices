@@ -82,32 +82,19 @@ namespace Pard
             {
                 count = items.Count;
 
-                Func<int, Production> fn1 = i =>
-                {
-                    return Productions[i];
-                };
-                Func<Production, Item, Nonterminal> fn2 = (p, i) =>
-                {
-                    return p.Rhs[i.DotPosition] as Nonterminal;
-                };
-                Func<Production, Nonterminal, bool> fn3 = (p, n) =>
-                {
-                    return p.Lhs == n;
-                };
-
                 // for each item [A → α∙Bβ, a] in I,
                 // each production B → γ in G',
                 // and each terminal b in FIRST(βa)
                 // such that [B → ∙γ, b] is not in I do
                 var q = from i in items.AsQueryable()
-                        let ip = fn1(i.ProductionIndex)
+                        let ip = Productions[i.ProductionIndex]
                         where i.DotPosition < ip.Rhs.Count
-                        let n = fn2(ip, i)
+                        let n = ip.Rhs[i.DotPosition] as Nonterminal
                         where n != null
                         let r = ip.Rhs.Skip(i.DotPosition + 1)
                         let l = i.Lookahead
                         from p in Productions.Select((x, y) => new { Production = x, Index = y })
-                        where fn3(p.Production, n)
+                        where p.Production.Lhs == n
                         from b in First(r.Concat(new[] { l }), expandedProductions)
                         select new Item(p.Index, 0, b);
 
