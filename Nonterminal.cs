@@ -8,8 +8,11 @@ namespace Pard
 {
     class Nonterminal : Symbol
     {
-        public static readonly Nonterminal AugmentedStart = new Nonterminal("(start)");
+        public static readonly Nonterminal AugmentedStart = new Nonterminal("(start)", null);
 
-        public Nonterminal(string name) : base(name) { }
+        public Nonterminal(string name, string typeName)
+            : base(name, typeName)
+        {
+        }
     }
 }

@@ -8,9 +8,12 @@ namespace Pard
 {
     abstract class Symbol : NamedObject
     {
-        public Symbol(string name)
+        public readonly string TypeName;
+
+        public Symbol(string name, string typeName)
             : base(name)
         {
+            TypeName = typeName;
         }
     }
 }

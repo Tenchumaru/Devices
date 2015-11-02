@@ -1,16 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <grammar>
+  <symbols>
+    <literal value="c"/>
+    <literal value="d"/>
+    <nonterminal name="S"/>
+    <nonterminal name="C"/>
+  </symbols>
   <rules>
     <rule name="S">
       <nonterminal name="C"/>
       <nonterminal name="C"/>
     </rule>
     <rule name="C">
-      <literal name="c"/>
+      <literal value="c"/>
       <nonterminal name="C"/>
     </rule>
     <rule name="C">
-      <literal name="d"/>
+      <literal value="d"/>
     </rule>
   </rules>
 </grammar>

@@ -259,8 +259,15 @@ namespace Pard
             public Terminal Terminal { get; set; }
             public Action Action { get; set; }
             public int Index { get; set; }
+
+            public override string ToString()
+            {
+                return String.Format(Action == Action.Accept ? "{0}" : "{0}{1}", Action.ToString(), Index);
+            }
         }
 
         public enum Action { None, Shift, Reduce, Accept };
+
+        public enum Associativity { None, Left, Right, Nonassociative }
     }
 }
