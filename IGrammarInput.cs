@@ -2,8 +2,8 @@
 
 namespace Pard
 {
-	interface IGrammarInput
-	{
-		Grammar Read(TextReader reader);
-	}
+    interface IGrammarInput
+    {
+        Grammar Read(TextReader reader);
+    }
 }
