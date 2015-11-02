@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Pard
 {
-    class NamedObject<T> where T : class
+    abstract class NamedObject
     {
         public string Name { get; private set; }
 
@@ -17,13 +17,13 @@ namespace Pard
 
         public override bool Equals(object obj)
         {
-            var that = obj as T;
-            return !Object.ReferenceEquals(that, null) && ToString() == that.ToString();
+            var that = obj as NamedObject;
+            return !Object.ReferenceEquals(that, null) && GetType() == that.GetType() && Name == that.Name;
         }
 
         public override int GetHashCode()
         {
-            return ToString().GetHashCode();
+            return Name.GetHashCode();
         }
 
         public override string ToString()
@@ -31,12 +31,12 @@ namespace Pard
             return Name;
         }
 
-        public static bool operator ==(NamedObject<T> left, NamedObject<T> right)
+        public static bool operator ==(NamedObject left, NamedObject right)
         {
             return Object.ReferenceEquals(left, null) ? Object.ReferenceEquals(right, null) : left.Equals(right);
         }
 
-        public static bool operator !=(NamedObject<T> left, NamedObject<T> right)
+        public static bool operator !=(NamedObject left, NamedObject right)
         {
             return !(left == right);
         }
