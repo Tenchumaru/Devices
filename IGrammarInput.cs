@@ -4,6 +4,6 @@ namespace Pard
 {
 	interface IGrammarInput
 	{
-		bool Read(TextReader reader, Grammar grammar);
+		Grammar Read(TextReader reader);
 	}
 }

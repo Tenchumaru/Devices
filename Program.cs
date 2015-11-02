@@ -11,13 +11,13 @@ namespace Pard
     {
         static void Main(string[] args)
         {
-            var grammar = new Grammar();
+            Grammar grammar;
             using(var reader = File.OpenText(args[0]))
             {
                 var input = new XmlInput();
-                input.Read(reader, grammar);
+                grammar = input.Read(reader);
             }
-            var table = grammar.ConstructTable();
+            var table = grammar.Table;
         }
     }
 }

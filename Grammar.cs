@@ -8,26 +8,25 @@ namespace Pard
 {
     class Grammar
     {
-        public List<Production> Productions { get; set; }
+        public object Table { get; private set; }
 
-        // Algorithm 4.10, p. 234
-        public object ConstructTable()
+        public Grammar(IReadOnlyList<Production> productions)
         {
             // Check for unreferenced productions.  Assume any production whose
             // left-hand side is the same as the left-hand side of the first
             // production is a starting production.  This isn't part of the
             // algorithm but I think it's appropriate.
-            var referencedProductions = new HashSet<Production>(Productions.Where(p => p.Lhs == Productions[0].Lhs));
+            var referencedProductions = new HashSet<Production>(productions.Where(p => p.Lhs == productions[0].Lhs));
             int count;
             do
             {
                 count = referencedProductions.Count;
                 var q = from n in referencedProductions.SelectMany(p => p.Rhs).OfType<Nonterminal>()
-                        join p in Productions on n equals p.Lhs
+                        join p in productions on n equals p.Lhs
                         select p;
                 referencedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
             } while(count < referencedProductions.Count);
-            var unreferencedProductions = Productions.Except(referencedProductions).ToList();
+            var unreferencedProductions = productions.Except(referencedProductions).ToList();
             if(unreferencedProductions.Any())
             {
                 // Issue a warning if any.  Don't include them in the augmented grammar.
@@ -39,13 +38,13 @@ namespace Pard
             }
 
             // Create the augmented grammar (p. 222).
-            var augmentedGrammar = new Grammar { Productions = new List<Production>() };
-            augmentedGrammar.Productions.Add(new Production(Nonterminal.AugmentedStart, new[] { Productions[0].Lhs }));
-            augmentedGrammar.Productions.AddRange(referencedProductions);
+            var augmentedProductions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { productions[0].Lhs }) };
+            augmentedProductions.AddRange(referencedProductions);
 
             // Algorithm 4.9, p. 231
-            var items = augmentedGrammar.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
+            var items = Items(augmentedProductions).Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
 
+            // Algorithm 4.10, p. 234
             // Create the action table.
             var a = from p in items
                     let x = from g in p.Key.Gotos
@@ -53,7 +52,7 @@ namespace Pard
                             where t != null
                             select new Entry { Terminal = t, Action = Action.Shift, Index = items[g.Value] }
                     let y = from i in p.Key.AsQueryable()
-                            where i.DotPosition == augmentedGrammar.Productions[i.ProductionIndex].Rhs.Count
+                            where i.DotPosition == augmentedProductions[i.ProductionIndex].Rhs.Count
                             let t = i.Lookahead
                             let s = i.ProductionIndex == 0
                             where !s || t == Terminal.AugmentedEnd
@@ -71,11 +70,11 @@ namespace Pard
             // TODO:  this does not account for conflicts.
             var gotos = c.Select(e => e.ToDictionary(p => p.Nonterminal, p => p.Target)).ToList();
 
-            return new KeyValuePair<List<Dictionary<Terminal, Entry>>, List<Dictionary<Nonterminal, int>>>(actions, gotos);
+            Table = new KeyValuePair<List<Dictionary<Terminal, Entry>>, List<Dictionary<Nonterminal, int>>>(actions, gotos);
         }
 
         // closure(I), p. 232
-        private Item.Set Closure(Item.Set items, IEnumerable<Production> expandedProductions)
+        private Item.Set Closure(Item.Set items, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
         {
             int count;
             do
@@ -87,13 +86,13 @@ namespace Pard
                 // and each terminal b in FIRST(βa)
                 // such that [B → ∙γ, b] is not in I do
                 var q = from i in items.AsQueryable()
-                        let ip = Productions[i.ProductionIndex]
+                        let ip = productions[i.ProductionIndex]
                         where i.DotPosition < ip.Rhs.Count
                         let n = ip.Rhs[i.DotPosition] as Nonterminal
                         where n != null
                         let r = ip.Rhs.Skip(i.DotPosition + 1)
                         let l = i.Lookahead
-                        from p in Productions.Select((x, y) => new { Production = x, Index = y })
+                        from p in productions.Select((x, y) => new { Production = x, Index = y })
                         where p.Production.Lhs == n
                         from b in First(r.Concat(new[] { l }), expandedProductions)
                         select new Item(p.Index, 0, b);
@@ -109,38 +108,38 @@ namespace Pard
         }
 
         // goto(I, X), p. 232
-        private Item.Set Goto(Item.Set items, Symbol symbol, IEnumerable<Production> expandedProductions)
+        private Item.Set Goto(Item.Set items, Symbol symbol, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
         {
             // let J be the set of items [A → αX∙β, a] such that
             // [A → α∙Xβ, a] is in I;
             var q = from i in items.AsQueryable()
-                    let p = Productions[i.ProductionIndex]
+                    let p = productions[i.ProductionIndex]
                     let d = i.DotPosition
                     where d < p.Rhs.Count && p.Rhs[d] == symbol
                     select new Item(i.ProductionIndex, d + 1, i.Lookahead);
 
             // return closure(J)
-            return Closure(new Item.Set(q), expandedProductions);
+            return Closure(new Item.Set(q), productions, expandedProductions);
         }
 
         // items(G'), p. 232
-        private List<Item.Set> Items()
+        private List<Item.Set> Items(IReadOnlyList<Production> productions)
         {
             // Create a collection of symbols used in the grammar.
-            var symbols = new HashSet<Symbol>(Productions.SelectMany(p => p.Rhs));
+            var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
 
             // Create a collection of terminals.
-            var terminals = new HashSet<Terminal>(Productions.SelectMany(p => p.Rhs.OfType<Terminal>()));
+            var terminals = new HashSet<Terminal>(productions.SelectMany(p => p.Rhs.OfType<Terminal>()));
 
             // Collect the expanded productions.
-            var expandedProductions = CollectExpandedProductions(Productions);
+            var expandedProductions = CollectExpandedProductions(productions);
 
             // Create a list to hold the items added to the closure.  Their
             // indicies will be the state indicies.
             var items = new List<Item.Set>();
 
             // C := {closure({[S' → ∙S, $]})};
-            var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) }), expandedProductions) });
+            var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) }), productions, expandedProductions) });
             items.Add(c.First());
 
             // repeat
@@ -155,7 +154,7 @@ namespace Pard
                     foreach(var symbol in symbols)
                     {
                         // such that goto(I, X) is not empty and not in C do
-                        var g = Goto(itemSet, symbol, expandedProductions);
+                        var g = Goto(itemSet, symbol, productions, expandedProductions);
                         if(g.Any() && !c.Contains(g))
                         {
                             // add goto(I, X) to C

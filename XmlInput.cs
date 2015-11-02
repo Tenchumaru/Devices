@@ -8,12 +8,12 @@ namespace Pard
 {
     class XmlInput : IGrammarInput
     {
-        public bool Read(TextReader reader, Grammar grammar)
+        public Grammar Read(TextReader reader)
         {
             try
             {
                 var xml = XDocument.Load(reader).Element("grammar");
-                grammar.Productions = new List<Production>();
+                var productions = new List<Production>();
                 foreach(var rule in xml.Element("rules").Elements("rule"))
                 {
                     var lhs = (string)rule.Attribute("name");
@@ -22,14 +22,14 @@ namespace Pard
                               let n = (string)s.Attribute("name") ?? (string)s.Attribute("value")
                               select s.Name == "nonterminal" ? (Symbol)new Nonterminal(n) : s.Name == "literal" ? new Terminal(n.Substring(0, 1)) : new Terminal(n);
                     var production = new Production(new Nonterminal(lhs), rhs);
-                    grammar.Productions.Add(production);
+                    productions.Add(production);
                 }
-                return true;
+                return new Grammar(productions);
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return false;
+                return null;
             }
         }
     }
