@@ -56,13 +56,22 @@ namespace Pard
                 Terminal terminal;
                 var name = (string)rule.Attribute("name");
                 var lhs = nonterminals.TryGetValue(name, out nonterminal) ? nonterminal : new Nonterminal(name, null);
-                var rhs = from s in rule.Elements()
-                          where s.Name != "action"
-                          let n = (string)s.Attribute("name") ?? (string)s.Attribute("value")
-                          let l = Terminal.FormatLiteralName(n)
-                          select s.Name == "nonterminal" ? nonterminals.TryGetValue(name, out nonterminal) ? (Symbol)nonterminal : new Nonterminal(n, null) :
-                          s.Name == "literal" ? terminals.TryGetValue(l, out terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0) :
-                          terminals.TryGetValue(n, out terminal) ? terminal : new Terminal(n, null, Grammar.Associativity.None, 0);
+                var q = from x in rule.Elements()
+                        where x.Name != "action"
+                        let n = (string)x.Attribute("name")
+                        let v = (string)x.Attribute("value")
+                        let l = v != null ? Terminal.FormatLiteralName(v) : null
+                        let s = x.Name == "nonterminal" ? nonterminals.TryGetValue(n, out nonterminal) ? (Symbol)nonterminal : new Nonterminal(n, null) :
+                        x.Name == "literal" && l != null ? terminals.TryGetValue(l, out terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0) :
+                        x.Name == "terminal" ? terminals.TryGetValue(n, out terminal) ? terminal : new Terminal(n, null, Grammar.Associativity.None, 0) : null
+                        let e = s == null ? x.Name == "literal" && v == null ? "missing literal value" : String.Format("unknown symbol element '{0}'", x.Name) : null
+                        select new { Symbol = s, Error = e };
+                q = q.ToList();
+                foreach(var item in q.Where(a => a.Error != null))
+                {
+                    Console.Error.WriteLine("warning: {0}; ignoring", item.Error);
+                }
+                var rhs = q.Where(a => a.Symbol != null).Select(a => a.Symbol);
                 var actionCode = (string)rule.Element("action");
                 Production production;
                 var precedenceTokenName = (string)rule.Attribute("precedence") ?? "";
