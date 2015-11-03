@@ -38,7 +38,7 @@ namespace Pard
             }
 
             // Create the augmented grammar (p. 222).
-            var augmentedProductions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { productions[0].Lhs }) };
+            var augmentedProductions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { productions[0].Lhs }, -1) };
             augmentedProductions.AddRange(referencedProductions);
 
             // Algorithm 4.9, p. 231
@@ -245,7 +245,7 @@ namespace Pard
                 {
                     var q = from p in expandedProductions
                             where p.Rhs.FirstOrDefault() == epsilonLhs
-                            select new Production(p.Lhs, p.Rhs.Skip(1));
+                            select new Production(p.Lhs, p.Rhs.Skip(1), 0);
                     expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
                 }
 

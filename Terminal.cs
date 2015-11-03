@@ -9,6 +9,7 @@ namespace Pard
     class Terminal : Symbol
     {
         public readonly Grammar.Associativity Associativity;
+        public readonly int Precedence;
 
         public static readonly Terminal AugmentedEnd = new Terminal("(end)", null, Grammar.Associativity.None, 0);
         public static readonly Terminal Epsilon = new Terminal("(epsilon)", null, Grammar.Associativity.None, 0);
@@ -17,6 +18,7 @@ namespace Pard
             : base(name, typeName)
         {
             Associativity = associativity;
+            Precedence = precedence;
         }
 
         public static string FormatLiteralName(string s)
