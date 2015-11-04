@@ -3,12 +3,12 @@
   <rules>
     <rule name="E">
       <nonterminal name="E"/>
-      <literal value="+"/>
+      <literal value="*"/>
       <nonterminal name="E"/>
     </rule>
     <rule name="E">
       <nonterminal name="E"/>
-      <literal value="*"/>
+      <literal value="+"/>
       <nonterminal name="E"/>
     </rule>
     <rule name="E">

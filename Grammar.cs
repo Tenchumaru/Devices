@@ -25,11 +25,11 @@ namespace Pard
                         join p in productions on n equals p.Lhs
                         select p;
                 referencedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
-            } while(count < referencedProductions.Count);
+            } while(count < referencedProductions.Count && referencedProductions.Count < productions.Count);
             var unreferencedProductions = productions.Except(referencedProductions).ToList();
             if(unreferencedProductions.Any())
             {
-                // Issue a warning if any.  Don't include them in the augmented grammar.
+                // Issue a warning if any.
                 Console.Error.WriteLine("warning: {0} unreferenced productions:", unreferencedProductions.Count);
                 foreach(var unreferencedProduction in unreferencedProductions)
                 {
@@ -37,7 +37,7 @@ namespace Pard
                 }
             }
 
-            // Create the augmented grammar (p. 222).
+            // Create the augmented grammar (p. 222) using only referenced productions.
             var augmentedProductions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { productions[0].Lhs }, -1) };
             augmentedProductions.AddRange(referencedProductions);
 
@@ -74,7 +74,7 @@ namespace Pard
         }
 
         // closure(I), p. 232
-        private Item.Set Closure(Item.Set items, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
+        private static Item.Set Closure(Item.Set items, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
         {
             int count;
             do
@@ -108,7 +108,7 @@ namespace Pard
         }
 
         // goto(I, X), p. 232
-        private Item.Set Goto(Item.Set items, Symbol symbol, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
+        private static Item.Set Goto(Item.Set items, Symbol symbol, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
         {
             // let J be the set of items [A → αX∙β, a] such that
             // [A → α∙Xβ, a] is in I;
@@ -123,7 +123,7 @@ namespace Pard
         }
 
         // items(G'), p. 232
-        private List<Item.Set> Items(IReadOnlyList<Production> productions)
+        private static List<Item.Set> Items(IReadOnlyList<Production> productions)
         {
             // Create a collection of symbols used in the grammar.
             var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
