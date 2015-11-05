@@ -8,7 +8,7 @@ namespace Pard
 {
     class XmlInput : IGrammarInput
     {
-        public Grammar Read(TextReader reader)
+        public Grammar Read(TextReader reader, Options options)
         {
             var xml = XDocument.Load(reader).Element("grammar");
             var productions = new List<Production>();

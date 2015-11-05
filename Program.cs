@@ -9,13 +9,15 @@ namespace Pard
 {
     class Program
     {
+        public static readonly string Name = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]);
+
         static void Main(string[] args)
         {
+            var options = new Options(args);
             Grammar grammar;
-            using(var reader = File.OpenText(args[0]))
+            using(var reader = File.OpenText(options.InputFilePath))
             {
-                var input = new XmlInput();
-                grammar = input.Read(reader);
+                grammar = options.GrammarInput.Read(reader, options);
             }
             var table = grammar.Table;
         }
