@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <rules>
+    <rule name="E">
+      <nonterminal name="E"/>
+      <literal value="+"/>
+      <nonterminal name="T"/>
+    </rule>
+    <rule name="E">
+      <nonterminal name="T"/>
+    </rule>
+    <rule name="T">
+      <nonterminal name="T"/>
+      <literal value="*"/>
+      <nonterminal name="F"/>
+    </rule>
+    <rule name="T">
+      <nonterminal name="F"/>
+    </rule>
+    <rule name="F">
+      <literal value="("/>
+      <nonterminal name="E"/>
+      <literal value=")"/>
+    </rule>
+    <rule name="F">
+      <terminal name="id"/>
+    </rule>
+  </rules>
+</grammar>

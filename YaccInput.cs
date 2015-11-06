@@ -7,7 +7,7 @@ namespace Pard
 {
     class YaccInput : IGrammarInput
     {
-        public Grammar Read(System.IO.TextReader reader, Options options)
+        public IReadOnlyList<Production> Read(System.IO.TextReader reader, Options options)
         {
             throw new NotImplementedException();
         }

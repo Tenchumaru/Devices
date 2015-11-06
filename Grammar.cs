@@ -8,7 +8,10 @@ namespace Pard
 {
     class Grammar
     {
-        public object Table { get; private set; }
+        public IReadOnlyList<ActionEntry> Actions { get { return actions; } }
+        public IReadOnlyList<GotoEntry> Gotos { get { return gotos; } }
+        private readonly IReadOnlyList<ActionEntry> actions;
+        private readonly IReadOnlyList<GotoEntry> gotos;
 
         public Grammar(IReadOnlyList<Production> productions)
         {
@@ -50,27 +53,25 @@ namespace Pard
                     let x = from g in p.Key.Gotos
                             let t = g.Key as Terminal
                             where t != null
-                            select new Entry { Terminal = t, Action = Action.Shift, Index = items[g.Value] }
+                            select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = Action.Shift, Value = items[g.Value] }
                     let y = from i in p.Key.AsQueryable()
                             where i.DotPosition == augmentedProductions[i.ProductionIndex].Rhs.Count
                             let t = i.Lookahead
                             let s = i.ProductionIndex == 0
                             where !s || t == Terminal.AugmentedEnd
-                            select new Entry { Terminal = t, Action = s ? Action.Accept : Action.Reduce, Index = i.ProductionIndex }
+                            select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = s ? Action.Accept : Action.Reduce, Value = i.ProductionIndex }
                     select x.Concat(y);
             // TODO:  this does not account for conflicts.
-            var actions = a.Select(e => e.ToDictionary(p => p.Terminal)).ToList();
+            actions = a.SelectMany(e => e).ToList();
 
             // Create the goto table.
             var c = from p in items
                     select from g in p.Key.Gotos
                            let n = g.Key as Nonterminal
                            where n != null
-                           select new { Nonterminal = n, Target = items[g.Value] };
+                           select new GotoEntry { StateIndex = p.Value, Nonterminal = n, TargetStateIndex = items[g.Value] };
             // TODO:  this does not account for conflicts.
-            var gotos = c.Select(e => e.ToDictionary(p => p.Nonterminal, p => p.Target)).ToList();
-
-            Table = new KeyValuePair<List<Dictionary<Terminal, Entry>>, List<Dictionary<Nonterminal, int>>>(actions, gotos);
+            gotos = c.SelectMany(e => e).ToList();
         }
 
         // closure(I), p. 232
@@ -254,15 +255,28 @@ namespace Pard
             return expandedProductions;
         }
 
-        public class Entry
+        public class ActionEntry
         {
+            public int StateIndex { get; set; }
             public Terminal Terminal { get; set; }
             public Action Action { get; set; }
-            public int Index { get; set; }
+            public int Value { get; set; }
 
             public override string ToString()
             {
-                return String.Format(Action == Action.Accept ? "{0}" : "{0}{1}", Action.ToString(), Index);
+                return String.Format(Action == Action.Accept ? "{0}" : "{0}{1}", Action.ToString(), Value);
+            }
+        }
+
+        public class GotoEntry
+        {
+            public int StateIndex { get; set; }
+            public Nonterminal Nonterminal { get; set; }
+            public int TargetStateIndex { get; set; }
+
+            public override string ToString()
+            {
+                return String.Format("Goto{0}", TargetStateIndex);
             }
         }
 

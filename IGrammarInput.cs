@@ -1,9 +1,10 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 
 namespace Pard
 {
     interface IGrammarInput
     {
-        Grammar Read(TextReader reader, Options options);
+        IReadOnlyList<Production> Read(TextReader reader, Options options);
     }
 }

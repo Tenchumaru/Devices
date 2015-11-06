@@ -14,12 +14,17 @@ namespace Pard
         static void Main(string[] args)
         {
             var options = new Options(args);
-            Grammar grammar;
+            IReadOnlyList<Production> productions;
             using(var reader = File.OpenText(options.InputFilePath))
             {
-                grammar = options.GrammarInput.Read(reader, options);
+                productions = options.GrammarInput.Read(reader, options);
             }
-            var table = grammar.Table;
+            var grammar = new Grammar(productions);
+
+            // Write the parser.
+            var output = new CodeOutput();
+            using(var writer = options.OutputFilePath != null ? new StreamWriter(options.OutputFilePath, false, Encoding.UTF8) : Console.Out)
+                output.Write(grammar.Actions, grammar.Gotos, productions, writer, options);
         }
     }
 }

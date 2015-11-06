@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -8,7 +7,7 @@ namespace Pard
 {
     class XmlInput : IGrammarInput
     {
-        public Grammar Read(TextReader reader, Options options)
+        public IReadOnlyList<Production> Read(System.IO.TextReader reader, Options options)
         {
             var xml = XDocument.Load(reader).Element("grammar");
             var productions = new List<Production>();
@@ -86,7 +85,7 @@ namespace Pard
                 }
                 productions.Add(production);
             }
-            return new Grammar(productions);
+            return productions;
         }
     }
 }
