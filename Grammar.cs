@@ -76,16 +76,19 @@ namespace Pard
         class Augmented
         {
             public IReadOnlyList<Production> Productions { get { return productions; } }
-            private readonly List<Production> productions;
+            private readonly IReadOnlyList<Production> productions;
+            private readonly IEnumerable<Production> expandedProductions;
 
             public Augmented(Production startProduction, HashSet<Production> referencedProductions)
             {
-                productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
+                var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
                 productions.AddRange(referencedProductions);
+                this.productions = productions;
+                expandedProductions = CollectExpandedProductions(productions);
             }
 
             // closure(I), p. 232
-            private Item.Set Closure(Item.Set items, IEnumerable<Production> expandedProductions)
+            private Item.Set Closure(Item.Set items)
             {
                 int count;
                 do
@@ -105,7 +108,7 @@ namespace Pard
                             let l = i.Lookahead
                             from p in productions.Select((x, y) => new { Production = x, Index = y })
                             where p.Production.Lhs == n
-                            from b in First(r.Concat(new[] { l }), expandedProductions)
+                            from b in First(r.Concat(new[] { l }))
                             select new Item(p.Index, 0, b);
 
                     // add [B → ∙γ, b] to I;
@@ -119,7 +122,7 @@ namespace Pard
             }
 
             // goto(I, X), p. 232
-            private Item.Set Goto(Item.Set items, Symbol symbol, IEnumerable<Production> expandedProductions)
+            private Item.Set Goto(Item.Set items, Symbol symbol)
             {
                 // let J be the set of items [A → αX∙β, a] such that
                 // [A → α∙Xβ, a] is in I;
@@ -130,7 +133,7 @@ namespace Pard
                         select new Item(i.ProductionIndex, d + 1, i.Lookahead);
 
                 // return closure(J)
-                return Closure(new Item.Set(q), expandedProductions);
+                return Closure(new Item.Set(q));
             }
 
             // items(G'), p. 232
@@ -142,15 +145,12 @@ namespace Pard
                 // Create a collection of terminals.
                 var terminals = new HashSet<Terminal>(productions.SelectMany(p => p.Rhs.OfType<Terminal>()));
 
-                // Collect the expanded productions.
-                var expandedProductions = CollectExpandedProductions(productions);
-
                 // Create a list to hold the items added to the closure.  Their
                 // indicies will be the state indicies.
                 var items = new List<Item.Set>();
 
                 // C := {closure({[S' → ∙S, $]})};
-                var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) }), expandedProductions) });
+                var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) })) });
                 items.Add(c.First());
 
                 // repeat
@@ -165,7 +165,7 @@ namespace Pard
                         foreach(var symbol in symbols)
                         {
                             // such that goto(I, X) is not empty and not in C do
-                            var g = Goto(itemSet, symbol, expandedProductions);
+                            var g = Goto(itemSet, symbol);
                             if(g.Any() && !c.Contains(g))
                             {
                                 // add goto(I, X) to C
@@ -194,13 +194,13 @@ namespace Pard
                 return items;
             }
 
-            private static HashSet<Terminal> First(IEnumerable<Symbol> symbols, IEnumerable<Production> expandedProductions)
+            private HashSet<Terminal> First(IEnumerable<Symbol> symbols)
             {
                 var first = new HashSet<Terminal>();
 
                 foreach(var symbol in symbols)
                 {
-                    var symbolFirst = First(symbol, expandedProductions);
+                    var symbolFirst = First(symbol);
                     first.UnionWith(symbolFirst);
                     if(!symbolFirst.Contains(Terminal.Epsilon))
                     {
@@ -213,7 +213,7 @@ namespace Pard
             }
 
             // FIRST(X), p. 189
-            private static HashSet<Terminal> First(Symbol symbol, IEnumerable<Production> expandedProductions)
+            private HashSet<Terminal> First(Symbol symbol)
             {
                 var first = new HashSet<Terminal>();
 
