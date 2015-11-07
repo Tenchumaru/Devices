@@ -75,11 +75,11 @@ namespace Pard
 
         class Augmented
         {
-            public IReadOnlyList<Production> Productions { get { return productions; } }
+            internal IReadOnlyList<Production> Productions { get { return productions; } }
             private readonly IReadOnlyList<Production> productions;
             private readonly IEnumerable<Production> expandedProductions;
 
-            public Augmented(Production startProduction, HashSet<Production> referencedProductions)
+            internal Augmented(Production startProduction, HashSet<Production> referencedProductions)
             {
                 var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
                 productions.AddRange(referencedProductions);
@@ -137,7 +137,7 @@ namespace Pard
             }
 
             // items(G'), p. 232
-            public List<Item.Set> Items()
+            internal List<Item.Set> Items()
             {
                 // Create a collection of symbols used in the grammar.
                 var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
