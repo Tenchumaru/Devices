@@ -64,13 +64,13 @@ namespace Pard
             actions = a.SelectMany(e => e).ToList();
 
             // Create the goto table.
-            var c = from p in items
+            var b = from p in items
                     select from g in p.Key.Gotos
                            let n = g.Key as Nonterminal
                            where n != null
                            select new GotoEntry { StateIndex = p.Value, Nonterminal = n, TargetStateIndex = items[g.Value] };
             // TODO:  this does not account for conflicts.
-            gotos = c.SelectMany(e => e).ToList();
+            gotos = b.SelectMany(e => e).ToList();
         }
 
         class Augmented
@@ -78,9 +78,9 @@ namespace Pard
             internal IReadOnlyList<Production> Productions { get { return productions; } }
             private readonly IReadOnlyList<Production> productions;
             private readonly IEnumerable<Production> expandedProductions;
-            private readonly Dictionary<Symbol, HashSet<Terminal>> firstSets = new Dictionary<Symbol, HashSet<Terminal>>();
+            private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets = new Dictionary<Symbol, HashSet<Terminal>>();
 
-            internal Augmented(Production startProduction, HashSet<Production> referencedProductions)
+            internal Augmented(Production startProduction, IEnumerable<Production> referencedProductions)
             {
                 var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
                 productions.AddRange(referencedProductions);
@@ -138,7 +138,7 @@ namespace Pard
             }
 
             // items(G'), p. 232
-            internal List<Item.Set> Items()
+            internal IReadOnlyList<Item.Set> Items()
             {
                 // Create a collection of symbols used in the grammar.
                 var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
