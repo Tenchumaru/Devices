@@ -34,7 +34,15 @@ namespace Pard
                 switch(symbol.Name.LocalName)
                 {
                 case "literal":
-                    knownTerminals.Add(new Terminal(Terminal.FormatLiteralName(symbol.Attribute("value").Value), typeName, associativity, pair.Precedence));
+                    string literalName = Terminal.FormatLiteralName(name);
+                    if(literalName != null)
+                    {
+                        knownTerminals.Add(new Terminal(literalName, typeName, associativity, pair.Precedence, name[0]));
+                    }
+                    else
+                    {
+                        Console.Error.WriteLine("warning: invalid literal value '{0}'; ignoring", name);
+                    }
                     break;
                 case "terminal":
                     knownTerminals.Add(new Terminal(name, typeName, associativity, pair.Precedence));
@@ -61,7 +69,7 @@ namespace Pard
                         let v = (string)x.Attribute("value")
                         let l = v != null ? Terminal.FormatLiteralName(v) : null
                         let s = x.Name == "nonterminal" ? nonterminals.TryGetValue(n, out nonterminal) ? (Symbol)nonterminal : new Nonterminal(n, null) :
-                        x.Name == "literal" && l != null ? terminals.TryGetValue(l, out terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0) :
+                        x.Name == "literal" && l != null ? terminals.TryGetValue(l, out terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0, v[0]) :
                         x.Name == "terminal" ? terminals.TryGetValue(n, out terminal) ? terminal : new Terminal(n, null, Grammar.Associativity.None, 0) : null
                         let e = s == null ? x.Name == "literal" && v == null ? "missing literal value" : String.Format("unknown symbol element '{0}'", x.Name) : null
                         select new { Symbol = s, Error = e };

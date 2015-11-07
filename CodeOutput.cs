@@ -75,10 +75,10 @@ namespace Pard
                     stateRowLists[entry.StateIndex].Add("case -1:return true;");
                     break;
                 case Grammar.Action.Reduce:
-                    stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto reduce1;", terminal.Name, productionIndices[productions[entry.Value - 1]]));
+                    stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto reduce1;", terminal.Value, productionIndices[productions[entry.Value - 1]]));
                     break;
                 case Grammar.Action.Shift:
-                    stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto shift;", terminal.Name, entry.Value));
+                    stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto shift;", terminal.Value, entry.Value));
                     break;
                 }
             }
