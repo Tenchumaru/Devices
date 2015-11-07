@@ -85,7 +85,7 @@ namespace Pard
             }
 
             // closure(I), p. 232
-            private static Item.Set Closure(Item.Set items, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
+            private Item.Set Closure(Item.Set items, IEnumerable<Production> expandedProductions)
             {
                 int count;
                 do
@@ -119,7 +119,7 @@ namespace Pard
             }
 
             // goto(I, X), p. 232
-            private static Item.Set Goto(Item.Set items, Symbol symbol, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
+            private Item.Set Goto(Item.Set items, Symbol symbol, IEnumerable<Production> expandedProductions)
             {
                 // let J be the set of items [A → αX∙β, a] such that
                 // [A → α∙Xβ, a] is in I;
@@ -130,7 +130,7 @@ namespace Pard
                         select new Item(i.ProductionIndex, d + 1, i.Lookahead);
 
                 // return closure(J)
-                return Closure(new Item.Set(q), productions, expandedProductions);
+                return Closure(new Item.Set(q), expandedProductions);
             }
 
             // items(G'), p. 232
@@ -150,7 +150,7 @@ namespace Pard
                 var items = new List<Item.Set>();
 
                 // C := {closure({[S' → ∙S, $]})};
-                var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) }), productions, expandedProductions) });
+                var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) }), expandedProductions) });
                 items.Add(c.First());
 
                 // repeat
@@ -165,7 +165,7 @@ namespace Pard
                         foreach(var symbol in symbols)
                         {
                             // such that goto(I, X) is not empty and not in C do
-                            var g = Goto(itemSet, symbol, productions, expandedProductions);
+                            var g = Goto(itemSet, symbol, expandedProductions);
                             if(g.Any() && !c.Contains(g))
                             {
                                 // add goto(I, X) to C
