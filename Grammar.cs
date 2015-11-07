@@ -41,11 +41,10 @@ namespace Pard
             }
 
             // Create the augmented grammar (p. 222) using only referenced productions.
-            var augmentedProductions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { productions[0].Lhs }, -1) };
-            augmentedProductions.AddRange(referencedProductions);
+            var augmented = new Augmented(productions[0], referencedProductions);
 
             // Algorithm 4.9, p. 231
-            var items = Augmented.Items(augmentedProductions).Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
+            var items = augmented.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
 
             // Algorithm 4.10, p. 234
             // Create the action table.
@@ -55,7 +54,7 @@ namespace Pard
                             where t != null
                             select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = Action.Shift, Value = items[g.Value] }
                     let y = from i in p.Key.AsQueryable()
-                            where i.DotPosition == augmentedProductions[i.ProductionIndex].Rhs.Count
+                            where i.DotPosition == augmented.Productions[i.ProductionIndex].Rhs.Count
                             let t = i.Lookahead
                             let s = i.ProductionIndex == 0
                             where !s || t == Terminal.AugmentedEnd
@@ -76,6 +75,15 @@ namespace Pard
 
         class Augmented
         {
+            public IReadOnlyList<Production> Productions { get { return productions; } }
+            private readonly List<Production> productions;
+
+            public Augmented(Production startProduction, HashSet<Production> referencedProductions)
+            {
+                productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
+                productions.AddRange(referencedProductions);
+            }
+
             // closure(I), p. 232
             private static Item.Set Closure(Item.Set items, IReadOnlyList<Production> productions, IEnumerable<Production> expandedProductions)
             {
@@ -126,7 +134,7 @@ namespace Pard
             }
 
             // items(G'), p. 232
-            public static List<Item.Set> Items(IReadOnlyList<Production> productions)
+            public List<Item.Set> Items()
             {
                 // Create a collection of symbols used in the grammar.
                 var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
