@@ -78,6 +78,7 @@ namespace Pard
             internal IReadOnlyList<Production> Productions { get { return productions; } }
             private readonly IReadOnlyList<Production> productions;
             private readonly IEnumerable<Production> expandedProductions;
+            private readonly Dictionary<Symbol, HashSet<Terminal>> firstSets = new Dictionary<Symbol, HashSet<Terminal>>();
 
             internal Augmented(Production startProduction, HashSet<Production> referencedProductions)
             {
@@ -215,20 +216,22 @@ namespace Pard
             // FIRST(X), p. 189
             private HashSet<Terminal> First(Symbol symbol)
             {
-                var first = new HashSet<Terminal>();
-
-                if(symbol is Terminal)
+                HashSet<Terminal> first;
+                if(!firstSets.TryGetValue(symbol, out first))
                 {
-                    first.Add((Terminal)symbol);
+                    first = new HashSet<Terminal>();
+                    var terminal = symbol as Terminal;
+                    if(terminal != null)
+                        first.Add(terminal);
+                    else
+                    {
+                        var q = from p in expandedProductions
+                                where p.Lhs == symbol
+                                select p.Rhs.FirstOrDefault() ?? Terminal.Epsilon;
+                        first.UnionWith(q.OfType<Terminal>());
+                    }
+                    firstSets.Add(symbol, first);
                 }
-                else
-                {
-                    var q = from p in expandedProductions
-                            where p.Lhs == symbol
-                            select p.Rhs.FirstOrDefault() ?? Terminal.Epsilon;
-                    first.UnionWith(q.OfType<Terminal>());
-                }
-
                 return first;
             }
 
