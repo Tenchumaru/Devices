@@ -60,8 +60,27 @@ namespace Pard
                             where !s || t == Terminal.AugmentedEnd
                             select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = s ? Action.Accept : Action.Reduce, Value = i.ProductionIndex }
                     select x.Concat(y);
-            // TODO:  this does not account for conflicts.
-            actions = a.SelectMany(e => e).ToList();
+
+            // Account for conflicts.
+            int shiftReduceConflictCount = 0, reduceReduceConflictCount = 0;
+            var c = from x in a
+                    from y in x
+                    group y by new KeyValuePair<int, Terminal>(y.StateIndex, y.Terminal);
+            var d = c.Select(x => ResolveConflict(x.Key.Key, x.Key.Value, x.ToList(), augmented.Productions, ref shiftReduceConflictCount, ref reduceReduceConflictCount));
+            actions = d.ToList();
+            if(shiftReduceConflictCount > 0 || reduceReduceConflictCount > 0)
+            {
+                Console.Error.Write("warning:");
+                if(shiftReduceConflictCount > 0)
+                {
+                    Console.Error.Write(" {0} shift-reduce conflict{1}", shiftReduceConflictCount, shiftReduceConflictCount == 1 ? "" : "s");
+                    if(reduceReduceConflictCount > 0)
+                        Console.Error.Write(" and");
+                }
+                if(reduceReduceConflictCount > 0)
+                    Console.Error.Write(" {0} reduce-reduce conflict{1}", reduceReduceConflictCount, reduceReduceConflictCount == 1 ? "" : "s");
+                Console.Error.WriteLine();
+            }
 
             // Create the goto table.
             var b = from p in items
@@ -71,6 +90,59 @@ namespace Pard
                     select new GotoEntry { StateIndex = p.Value, Nonterminal = n, TargetStateIndex = items[g.Value] };
             // TODO:  this does not account for conflicts.
             gotos = b.ToList();
+        }
+
+        private ActionEntry ResolveConflict(int stateIndex, Terminal terminal, List<ActionEntry> list, IReadOnlyList<Production> productions, ref int shiftReduceConflictCount, ref int reduceReduceConflictCount)
+        {
+            switch(list.Count)
+            {
+            case 1:
+                return list[0];
+            case 2:
+                ActionEntry left = list[0], right = list[1], result;
+                switch(left.Action.ToString() + right.Action.ToString())
+                {
+                case "ShiftReduce":
+                    result = ResolveShiftReduceConflict(left, right, productions);
+                    if(result != null)
+                        return result;
+                    ++shiftReduceConflictCount;
+                    return left;
+                case "ReduceShift":
+                    result = ResolveShiftReduceConflict(right, left, productions);
+                    if(result != null)
+                        return result;
+                    ++shiftReduceConflictCount;
+                    return right;
+                }
+                break;
+            }
+            throw new Exception();
+        }
+
+        private ActionEntry ResolveShiftReduceConflict(ActionEntry shift, ActionEntry reduce, IReadOnlyList<Production> productions)
+        {
+            if(shift.Terminal.Precedence > productions[reduce.Value].Precedence)
+                return shift;
+            else if(shift.Terminal.Precedence < productions[reduce.Value].Precedence)
+                return reduce;
+            else if(shift.Terminal.Associativity == productions[reduce.Value].Associativity)
+            {
+                switch(shift.Terminal.Associativity)
+                {
+                case Associativity.None:
+                    Console.Error.WriteLine("warning: associativity for {0} unspecified; assuming left", shift.Terminal);
+                    break;
+                case Associativity.Left:
+                    return reduce;
+                case Associativity.Right:
+                    return shift;
+                case Associativity.Nonassociative:
+                    Console.Error.WriteLine("warning: {0} is non-associative", shift.Terminal);
+                    break;
+                }
+            }
+            return null;
         }
 
         class Augmented
