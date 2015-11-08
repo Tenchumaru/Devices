@@ -85,7 +85,7 @@ namespace Pard
                     Usage(message);
                 if(!Char.IsLetter(name[0]) && name[0] != '_')
                     Usage(message);
-                if(name.Any(c => !Char.IsLetterOrDigit(c) && c != '_'))
+                if(name.Any(c => !Char.IsLetterOrDigit(c) && c != '_' && c != '.'))
                     Usage(message);
             }
         }
