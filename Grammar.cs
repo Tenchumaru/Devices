@@ -167,7 +167,8 @@ namespace Pard
         {
             internal IReadOnlyList<Production> Productions { get { return productions; } }
             private readonly IReadOnlyList<Production> productions;
-            private readonly IEnumerable<Production> expandedProductions;
+            private readonly IDictionary<Nonterminal, List<Production>> productionsByNonterminal;
+            private readonly IDictionary<Nonterminal, List<Production>> expandedProductionsByNonterminal;
             private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets = new Dictionary<Symbol, HashSet<Terminal>>();
 
             internal Augmented(Production startProduction, IEnumerable<Production> referencedProductions)
@@ -179,7 +180,9 @@ namespace Pard
                         select new Production(p.Lhs, p.Rhs, r.Index, p.ActionCode, p.Associativity, p.Precedence);
                 productions = q.ToList();
                 this.productions = productions;
-                expandedProductions = CollectExpandedProductions(productions);
+                var expandedProductions = CollectExpandedProductions(productions);
+                productionsByNonterminal = productions.GroupBy(p => p.Lhs).ToDictionary(g => g.Key, g => g.ToList());
+                expandedProductionsByNonterminal = expandedProductions.GroupBy(p => p.Lhs).ToDictionary(g => g.Key, g => g.ToList());
             }
 
             // closure(I), p. 232
@@ -200,8 +203,7 @@ namespace Pard
                             let n = ip.Rhs[i.DotPosition] as Nonterminal
                             where n != null
                             let f = First(ip.Rhs.Skip(i.DotPosition + 1).Concat(new[] { i.Lookahead }))
-                            from p in productions
-                            where p.Lhs == n
+                            from p in productionsByNonterminal[n]
                             from b in f
                             select new Item(p.RuleIndex, 0, b);
 
@@ -318,8 +320,8 @@ namespace Pard
                         first.Add(terminal);
                     else
                     {
-                        var q = from p in expandedProductions
-                                where p.Lhs == symbol
+                        var nonterminal = (Nonterminal)symbol;
+                        var q = from p in expandedProductionsByNonterminal[nonterminal]
                                 select p.Rhs.FirstOrDefault() ?? Terminal.Epsilon;
                         first.UnionWith(q.OfType<Terminal>());
                     }
