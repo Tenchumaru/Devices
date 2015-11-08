@@ -20,15 +20,14 @@ namespace Pard
                 var symbol = pair.Element;
                 var name = (string)symbol.Attribute("name");
                 var typeName = (string)symbol.Attribute("type");
-                var associativityString = (string)symbol.Attribute("associativity");
-                if(associativityString != null)
-                    associativityString = associativityString.ToLowerInvariant();
+                var associativityString = (string)symbol.Attribute("associativity") ?? Grammar.Associativity.None.ToString();
+                associativityString = associativityString.ToLowerInvariant();
                 Grammar.Associativity associativity;
                 if(associativityNames.Contains(associativityString))
                     associativity = (Grammar.Associativity)Enum.Parse(typeof(Grammar.Associativity), associativityString, true);
                 else
                 {
-                    Console.Error.WriteLine("warning: unknown associativity '{0}'; using 'none'", symbol.Name.LocalName);
+                    Console.Error.WriteLine("warning: unknown associativity '{0}'; using 'none'", associativityString);
                     associativity = Grammar.Associativity.None;
                 }
                 switch(symbol.Name.LocalName)
