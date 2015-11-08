@@ -114,6 +114,12 @@ namespace Pard
                         return result;
                     ++shiftReduceConflictCount;
                     return right;
+                case "ReduceReduce":
+                    // Take the reduction with the lowest production index.
+                    ++reduceReduceConflictCount;
+                    return list.OrderBy(e => e.Value).First();
+                }
+                break;
                 }
                 break;
             }
