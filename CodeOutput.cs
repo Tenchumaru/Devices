@@ -111,7 +111,7 @@ namespace Pard
                             let t = e.Terminal
                             where t.Name[0] != '\'' && t.Name != "(end)"
                             select t;
-            foreach(var terminal in terminals.Distinct().Select((t, i) => new { Name = t.Name, Value = i + Char.MaxValue + 1 }))
+            foreach(var terminal in terminals.Distinct())
                 writer.WriteLine("public const int {0}= {1};", terminal.Name, terminal.Value);
             EmitSection(skeleton, writer);
 
