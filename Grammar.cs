@@ -65,12 +65,12 @@ namespace Pard
 
             // Create the goto table.
             var b = from p in items
-                    select from g in p.Key.Gotos
-                           let n = g.Key as Nonterminal
-                           where n != null
-                           select new GotoEntry { StateIndex = p.Value, Nonterminal = n, TargetStateIndex = items[g.Value] };
+                    from g in p.Key.Gotos
+                    let n = g.Key as Nonterminal
+                    where n != null
+                    select new GotoEntry { StateIndex = p.Value, Nonterminal = n, TargetStateIndex = items[g.Value] };
             // TODO:  this does not account for conflicts.
-            gotos = b.SelectMany(e => e).ToList();
+            gotos = b.ToList();
         }
 
         class Augmented
