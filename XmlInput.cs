@@ -19,6 +19,7 @@ namespace Pard
             {
                 var symbol = pair.Element;
                 var name = (string)symbol.Attribute("name");
+                var value = (string)symbol.Attribute("value");
                 var typeName = (string)symbol.Attribute("type");
                 var associativityString = (string)symbol.Attribute("associativity") ?? Grammar.Associativity.None.ToString();
                 associativityString = associativityString.ToLowerInvariant();
@@ -33,10 +34,10 @@ namespace Pard
                 switch(symbol.Name.LocalName)
                 {
                 case "literal":
-                    string literalName = Terminal.FormatLiteralName(name);
+                    string literalName = Terminal.FormatLiteralName(value);
                     if(literalName != null)
                     {
-                        knownTerminals.Add(new Terminal(literalName, typeName, associativity, pair.Precedence, name[0]));
+                        knownTerminals.Add(new Terminal(literalName, typeName, associativity, pair.Precedence, value[0]));
                     }
                     else
                     {

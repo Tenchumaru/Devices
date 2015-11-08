@@ -1,5 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <grammar>
+  <symbols>
+    <nonterminal name="E" type="int" />
+    <literal value="+" associativity="left"/>
+    <literal value="*" associativity="left"/>
+    <terminal name="id" type="int" />
+  </symbols>
   <rules>
     <rule name="E">
       <nonterminal name="E"/>
