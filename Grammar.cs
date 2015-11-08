@@ -172,8 +172,12 @@ namespace Pard
 
             internal Augmented(Production startProduction, IEnumerable<Production> referencedProductions)
             {
-                var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
+                var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, 0) };
                 productions.AddRange(referencedProductions);
+                var q = from r in productions.Select((p, i) => new { Production = p, Index = i })
+                        let p = r.Production
+                        select new Production(p.Lhs, p.Rhs, r.Index, p.ActionCode, p.Associativity, p.Precedence);
+                productions = q.ToList();
                 this.productions = productions;
                 expandedProductions = CollectExpandedProductions(productions);
             }
@@ -196,10 +200,10 @@ namespace Pard
                             let n = ip.Rhs[i.DotPosition] as Nonterminal
                             where n != null
                             let f = First(ip.Rhs.Skip(i.DotPosition + 1).Concat(new[] { i.Lookahead }))
-                            from p in productions.Select((x, y) => new { Production = x, Index = y })
-                            where p.Production.Lhs == n
+                            from p in productions
+                            where p.Lhs == n
                             from b in f
-                            select new Item(p.Index, 0, b);
+                            select new Item(p.RuleIndex, 0, b);
 
                     // add [B → ∙γ, b] to I;
                     items.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
