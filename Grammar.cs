@@ -195,11 +195,10 @@ namespace Pard
                             where i.DotPosition < ip.Rhs.Count
                             let n = ip.Rhs[i.DotPosition] as Nonterminal
                             where n != null
-                            let r = ip.Rhs.Skip(i.DotPosition + 1)
-                            let l = i.Lookahead
+                            let f = First(ip.Rhs.Skip(i.DotPosition + 1).Concat(new[] { i.Lookahead }))
                             from p in productions.Select((x, y) => new { Production = x, Index = y })
                             where p.Production.Lhs == n
-                            from b in First(r.Concat(new[] { l }))
+                            from b in f
                             select new Item(p.Index, 0, b);
 
                     // add [B → ∙γ, b] to I;
