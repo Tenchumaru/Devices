@@ -131,7 +131,7 @@ namespace Pard
                 switch(shift.Terminal.Associativity)
                 {
                 case Associativity.None:
-                    Console.Error.WriteLine("warning: associativity for {0} unspecified; assuming left", shift.Terminal);
+                    Console.Error.WriteLine("warning: associativity for {0} unspecified; assuming right", shift.Terminal);
                     break;
                 case Associativity.Left:
                     return reduce;
