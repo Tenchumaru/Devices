@@ -120,6 +120,18 @@ namespace Pard
                     return list.OrderBy(e => e.Value).First();
                 }
                 break;
+            default:
+                if(list.Count(e => e.Action == Action.Shift) == 1)
+                {
+                    // Take the reduction with the lowest production index.
+                    var shift = list.First(e => e.Action == Action.Shift);
+                    var reduce = list.Where(e => e.Action == Action.Reduce).OrderBy(e => e.Value).First();
+                    result = ResolveShiftReduceConflict(shift, reduce, productions);
+                    if(result != null)
+                        return result;
+                    reduceReduceConflictCount += list.Count - 2;
+                    ++shiftReduceConflictCount;
+                    return shift;
                 }
                 break;
             }
