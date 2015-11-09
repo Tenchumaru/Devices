@@ -61,6 +61,12 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="YaccInput.cs" />
+    <Compile Include="YaccInput.xml.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>YaccInput.xml</DependentUpon>
+    </Compile>
+    <None Include="Pre-build.cmd" />
     <None Include="Properties\Skeleton.cs" />
     <Compile Include="Symbol.cs" />
     <Compile Include="Terminal.cs" />
@@ -80,7 +86,13 @@
       <Link>Adrezdi.dll</Link>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="YaccInput.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>"$(ProjectDir)Pre-build.cmd" "$(ConfigurationName)"</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
