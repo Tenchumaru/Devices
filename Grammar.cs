@@ -235,7 +235,7 @@ namespace Pard
                 var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
 
                 // Create a collection of terminals.
-                var terminals = new HashSet<Terminal>(productions.SelectMany(p => p.Rhs.OfType<Terminal>()));
+                var terminals = new HashSet<Terminal>(symbols.OfType<Terminal>());
 
                 // Create a list to hold the items added to the closure.  Their
                 // indicies will be the state indicies.
