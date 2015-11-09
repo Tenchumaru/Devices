@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <rules>
+    <rule name="S">
+      <nonterminal name="L"/>
+      <literal value="="/>
+      <nonterminal name="R"/>
+      <action><![CDATA[Result.Append("<S->L=R>");]]></action>
+    </rule>
+    <rule name="S">
+      <nonterminal name="R"/>
+      <action><![CDATA[Result.Append("<S->R>");]]></action>
+    </rule>
+    <rule name="L">
+      <literal value="*"/>
+      <nonterminal name="R"/>
+      <action><![CDATA[Result.Append("<L->*R>");]]></action>
+    </rule>
+    <rule name="L">
+      <terminal name="id"/>
+      <action><![CDATA[Result.Append("<L->id>");]]></action>
+    </rule>
+    <rule name="R">
+      <nonterminal name="L"/>
+      <action><![CDATA[Result.Append("<R->L>");]]></action>
+    </rule>
+  </rules>
+</grammar>

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <rules>
+    <rule name="S">
+      <literal value="i"/>
+      <nonterminal name="E1"/>
+      <nonterminal name="E2"/>
+      <literal value="e"/>
+      <action><![CDATA[Result.Append("<iE1E2e>");]]></action>
+    </rule>
+    <rule name="E1">
+      <action><![CDATA[Result.Append("<E1>");]]></action>
+    </rule>
+    <rule name="E2">
+      <action><![CDATA[Result.Append("<E2>");]]></action>
+    </rule>
+  </rules>
+</grammar>

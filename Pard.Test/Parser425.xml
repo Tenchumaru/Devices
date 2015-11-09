@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- Page 252 -->
+<grammar>
+  <symbols>
+    <nonterminal name="E" />
+    <terminal name="sub" associativity="right"/>
+    <terminal name="sup" associativity="right"/>
+  </symbols>
+  <rules>
+    <rule name="E">
+      <nonterminal name="E"/>
+      <terminal name="sub"/>
+      <nonterminal name="E"/>
+      <terminal name="sup"/>
+      <nonterminal name="E"/>
+      <action><![CDATA[Result.Append("<EsubEsupE>");]]></action>
+    </rule>
+    <rule name="E">
+      <nonterminal name="E"/>
+      <terminal name="sub"/>
+      <nonterminal name="E"/>
+      <action><![CDATA[Result.Append("<EsubE>");]]></action>
+    </rule>
+    <rule name="E">
+      <nonterminal name="E"/>
+      <terminal name="sup"/>
+      <nonterminal name="E"/>
+      <action><![CDATA[Result.Append("<EsupE>");]]></action>
+    </rule>
+    <rule name="E">
+      <literal value="{"/>
+      <nonterminal name="E"/>
+      <literal value="}"/>
+      <action><![CDATA[Result.Append("<{E}>");]]></action>
+    </rule>
+    <rule name="E">
+      <terminal name="id"/>
+      <action><![CDATA[Result.Append("<id>");]]></action>
+    </rule>
+  </rules>
+</grammar>

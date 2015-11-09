@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <rules>
+    <rule name="S">
+      <nonterminal name="C"/>
+      <nonterminal name="C"/>
+      <action><![CDATA[Result.Append("<CC>");Console.WriteLine("I got two Cs.");]]></action>
+    </rule>
+    <rule name="C">
+      <literal value="c"/>
+      <nonterminal name="C"/>
+      <action><![CDATA[Result.Append("<cC>");Console.WriteLine("I got a c and a C.");]]></action>
+    </rule>
+    <rule name="C">
+      <literal value="d"/>
+      <action><![CDATA[Result.Append("<d>");Console.WriteLine("I got a d.");]]></action>
+    </rule>
+  </rules>
+</grammar>
