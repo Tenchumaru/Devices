@@ -26,7 +26,7 @@ namespace Pard
             var commandLineParser = new Adrezdi.CommandLine();
             var commandLine = commandLineParser.Parse<CommandLine>(args, true);
             if(commandLineParser.ExtraOptions.Any())
-                Usage("unexpected options");
+                Usage("unexpected options: " + String.Join(", ", commandLineParser.ExtraOptions));
             if(commandLineParser.ExtraArguments.Skip(2).Any())
                 Usage("too many file specifications");
             InputFilePath = commandLineParser.ExtraArguments.FirstOrDefault();
@@ -101,19 +101,19 @@ namespace Pard
 
         class CommandLine
         {
-            [Adrezdi.CommandLine.ValueArgument(LongName = "grammar-input-type", ShortName = 't', Usage = "the type of the grammar; one of xml and yacc")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "grammar-input-type", ShortName = 't', Usage = "the type of the grammar; one of xml and yacc")]
             public string GrammarInputType { get; set; }
 
-            [Adrezdi.CommandLine.ValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace into which to put the classes")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace into which to put the classes")]
             public string NamespaceName { get; set; }
 
-            [Adrezdi.CommandLine.ValueArgument(LongName = "parser-class-name", ShortName = 'p', Usage = "the name of the parser class")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "parser-class-name", ShortName = 'p', Usage = "the name of the parser class")]
             public string ParserClassName { get; set; }
 
-            [Adrezdi.CommandLine.ValueArgument(LongName = "scanner-class-name", ShortName = 's', Usage = "the name of the scanner class")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-class-name", ShortName = 's', Usage = "the name of the scanner class")]
             public string ScannerClassName { get; set; }
 
-            [Adrezdi.CommandLine.ValueArgument(LongName = "state-output-file", ShortName = 'o', Usage = "the path of the state output file; assumes -v")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "state-output-file", ShortName = 'o', Usage = "the path of the state output file; assumes -v")]
             public string StateOutputFilePath { get; set; }
 
             [Adrezdi.CommandLine.FlagArgument(LongName = "verbose", ShortName = 'v', Usage = "create a state output file (default outputFilePath.txt)")]
