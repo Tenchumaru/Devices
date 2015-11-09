@@ -10,6 +10,10 @@ namespace Pard
         public IReadOnlyList<Production> Read(System.IO.TextReader reader, Options options)
         {
             var xml = XDocument.Load(reader).Element("grammar");
+            var defines = xml.Elements("define").Select(u => (string)u.Attribute("value"));
+            options.DefineDirectives.AddRange(defines);
+            var usings = xml.Elements("using").Select(u => (string)u.Attribute("value"));
+            options.AdditionalUsingDirectives.AddRange(usings);
             var productions = new List<Production>();
             var associativityNames = Enum.GetNames(typeof(Grammar.Associativity)).Select(s => s.ToLowerInvariant()).ToList();
             var knownTerminals = new HashSet<Terminal>();
