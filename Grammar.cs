@@ -32,7 +32,7 @@ namespace Pard
             var unreferencedProductions = productions.Except(referencedProductions).ToList();
             if(unreferencedProductions.Any())
             {
-                // Issue a warning if any.
+                // Issue a warning, if any.
                 Console.Error.WriteLine("warning: {0} unreferenced productions:", unreferencedProductions.Count);
                 foreach(var unreferencedProduction in unreferencedProductions)
                 {
@@ -88,7 +88,6 @@ namespace Pard
                     let n = g.Key as Nonterminal
                     where n != null
                     select new GotoEntry { StateIndex = p.Value, Nonterminal = n, TargetStateIndex = items[g.Value] };
-            // TODO:  this does not account for conflicts.
             gotos = b.ToList();
         }
 
@@ -121,19 +120,16 @@ namespace Pard
                 }
                 break;
             default:
-                if(list.Count(e => e.Action == Action.Shift) == 1)
-                {
-                    // Take the reduction with the lowest production index.
-                    var shift = list.First(e => e.Action == Action.Shift);
-                    var reduce = list.Where(e => e.Action == Action.Reduce).OrderBy(e => e.Value).First();
-                    result = ResolveShiftReduceConflict(shift, reduce, productions);
-                    if(result != null)
-                        return result;
-                    reduceReduceConflictCount += list.Count - 2;
-                    ++shiftReduceConflictCount;
-                    return shift;
-                }
-                break;
+                // Take the reduction with the lowest production index and
+                // resolve the shift-reduce conflict.
+                var shift = list.Single(e => e.Action == Action.Shift);
+                var reduce = list.Where(e => e.Action == Action.Reduce).OrderBy(e => e.Value).First();
+                result = ResolveShiftReduceConflict(shift, reduce, productions);
+                if(result != null)
+                    return result;
+                reduceReduceConflictCount += list.Count - 2;
+                ++shiftReduceConflictCount;
+                return shift;
             }
             throw new Exception();
         }
