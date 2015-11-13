@@ -13,6 +13,8 @@ SET PARD="..\TestResults\Pard.exe"
 SET T=%TEMP%\%RANDOM%.make
 find "goto" %OUTPUT% > nul
 IF ERRORLEVEL 1 DEL /F /Q %OUTPUT%
+REM I need Lad to create the scanner for the Yacc parser.
+IF NOT EXIST "..\TestResults\Lad.exe" IF EXIST %PARD% DEL /F /Q %PARD%
 IF EXIST %PARD% (
 	cscript //nologo //E:JScript %0 YaccInput.xml > %T%
 	nmake -nologo "ConfigurationName=%~1" -f %T%
@@ -25,7 +27,7 @@ IF EXIST %PARD% (
 	)
 ) ELSE (
 	ECHO XML-only parser
-	ECHO using System; > %OUTPUT%
+	COPY /Y YaccInput.txt %OUTPUT%
 	EXIT /B 0
 )
 GOTO :EOF
@@ -34,7 +36,7 @@ function REM() {
 	var xmlFileName = WScript.Arguments(0);
 	var csFileName = xmlFileName + ".cs";
 	var fout = WScript.StdOut;
-	fout.WriteLine(csFileName + ':');
+	fout.WriteLine(csFileName + ": " + xmlFileName);
 	fout.WriteLine('\tIF EXIST ' + csFileName + ' DEL /F /Q ' + csFileName);
-	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Pard --parser-class-name=YaccParser --scanner-class-name=YaccScanner ' + xmlFileName + ' ' + csFileName);
+	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Pard --parser-class-name=YaccInput --scanner-class-name=YaccScanner ' + xmlFileName + ' ' + csFileName);
 }

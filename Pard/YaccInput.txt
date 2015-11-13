@@ -1,0 +1,25 @@
+namespace Pard
+{
+	public partial class YaccInput
+	{
+		private YaccScanner scanner;
+		const int Literal = 0;
+		public YaccInput(object _) { }
+		public bool Parse()
+		{
+			throw new System.NotImplementedException();
+		}
+		public partial class YaccScanner
+		{
+			public ScannerToken ReadSectionOne()
+			{
+				mode = ScannerMode.SectionOne;
+				throw new System.NotImplementedException();
+			}
+			public ScannerToken ReadSectionTwo()
+			{
+				throw new System.NotImplementedException();
+			}
+		}
+	}
+}
