@@ -3,11 +3,10 @@
 	<using value="StringList= System.Collections.Generic.List&lt;string&gt;"/>
 	<using value="SymbolList= System.Collections.Generic.List&lt;Pard.Symbol&gt;"/>
 	<symbols>
-		<terminal name="PToken" type="Associativity"/>
+		<terminal name="PToken" type="Grammar.Associativity"/>
 		<terminal name="Identifier" type="string"/>
 		<terminal name="CodeBlock" type="string"/>
 		<terminal name="PDefine" type="string"/>
-		<terminal name="Default"/>
 		<terminal name="PUsing" type="string"/>
 		<terminal name="PP"/>
 		<terminal name="Literal" type="char"/>
@@ -19,14 +18,13 @@
 		<nonterminal name="idents" type="StringList"/>
 		<nonterminal name="rhs" type="SymbolList"/>
 		<nonterminal name="rhe" type="Symbol"/>
-		<nonterminal name="prec" type="TerminalSymbol"/>
+		<nonterminal name="prec" type="Terminal"/>
 	</symbols>
 	<rules>
 		<rule name="pard">
 			<nonterminal name="sec1"/>
 			<terminal name="PP"/>
 			<nonterminal name="sec2"/>
-			<action><![CDATA[ReportUndeclaredNonterminals();]]></action>
 		</rule>
 		<rule name="sec1"/>
 		<rule name="sec1">
@@ -43,7 +41,7 @@
 			<terminal name="Identifier"/>
 			<literal value="&gt;"/>
 			<nonterminal name="idents"/>
-			<action><![CDATA[CreateTypes($3, $5);]]></action>
+			<action><![CDATA[CreateNonterminals($3, $5);]]></action>
 		</rule>
 		<rule name="decl">
 			<terminal name="PDefine"/>
@@ -58,11 +56,11 @@
 			<literal value="&lt;"/>
 			<terminal name="Identifier"/>
 			<literal value="&gt;"/>
-			<action><![CDATA[SetTokenParameters($1, $3);]]></action>
+			<action><![CDATA[SetTerminalParameters($1, $3);]]></action>
 		</rule>
 		<rule name="token">
 			<terminal name="PToken"/>
-			<action><![CDATA[SetTokenParameters($1, null);]]></action>
+			<action><![CDATA[SetTerminalParameters($1, null);]]></action>
 		</rule>
 		<rule name="tokens">
 			<terminal name="Identifier"/>
@@ -147,7 +145,7 @@
 		</rule>
 		<rule name="rhe">
 			<terminal name="ErrorToken"/>
-			<action><![CDATA[$$= TerminalSymbol.ErrorSymbol;]]></action>
+			<action><![CDATA[$$= Terminal.Error;]]></action>
 		</rule>
 	</rules>
 </grammar>
