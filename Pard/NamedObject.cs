@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Pard
 {
-    abstract class NamedObject
+    public abstract class NamedObject
     {
         public string Name { get; private set; }
 

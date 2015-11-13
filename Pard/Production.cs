@@ -6,23 +6,23 @@ using System.Threading.Tasks;
 
 namespace Pard
 {
-    class Production : NamedObject
+    public class Production : NamedObject
     {
-        public readonly Nonterminal Lhs;
-        public readonly IReadOnlyList<Symbol> Rhs;
+        internal readonly Nonterminal Lhs;
+        internal readonly IReadOnlyList<Symbol> Rhs;
         public readonly int RuleIndex;
         public readonly string ActionCode;
-        public readonly Grammar.Associativity Associativity;
+        internal readonly Grammar.Associativity Associativity;
         public readonly int Precedence;
 
-        public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int ruleIndex, string actionCode, Grammar.Associativity associativity, int precedence)
+        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int ruleIndex, string actionCode, Grammar.Associativity associativity, int precedence)
             : this(lhs, rhs, ruleIndex, actionCode)
         {
             Associativity = associativity;
             Precedence = precedence;
         }
 
-        public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int ruleIndex, string actionCode = null)
+        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int ruleIndex, string actionCode = null)
             : base(String.Format("{0} -> {1}", lhs, String.Join(" ", rhs)))
         {
             Lhs = lhs;

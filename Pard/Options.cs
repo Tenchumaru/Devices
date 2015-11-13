@@ -6,7 +6,7 @@ using System.IO;
 
 namespace Pard
 {
-    class Options
+    public class Options
     {
         // Command line parameters
         public readonly string NamespaceName;
@@ -15,7 +15,7 @@ namespace Pard
         public readonly string InputFilePath;
         public readonly string OutputFilePath;
         public readonly string StateOutputFilePath;
-        public readonly IGrammarInput GrammarInput;
+        internal readonly IGrammarInput GrammarInput;
 
         // From the input file
         public readonly List<string> DefineDirectives = new List<string>();
