@@ -10,12 +10,14 @@ namespace Pard
     {
         // Command line parameters
         public readonly string NamespaceName;
-        public readonly string ParserClassName = "Parser";
-        public readonly string ScannerClassName = "IScanner";
+        public readonly string ParserClassName;
+        public readonly string ScannerClassName;
         public readonly string InputFilePath;
         public readonly string OutputFilePath;
         public readonly string StateOutputFilePath;
         internal readonly IGrammarInput GrammarInput;
+        private const string defaultParserClassName = "Parser";
+        private const string defaultScannerClassName = "IScanner";
 
         // From the input file
         public readonly List<string> DefineDirectives = new List<string>();
@@ -37,9 +39,9 @@ namespace Pard
                 OutputFilePath = null;
             NamespaceName = commandLine.NamespaceName;
             CheckName(NamespaceName, "namespace");
-            ParserClassName = commandLine.ParserClassName ?? "Parser";
+            ParserClassName = commandLine.ParserClassName ?? defaultParserClassName;
             CheckName(ParserClassName, "parser class name");
-            ScannerClassName = commandLine.ScannerClassName ?? "IScanner";
+            ScannerClassName = commandLine.ScannerClassName ?? defaultScannerClassName;
             CheckName(ScannerClassName, "scanner class name");
             StateOutputFilePath = commandLine.WantsStates ? commandLine.StateOutputFilePath ?? OutputFilePath + ".txt" : null;
             if(StateOutputFilePath == ".txt")
@@ -78,9 +80,9 @@ namespace Pard
 
         private static void CheckName(string name, string message)
         {
-            message = "invalid " + message;
             if(name != null)
             {
+                message = "invalid " + message;
                 if(name == "")
                     Usage(message);
                 if(!Char.IsLetter(name[0]) && name[0] != '_')
@@ -107,10 +109,10 @@ namespace Pard
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace into which to put the classes")]
             public string NamespaceName { get; set; }
 
-            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "parser-class-name", ShortName = 'p', Usage = "the name of the parser class")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "parser-class-name", ShortName = 'p', Usage = "the name of the parser class (default " + defaultParserClassName + ")")]
             public string ParserClassName { get; set; }
 
-            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-class-name", ShortName = 's', Usage = "the name of the scanner class")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-class-name", ShortName = 's', Usage = "the name of the scanner class (default " + defaultScannerClassName + ")")]
             public string ScannerClassName { get; set; }
 
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "state-output-file", ShortName = 'o', Usage = "the path of the state output file; assumes -v")]
