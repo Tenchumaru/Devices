@@ -14,23 +14,22 @@ SET T=%TEMP%\%RANDOM%.make
 find "goto" %OUTPUT% > nul
 IF ERRORLEVEL 1 DEL /F /Q %OUTPUT%
 REM I need Lad to create the scanner for the Yacc parser.
-IF NOT EXIST "..\TestResults\Lad.exe" IF EXIST %PARD% DEL /F /Q %PARD%
-IF EXIST %PARD% (
-	cscript //nologo //E:JScript %0 YaccInput.xml > %T%
-	nmake -nologo "ConfigurationName=%~1" -f %T%
-	IF ERRORLEVEL 1 (
-		DEL /F /Q %T%
-		EXIT /B 1
-	) ELSE (
-		DEL /F /Q %T%
-		EXIT /B 0
+IF EXIST "..\TestResults\Lad.exe" (
+	IF EXIST %PARD% (
+		cscript //nologo //E:JScript %0 YaccInput.xml > %T%
+		nmake -nologo "ConfigurationName=%~1" -f %T%
+		IF ERRORLEVEL 1 (
+			DEL /F /Q %T%
+			EXIT /B 1
+		) ELSE (
+			DEL /F /Q %T%
+			EXIT /B 0
+		)
 	)
-) ELSE (
-	ECHO XML-only parser
-	COPY /Y YaccInput.txt %OUTPUT%
-	EXIT /B 0
 )
-GOTO :EOF
+ECHO XML-only parser
+COPY /Y YaccInput.txt %OUTPUT%
+EXIT /B 0
 */
 function REM() {
 	var xmlFileName = WScript.Arguments(0);
