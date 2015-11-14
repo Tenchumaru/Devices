@@ -59,15 +59,14 @@ namespace Pard
                             let s = i.ProductionIndex == 0
                             where !s || t == Terminal.AugmentedEnd
                             select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = s ? Action.Accept : Action.Reduce, Value = i.ProductionIndex }
-                    select x.Concat(y);
+                    from z in x.Concat(y)
+                    select z;
 
             // Account for conflicts.
             int shiftReduceConflictCount = 0, reduceReduceConflictCount = 0;
-            var c = from x in a
-                    from y in x
-                    group y by new KeyValuePair<int, Terminal>(y.StateIndex, y.Terminal);
-            var d = c.Select(x => ResolveConflict(x.Key.Key, x.Key.Value, x.ToList(), augmented.Productions, ref shiftReduceConflictCount, ref reduceReduceConflictCount));
-            actions = d.ToList();
+            var c = a.GroupBy(p => new KeyValuePair<int, Terminal>(p.StateIndex, p.Terminal));
+            a = c.Select(x => ResolveConflict(x.Key.Key, x.Key.Value, x.ToList(), augmented.Productions, ref shiftReduceConflictCount, ref reduceReduceConflictCount));
+            actions = a.ToList();
             if(shiftReduceConflictCount > 0 || reduceReduceConflictCount > 0)
             {
                 Console.Error.Write("warning:");
