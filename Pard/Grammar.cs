@@ -53,7 +53,7 @@ namespace Pard
                             let t = g.Key as Terminal
                             where t != null
                             select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = Action.Shift, Value = items[g.Value] }
-                    let y = from i in p.Key.AsQueryable()
+                    let y = from i in p.Key.AsEnumerable()
                             where i.DotPosition == augmented.Productions[i.ProductionIndex].Rhs.Count
                             let t = i.Lookahead
                             let s = i.ProductionIndex == 0
@@ -193,7 +193,7 @@ namespace Pard
                     // each production B → γ in G',
                     // and each terminal b in FIRST(βa)
                     // such that [B → ∙γ, b] is not in I do
-                    var q = from i in items.AsQueryable()
+                    var q = from i in items.AsEnumerable()
                             let ip = productions[i.ProductionIndex]
                             where i.DotPosition < ip.Rhs.Count
                             let n = ip.Rhs[i.DotPosition] as Nonterminal
@@ -218,7 +218,7 @@ namespace Pard
             {
                 // let J be the set of items [A → αX∙β, a] such that
                 // [A → α∙Xβ, a] is in I;
-                var q = from i in items.AsQueryable()
+                var q = from i in items.AsEnumerable()
                         let p = productions[i.ProductionIndex]
                         let d = i.DotPosition
                         where d < p.Rhs.Count && p.Rhs[d] == symbol

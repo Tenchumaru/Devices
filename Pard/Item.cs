@@ -102,9 +102,9 @@ namespace Pard
                 return set.Any();
             }
 
-            internal IQueryable<Item> AsQueryable()
+            internal IEnumerable<Item> AsEnumerable()
             {
-                return set.AsQueryable<Item>();
+                return set.AsEnumerable<Item>();
             }
 
             internal void UnionWith(IEnumerable<Item> items)
