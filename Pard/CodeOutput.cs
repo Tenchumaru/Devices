@@ -115,6 +115,10 @@ namespace Pard
                 writer.WriteLine("public const int {0}= {1};", terminal.Name, terminal.Value);
             EmitSection(skeleton, writer);
 
+            // Emit the token class, if requested.
+            if(options.WantsTokenClass)
+                writer.WriteLine("public partial class Token { public int Symbol; public object Value; }");
+
             if(options.NamespaceName != null)
                 writer.WriteLine('}');
         }
