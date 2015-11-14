@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <rules>
+    <rule name="S">
+      <action><![CDATA[Result.Append("<>");]]></action>
+    </rule>
+    <rule name="S">
+      <nonterminal name="S"/>
+      <literal value="a"/>
+      <action><![CDATA[Result.Append("<a>");]]></action>
+    </rule>
+  </rules>
+</grammar>
