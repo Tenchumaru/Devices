@@ -16,7 +16,7 @@ IF ERRORLEVEL 1 DEL /F /Q %OUTPUT%
 REM I need Lad to create the scanner for the Yacc parser.
 IF EXIST "..\TestResults\Lad.exe" (
 	IF EXIST %PARD% (
-		cscript //nologo //E:JScript %0 YaccInput.xml > %T%
+		cscript //nologo //E:JScript %0 > %T%
 		nmake -nologo "ConfigurationName=%~1" -f %T%
 		IF ERRORLEVEL 1 (
 			DEL /F /Q %T%
@@ -28,14 +28,21 @@ IF EXIST "..\TestResults\Lad.exe" (
 	)
 )
 ECHO XML-only parser
+ECHO using System; > YaccInput.l.cs
 COPY /Y YaccInput.txt %OUTPUT%
 EXIT /B 0
 */
 function REM() {
-	var xmlFileName = WScript.Arguments(0);
-	var csFileName = xmlFileName + ".cs";
+	var yaccXmlFileName = "YaccInput.xml", lexLexFileName = "YaccInput.l";
+	var yaccCsFileName = yaccXmlFileName + ".cs", lexCsFileName = lexLexFileName + ".cs";
 	var fout = WScript.StdOut;
-	fout.WriteLine(csFileName + ": " + xmlFileName);
-	fout.WriteLine('\tIF EXIST ' + csFileName + ' DEL /F /Q ' + csFileName);
-	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Pard --parser-class-name=YaccInput --scanner-class-name=YaccScanner ' + xmlFileName + ' ' + csFileName);
+	fout.WriteLine("all: " + yaccCsFileName + ' ' + lexCsFileName);
+	fout.WriteLine();
+	fout.WriteLine(yaccCsFileName + ": " + yaccXmlFileName);
+	fout.WriteLine('\tIF EXIST ' + yaccCsFileName + ' DEL /F /Q ' + yaccCsFileName);
+	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Pard --parser-class-name=YaccInput --scanner-class-name=YaccScanner ' + yaccXmlFileName + ' ' + yaccCsFileName);
+	fout.WriteLine();
+	fout.WriteLine(lexCsFileName + ": " + lexLexFileName);
+	fout.WriteLine('\tIF EXIST ' + lexCsFileName + ' DEL /F /Q ' + lexCsFileName);
+	fout.WriteLine('\t"..\\TestResults\\Lad.exe" --namespace=Pard --class-name=YaccScanner --scanner-input-type=inline ' + lexLexFileName + ' ' + lexCsFileName);
 }
