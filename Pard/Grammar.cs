@@ -41,7 +41,7 @@ namespace Pard
             }
 
             // Create the augmented grammar (p. 222) using only referenced productions.
-            var augmented = new Augmented(productions[0], referencedProductions);
+            var augmented = new Augmented(productions[0], referencedProductions.OrderBy(p => p.RuleIndex));
 
             // Algorithm 4.9, p. 231
             var items = augmented.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
