@@ -166,8 +166,7 @@ namespace Pard
             internal IReadOnlyList<Production> Productions { get { return productions; } }
             private readonly IReadOnlyList<Production> productions;
             private readonly IDictionary<Nonterminal, List<Production>> productionsByNonterminal;
-            private readonly IDictionary<Nonterminal, List<Production>> expandedProductionsByNonterminal;
-            private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets = new Dictionary<Symbol, HashSet<Terminal>>();
+            private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets;
 
             internal Augmented(Production startProduction, IEnumerable<Production> referencedProductions)
             {
@@ -178,9 +177,11 @@ namespace Pard
                         select new Production(p.Lhs, p.Rhs, r.Index, p.ActionCode, p.Associativity, p.Precedence);
                 productions = q.ToList();
                 this.productions = productions;
-                var expandedProductions = CollectExpandedProductions(productions);
                 productionsByNonterminal = productions.GroupBy(p => p.Lhs).ToDictionary(g => g.Key, g => g.ToList());
-                expandedProductionsByNonterminal = expandedProductions.GroupBy(p => p.Lhs).ToDictionary(g => g.Key, g => g.ToList());
+                firstSets = CollectFirstSets(productions);
+                firstSets.Add(Terminal.AugmentedEnd, new HashSet<Terminal> { Terminal.AugmentedEnd });
+                foreach(var terminal in productions.SelectMany(p => p.Rhs).OfType<Terminal>().Distinct())
+                    firstSets.Add(terminal, new HashSet<Terminal> { terminal });
             }
 
             // closure(I), p. 232
@@ -236,9 +237,6 @@ namespace Pard
                 // Create a collection of symbols used in the grammar.
                 var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
 
-                // Create a collection of terminals.
-                var terminals = new HashSet<Terminal>(symbols.OfType<Terminal>());
-
                 // Create a list to hold the items added to the closure.  Their
                 // indicies will be the state indicies.
                 var items = new List<Item.Set>();
@@ -288,13 +286,14 @@ namespace Pard
                 return items;
             }
 
+            // FIRST(X), p. 189
             private HashSet<Terminal> First(IEnumerable<Symbol> symbols)
             {
                 var first = new HashSet<Terminal>();
 
                 foreach(var symbol in symbols)
                 {
-                    var symbolFirst = First(symbol);
+                    var symbolFirst = firstSets[symbol];
                     first.UnionWith(symbolFirst);
                     if(!symbolFirst.Contains(Terminal.Epsilon))
                     {
@@ -306,36 +305,14 @@ namespace Pard
                 return first;
             }
 
-            // FIRST(X), p. 189
-            private HashSet<Terminal> First(Symbol symbol)
-            {
-                HashSet<Terminal> first;
-                if(!firstSets.TryGetValue(symbol, out first))
-                {
-                    first = new HashSet<Terminal>();
-                    var terminal = symbol as Terminal;
-                    if(terminal != null)
-                        first.Add(terminal);
-                    else
-                    {
-                        var nonterminal = (Nonterminal)symbol;
-                        var q = from p in expandedProductionsByNonterminal[nonterminal]
-                                select p.Rhs.FirstOrDefault() ?? Terminal.Epsilon;
-                        first.UnionWith(q.OfType<Terminal>());
-                    }
-                    firstSets.Add(symbol, first);
-                }
-                return first;
-            }
-
-            // This assists the FIRST(X) procedure by collecting all productions
-            // with additional productions not in the grammar synthesized by
-            // removing initial non-terminals from productions where those initial
-            // non-terminals are the left-hand side of a production that derives ε.
-            private static HashSet<Production> CollectExpandedProductions(IEnumerable<Production> productions)
+            private static Dictionary<Symbol, HashSet<Terminal>> CollectFirstSets(IEnumerable<Production> productions)
             {
                 var expandedProductions = new HashSet<Production>(productions);
 
+                // Collect all productions with additional productions not in
+                // the grammar synthesized by removing initial non-terminals
+                // from productions where those initial non-terminals are the
+                // left-hand side of a production that derives ε.
                 int count;
                 do
                 {
@@ -345,9 +322,9 @@ namespace Pard
                     var epsilonLhss = new HashSet<Nonterminal>(expandedProductions.Where(p => !p.Rhs.Any()).Select(p => p.Lhs));
 
                     // For each of those, add to the expanded productions a
-                    // production synthesized from each production with that symbol
-                    // as its first right-hand side symbol by excluding that symbol
-                    // as its first right-hand side symbol.
+                    // production synthesized from each production with that
+                    // symbol as its first right-hand side symbol by excluding
+                    // that symbol as its first right-hand side symbol.
                     foreach(var epsilonLhs in epsilonLhss)
                     {
                         var q = from p in expandedProductions
@@ -358,7 +335,43 @@ namespace Pard
 
                 } while(count < expandedProductions.Count);
 
-                return expandedProductions;
+                // Remove from the expanded productions any production whose
+                // initial right-hand side is the left-hand side.
+                expandedProductions.RemoveWhere(p => p.Lhs == p.Rhs.FirstOrDefault());
+
+                // Create a list of non-terminal-terminal pairs to construct
+                // the FIRST sets.  Start with non-terminals that derive ε.
+                var pairs = expandedProductions.Where(p => !p.Rhs.Any()).Select(p => new { Nonterminal = p.Lhs, Terminal = Terminal.Epsilon }).ToList();
+
+                // Remove them from the expanded productions.
+                expandedProductions.RemoveWhere(p => !p.Rhs.Any());
+
+                // Find the terminal of the first production that has a
+                // terminal as the first symbol of its right-hand side.
+                for(Terminal terminal; (terminal = expandedProductions.Select(p => p.Rhs.First()).OfType<Terminal>().FirstOrDefault()) != null; )
+                {
+                    // Find all productions that have that terminal as the
+                    // first symbol of their right-hand sides.
+                    var list = expandedProductions.Where(p => p.Rhs.First() == terminal).Select(p => new { Nonterminal = p.Lhs, Terminal = terminal }).ToList();
+
+                    // Add them to the list of pairs.
+                    pairs.AddRange(list);
+
+                    // Remove them from the expanded productions.
+                    expandedProductions.RemoveWhere(p => p.Rhs.First() == terminal);
+
+                    // Add new productions by substituting that terminal for
+                    // the corresponding non-terminal as the first symbol of
+                    // their right-hand sides.
+                    var q = from p in expandedProductions
+                            join a in list on p.Rhs.First() equals a.Nonterminal
+                            select new Production(p.Lhs, new[] { terminal }, 0);
+                    expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
+                }
+
+                // Create a dictionary of FIRST sets for non-terminals.  The
+                // caller will add those for terminals.
+                return pairs.GroupBy(a => (Symbol)a.Nonterminal, a => a.Terminal).ToDictionary(g => g.Key, g => new HashSet<Terminal>(g));
             }
         }
 
