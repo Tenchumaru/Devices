@@ -44,9 +44,17 @@ namespace Pard
             CheckName(ParserClassName, "parser class name");
             ScannerClassName = commandLine.ScannerClassName ?? defaultScannerClassName;
             CheckName(ScannerClassName, "scanner class name");
-            StateOutputFilePath = commandLine.WantsStates ? commandLine.StateOutputFilePath ?? OutputFilePath + ".txt" : null;
-            if(StateOutputFilePath == ".txt")
-                Usage("cannot determine states output file path");
+            if(commandLine.WantsStates)
+            {
+                if(commandLine.StateOutputFilePath != null)
+                    StateOutputFilePath = commandLine.StateOutputFilePath;
+                else if(OutputFilePath != null)
+                    StateOutputFilePath = OutputFilePath + ".txt";
+                else
+                    Usage("cannot determine states output file path");
+            }
+            else
+                StateOutputFilePath = commandLine.StateOutputFilePath;
             WantsTokenClass = commandLine.WantsTokenClass;
             if(String.IsNullOrWhiteSpace(commandLine.GrammarInputType))
             {
