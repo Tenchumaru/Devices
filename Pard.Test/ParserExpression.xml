@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <symbols>
+    <nonterminal name="rx" type="Nfa"/>
+    <nonterminal name="choice" type="Nfa"/>
+    <nonterminal name="concat" type="Nfa"/>
+    <nonterminal name="kleene" type="Nfa"/>
+    <nonterminal name="simple" type="Nfa"/>
+    <nonterminal name="class" type="RangeSymbol"/>
+    <nonterminal name="range" type="RangeSymbol"/>
+    <terminal name="NamedExpression" type="string"/>
+    <terminal name="Number" type="int"/>
+    <terminal name="Symbol" type="char"/>
+    <terminal name="OSBC"/>
+  </symbols>
+  <rules>
+    <rule name="rx">
+      <action><![CDATA[Result.Append("<>");]]></action>
+    </rule>
+    <rule name="rx">
+      <nonterminal name="choice"/>
+      <action><![CDATA[Result.Append("<rx -> choice>");]]></action>
+    </rule>
+    <rule name="choice">
+      <nonterminal name="concat"/>
+    </rule>
+    <rule name="choice">
+      <nonterminal name="choice"/>
+      <literal value="|"/>
+      <nonterminal name="concat"/>
+      <action><![CDATA[Result.Append("<choice -> choice | concat>");]]></action>
+    </rule>
+    <rule name="concat">
+      <nonterminal name="kleene"/>
+    </rule>
+    <rule name="concat">
+      <nonterminal name="concat"/>
+      <nonterminal name="kleene"/>
+      <action><![CDATA[Result.Append("<concat -> concat kleene>");]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="*"/>
+      <action><![CDATA[Result.Append("<kleene -> simple*>");]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="+"/>
+      <action><![CDATA[Result.Append("<kleene -> simple+>");]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="?"/>
+      <action><![CDATA[Result.Append("<kleene -> simple?>");]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="{"/>
+      <terminal name="Number"/>
+      <literal value="}"/>
+      <action><![CDATA[Result.Append("<kleene -> simple{#}>");]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="{"/>
+      <terminal name="Number"/>
+      <nonterminal name="separator"/>
+      <terminal name="Number"/>
+      <literal value="}"/>
+      <action><![CDATA[Result.Append("<kleene -> simple{#,#}>");]]></action>
+    </rule>
+    <rule name="separator">
+      <literal value="-"/>
+    </rule>
+    <rule name="separator">
+      <literal value=","/>
+    </rule>
+    <rule name="simple">
+      <terminal name="Symbol"/>
+      <action><![CDATA[Result.Append("<simple -> Symbol>");]]></action>
+    </rule>
+    <rule name="simple">
+      <literal value="."/>
+      <action><![CDATA[Result.Append("<simple -> .>");]]></action>
+    </rule>
+    <rule name="simple">
+      <terminal name="NamedExpression"/>
+      <action><![CDATA[Result.Append("<simple -> NamedExpression>");]]></action>
+    </rule>
+    <rule name="simple">
+      <literal value="["/>
+      <nonterminal name="class"/>
+      <literal value="]"/>
+      <action><![CDATA[Result.Append("<simple -> [class]>");]]></action>
+    </rule>
+    <rule name="simple">
+      <terminal name="OSBC"/>
+      <nonterminal name="class"/>
+      <literal value="]"/>
+      <action><![CDATA[Result.Append("<simple -> [^class]>");]]></action>
+    </rule>
+    <rule name="simple">
+      <literal value="("/>
+      <nonterminal name="choice"/>
+      <literal value=")"/>
+      <action><![CDATA[Result.Append("<simple -> (choice)>");]]></action>
+    </rule>
+    <rule name="class">
+      <nonterminal name="range"/>
+    </rule>
+    <rule name="class">
+      <nonterminal name="class"/>
+      <nonterminal name="range"/>
+      <action><![CDATA[Result.Append("<class -> class range>");]]></action>
+    </rule>
+    <rule name="range">
+      <terminal name="Symbol"/>
+      <action><![CDATA[Result.Append("<range -> Symbol>");]]></action>
+    </rule>
+    <rule name="range">
+      <terminal name="Symbol"/>
+      <literal value="-"/>
+      <terminal name="Symbol"/>
+      <action><![CDATA[Result.Append("<range -> Symbol-Symbol>");]]></action>
+    </rule>
+  </rules>
+</grammar>
