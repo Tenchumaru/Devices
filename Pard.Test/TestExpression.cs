@@ -14,6 +14,14 @@ namespace Pard.Test
             Assert.IsTrue(parser.ParseAndDump());
             Assert.AreEqual("<range -> Symbol><range -> Symbol><class -> class range><simple -> [class]><rx -> choice>", parser.Result.ToString());
         }
+
+        [TestMethod]
+        public void ParseConcat()
+        {
+            var parser = new ParserExpression("abc");
+            Assert.IsTrue(parser.ParseAndDump());
+            Assert.AreEqual("<simple -> Symbol><simple -> Symbol><concat -> concat kleene><simple -> Symbol><concat -> concat kleene><rx -> choice>", parser.Result.ToString());
+        }
     }
 
     public partial class ParserExpression
