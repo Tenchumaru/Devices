@@ -111,6 +111,30 @@ namespace Pard
             {
                 set.UnionWith(items);
             }
+
+            internal string ToString(IReadOnlyList<Production> productions)
+            {
+                var sb = new StringBuilder();
+                foreach(var item in set)
+                {
+                    if(item.ProductionIndex == 0)
+                        sb.AppendFormat("start {0}", item.DotPosition == 0 ? "before" : "after");
+                    else
+                    {
+                        var production = productions[item.ProductionIndex - 1];
+                        sb.AppendFormat("{0} ->", production.Lhs);
+                        var before = production.Rhs.Take(item.DotPosition);
+                        foreach(var rhe in before)
+                            sb.AppendFormat(" {0}", rhe);
+                        sb.Append(" .");
+                        var after = production.Rhs.Skip(item.DotPosition);
+                        foreach(var rhe in after)
+                            sb.AppendFormat(" {0}", rhe);
+                    }
+                    sb.AppendFormat(" [{0}]{1}", item.Lookahead, Environment.NewLine);
+                }
+                return sb.ToString();
+            }
         }
     }
 }

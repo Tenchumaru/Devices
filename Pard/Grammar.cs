@@ -10,8 +10,10 @@ namespace Pard
     {
         public IReadOnlyList<ActionEntry> Actions { get { return actions; } }
         public IReadOnlyList<GotoEntry> Gotos { get { return gotos; } }
+        public IReadOnlyList<Item.Set> States { get { return states; } }
         private readonly IReadOnlyList<ActionEntry> actions;
         private readonly IReadOnlyList<GotoEntry> gotos;
+        private readonly IReadOnlyList<Item.Set> states;
 
         public Grammar(IReadOnlyList<Production> productions)
         {
@@ -45,6 +47,7 @@ namespace Pard
 
             // Algorithm 4.9, p. 231
             var items = augmented.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
+            states = items.OrderBy(p => p.Value).Select(p => p.Key).ToList();
 
             // Algorithm 4.10, p. 234
             // Create the action table.

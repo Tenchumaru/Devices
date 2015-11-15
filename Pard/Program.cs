@@ -29,6 +29,25 @@ namespace Pard
             var output = new CodeOutput();
             using(var writer = options.OutputFilePath != null ? new StreamWriter(options.OutputFilePath, false, Encoding.UTF8) : Console.Out)
                 output.Write(grammar.Actions, grammar.Gotos, productions, writer, options);
+
+            if(options.StateOutputFilePath != null)
+            {
+                using(var writer = new StreamWriter(options.StateOutputFilePath, false, Encoding.UTF8))
+                {
+                    var states = grammar.States.Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
+                    foreach(var item in states)
+                    {
+                        writer.WriteLine();
+                        writer.WriteLine("state {0}:", item.Value);
+                        writer.WriteLine(item.Key.ToString(productions));
+                        writer.WriteLine();
+                        foreach(var pair in item.Key.Gotos)
+                        {
+                            writer.WriteLine("\t{0} -> {1}", pair.Key, states[pair.Value]);
+                        }
+                    }
+                }
+            }
         }
 
 #if !DEBUG
