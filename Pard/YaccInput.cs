@@ -121,11 +121,6 @@ namespace Pard
             }
         }
 
-        public interface IScanner
-        {
-            Token Read();
-        }
-
         public class Token
         {
             public int Symbol;
@@ -135,7 +130,7 @@ namespace Pard
 
         private enum InputState { Section1, Section2Declaration, Section2Definition }
 
-        public partial class Scanner : IScanner
+        public partial class Scanner
         {
             private YY yy;
             private ScannerMode mode = ScannerMode.SectionOne;
