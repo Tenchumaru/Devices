@@ -61,10 +61,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="YaccInput.cs" />
-    <Compile Include="YaccInput.l.cs">
+    <Compile Include="YaccInput.il.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>YaccInput.l</DependentUpon>
+      <DependentUpon>YaccInput.il</DependentUpon>
     </Compile>
     <Compile Include="YaccInput.xml.cs">
       <AutoGen>True</AutoGen>
@@ -79,7 +79,7 @@
     <Compile Include="Symbol.cs" />
     <Compile Include="Terminal.cs" />
     <Compile Include="XmlInput.cs" />
-    <None Include="YaccInput.l" />
+    <None Include="YaccInput.il" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

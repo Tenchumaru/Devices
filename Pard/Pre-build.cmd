@@ -10,7 +10,7 @@ PATH %PATH%;C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin
 CD /D "%~dp0"
 SET T=%TEMP%\Pard.%RANDOM%.make
 CALL :check YaccInput.xml.cs
-CALL :check YaccInput.l.cs
+CALL :check YaccInput.il.cs
 REM I need Lad to create the scanner for the Yacc parser.
 IF EXIST "..\TestResults\Lad.exe" (
 	IF EXIST "..\TestResults\Pard.exe" (
@@ -26,7 +26,7 @@ IF EXIST "..\TestResults\Lad.exe" (
 	)
 )
 ECHO XML-only parser
-ECHO using System; > YaccInput.l.cs
+ECHO using System; > YaccInput.il.cs
 COPY /Y YaccInput.txt YaccInput.xml.cs
 EXIT /B 0
 :check
@@ -36,7 +36,7 @@ IF ERRORLEVEL 1 DEL /F /Q %1
 EXIT /B 0
 */
 function REM() {
-	var yaccXmlFileName = "YaccInput.xml", lexLexFileName = "YaccInput.l";
+	var yaccXmlFileName = "YaccInput.xml", lexLexFileName = "YaccInput.il";
 	var yaccCsFileName = yaccXmlFileName + ".cs", lexCsFileName = lexLexFileName + ".cs";
 	var fout = WScript.StdOut;
 	fout.WriteLine("all: " + yaccCsFileName + ' ' + lexCsFileName);
