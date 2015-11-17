@@ -157,11 +157,8 @@ namespace Pard
             {
                 // Read the rest of the line as the token value.
                 var sb = new StringBuilder();
-                for(int ch; ; )
+                for(int ch = yy.Get(); ch >= 0 && ch != '\n'; ch = yy.Get())
                 {
-                    ch = yy.Get();
-                    if(ch < 0 || ch == '\r' || ch == '\n')
-                        break;
                     sb.Append((char)ch);
                 }
                 return new Token { Symbol = tokenSymbol, Value = sb.ToString() };
@@ -219,6 +216,8 @@ namespace Pard
                         if(ScanValue < 0)
                             return ScanValue;
                         int ch = reader.Read();
+                        if(ch == '\r')
+                            ch = reader.Read();
                         if(ch < 0)
                             return ScanValue = -1;
                         buffer.Append((char)ch);
