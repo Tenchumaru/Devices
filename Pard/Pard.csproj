@@ -71,7 +71,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>YaccInput.xml</DependentUpon>
     </Compile>
-    <None Include="Post-build.cmd" />
+    <None Include="..\Post-build.cmd">
+      <Link>Post-build.cmd</Link>
+    </None>
     <None Include="Pre-build.cmd" />
     <None Include="Properties\Skeleton.cs" />
     <Compile Include="Symbol.cs" />
@@ -102,7 +104,7 @@
     <PreBuildEvent>"$(ProjectDir)Pre-build.cmd" "$(ConfigurationName)"</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)Post-build.cmd" "$(ConfigurationName)"</PostBuildEvent>
+    <PostBuildEvent>"$(SolutionDir)Post-build.cmd" "$(TargetName)" "$(ConfigurationName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
