@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pard", "Pard\Pard.csproj", "{C5ABA6AD-8D28-4123-8106-0D7FDE8BEEA0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pard.Test", "Pard.Test\Pard.Test.csproj", "{91B3D6F3-0181-4A9B-8FC1-510D0ADD92C5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C5ABA6AD-8D28-4123-8106-0D7FDE8BEEA0} = {C5ABA6AD-8D28-4123-8106-0D7FDE8BEEA0}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lad", "Lad\Lad.csproj", "{451419A6-3E85-428C-99B2-FF2304386E45}"
 	ProjectSection(ProjectDependencies) = postProject
