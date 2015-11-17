@@ -187,15 +187,13 @@ namespace Pard
                 Console.Error.WriteLine(format, args);
             }
 
-            private enum ScannerMode { SectionOne, SectionTwo }
-
             private class YY
             {
                 public int ScanValue { get; private set; }
                 public string TokenValue { get; private set; }
-                private StringBuilder buffer = new StringBuilder();
                 private int marker, position;
-                private TextReader reader;
+                private readonly TextReader reader;
+                private readonly StringBuilder buffer = new StringBuilder();
 
                 public YY(TextReader reader)
                 {
@@ -229,6 +227,8 @@ namespace Pard
                     return ScanValue = buffer[position - 1];
                 }
             }
+
+            private enum ScannerMode { SectionOne, SectionTwo }
         }
     }
 }
