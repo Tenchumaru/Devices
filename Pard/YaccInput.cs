@@ -132,9 +132,9 @@ namespace Pard
 
         public partial class Scanner
         {
-            private YY yy;
+            private readonly YY yy;
+            private readonly StringBuilder currentAction = new StringBuilder();
             private ScannerMode mode = ScannerMode.SectionOne;
-            private StringBuilder currentAction = new StringBuilder();
 
             public Scanner(TextReader reader)
             {
