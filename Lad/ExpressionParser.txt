@@ -1,0 +1,23 @@
+using System;
+
+namespace Lad
+{
+    public partial class ExpressionParser
+    {
+        internal const int Symbol = 0;
+        internal const int Number = 0;
+        internal const int NamedExpression = 0;
+        internal const int OSBC = 0;
+
+        internal ExpressionParser(ExpressionScanner scanner)
+        {
+            machine = null;
+            throw new NotImplementedException();
+        }
+
+        internal bool Parse()
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

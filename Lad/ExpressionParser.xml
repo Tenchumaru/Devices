@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+  <symbols>
+    <nonterminal name="rx" type="Nfa"/>
+    <nonterminal name="choice" type="Nfa"/>
+    <nonterminal name="concat" type="Nfa"/>
+    <nonterminal name="kleene" type="Nfa"/>
+    <nonterminal name="simple" type="Nfa"/>
+    <nonterminal name="class" type="RangeSymbol"/>
+    <nonterminal name="range" type="RangeSymbol"/>
+    <terminal name="NamedExpression" type="string"/>
+    <terminal name="Number" type="int"/>
+    <terminal name="Symbol" type="char"/>
+    <terminal name="OSBC"/>
+  </symbols>
+  <rules>
+    <!--rule name="rx">
+      <action><![CDATA[machine= null;]]></action>
+    </rule-->
+    <rule name="rx">
+      <nonterminal name="choice"/>
+      <action><![CDATA[machine= $1;]]></action>
+    </rule>
+    <rule name="choice">
+      <nonterminal name="concat"/>
+    </rule>
+    <rule name="choice">
+      <nonterminal name="choice"/>
+      <literal value="|"/>
+      <nonterminal name="concat"/>
+      <action><![CDATA[$1.Or($3); $$= $1;]]></action>
+    </rule>
+    <rule name="concat">
+      <nonterminal name="kleene"/>
+    </rule>
+    <rule name="concat">
+      <nonterminal name="concat"/>
+      <nonterminal name="kleene"/>
+      <action><![CDATA[$1.Concat($2); $$= $1;]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="*"/>
+      <action><![CDATA[$1.Kleene(); $$= $1;]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="+"/>
+      <action><![CDATA[$1.Plus(); $$= $1;]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="?"/>
+      <action><![CDATA[$1.Count(0, 1); $$= $1;]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="{"/>
+      <terminal name="Number"/>
+      <literal value="}"/>
+      <action><![CDATA[$1.Count($3, $3); $$= $1;]]></action>
+    </rule>
+    <rule name="kleene">
+      <nonterminal name="simple"/>
+      <literal value="{"/>
+      <terminal name="Number"/>
+      <nonterminal name="separator"/>
+      <terminal name="Number"/>
+      <literal value="}"/>
+      <action><![CDATA[$1.Count($3, $5); $$= $1;]]></action>
+    </rule>
+    <rule name="separator">
+      <literal value="-"/>
+    </rule>
+    <rule name="separator">
+      <literal value=","/>
+    </rule>
+    <rule name="simple">
+      <terminal name="Symbol"/>
+      <action><![CDATA[$$= new Nfa(new SimpleSymbol($1));]]></action>
+    </rule>
+    <rule name="simple">
+      <literal value="."/>
+      <action><![CDATA[$$= new Nfa(dotIncludesNewline ? AnySymbol.Value : AnySymbol.WithoutNewLine);]]></action>
+    </rule>
+    <rule name="simple">
+      <terminal name="NamedExpression"/>
+      <action><![CDATA[$$= CloneNamedNfa($1);]]></action>
+    </rule>
+    <rule name="simple">
+      <literal value="["/>
+      <nonterminal name="class"/>
+      <literal value="]"/>
+      <action><![CDATA[$$= new Nfa($2);]]></action>
+    </rule>
+    <rule name="simple">
+      <terminal name="OSBC"/>
+      <nonterminal name="class"/>
+      <literal value="]"/>
+      <action><![CDATA[$$= new Nfa(-$2);]]></action>
+    </rule>
+    <rule name="simple">
+      <literal value="("/>
+      <nonterminal name="choice"/>
+      <literal value=")"/>
+      <action><![CDATA[$$= $2;]]></action>
+    </rule>
+    <rule name="class">
+      <nonterminal name="range"/>
+    </rule>
+    <rule name="class">
+      <nonterminal name="class"/>
+      <nonterminal name="range"/>
+      <action><![CDATA[$$= $1 + $2;]]></action>
+    </rule>
+    <rule name="range">
+      <terminal name="Symbol"/>
+      <action><![CDATA[$$= CreateRange($1);]]></action>
+    </rule>
+    <rule name="range">
+      <terminal name="Symbol"/>
+      <literal value="-"/>
+      <terminal name="Symbol"/>
+      <action><![CDATA[$$= CreateRange($1, $3);]]></action>
+    </rule>
+  </rules>
+</grammar>
