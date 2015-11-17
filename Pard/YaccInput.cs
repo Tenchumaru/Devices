@@ -123,14 +123,14 @@ namespace Pard
 
         public interface IScanner
         {
-            ScannerToken Read();
+            Token Read();
         }
 
-        public class ScannerToken
+        public class Token
         {
             public int Symbol;
             public object Value;
-            public static readonly ScannerToken End = new ScannerToken { Symbol = -1 };
+            public static readonly Token End = new Token { Symbol = -1 };
         }
 
         private enum InputState { Section1, Section2Declaration, Section2Definition }
@@ -146,7 +146,7 @@ namespace Pard
                 yy = new YY(reader);
             }
 
-            public ScannerToken Read()
+            public Token Read()
             {
                 switch(mode)
                 {
@@ -158,7 +158,7 @@ namespace Pard
                 throw new Exception("unexpected scanner mode " + mode);
             }
 
-            private ScannerToken ReadRestOfLine(int tokenSymbol)
+            private Token ReadRestOfLine(int tokenSymbol)
             {
                 // Read the rest of the line as the token value.
                 var sb = new StringBuilder();
@@ -169,17 +169,17 @@ namespace Pard
                         break;
                     sb.Append((char)ch);
                 }
-                return new ScannerToken { Symbol = tokenSymbol, Value = sb.ToString() };
+                return new Token { Symbol = tokenSymbol, Value = sb.ToString() };
             }
 
-            private ScannerToken MakeLiteral(char value)
+            private Token MakeLiteral(char value)
             {
                 if(yy.Get() != '\'')
                 {
                     ReportError("unterminated literal: " + value);
-                    return ScannerToken.End;
+                    return Token.End;
                 }
-                return new ScannerToken { Symbol = Literal, Value = value };
+                return new Token { Symbol = Literal, Value = value };
             }
 
             private void ReportError(string message)

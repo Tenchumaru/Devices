@@ -8,7 +8,7 @@ namespace Pard
 	{
 		partial class Scanner
 		{
-			private ScannerToken ReadSectionOne()
+			private Token ReadSectionOne()
 			{
 				//** let ws = [\a\b\f\n\r\t\v ]
 
@@ -19,26 +19,26 @@ namespace Pard
 				return ReadRestOfLine(PUsing);
 
 				//** %left
-				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.Left };
+				return new Token { Symbol = PToken, Value = Grammar.Associativity.Left };
 
 				//** %right
-				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.Right };
+				return new Token { Symbol = PToken, Value = Grammar.Associativity.Right };
 
 				//** %nonassoc
-				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.Nonassociative };
+				return new Token { Symbol = PToken, Value = Grammar.Associativity.Nonassociative };
 
 				//** %token
-				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.None };
+				return new Token { Symbol = PToken, Value = Grammar.Associativity.None };
 
 				//** %type
-				return new ScannerToken { Symbol = PType };
+				return new Token { Symbol = PType };
 
 				//** [A-Za-z_][0-9A-Za-z_]*
-				return new ScannerToken { Symbol = Identifier, Value = yy.TokenValue };
+				return new Token { Symbol = Identifier, Value = yy.TokenValue };
 
 				//** %%{ws}+
 				mode = ScannerMode.SectionTwo;
-				return new ScannerToken { Symbol = PP };
+				return new Token { Symbol = PP };
 
 				//** '\\
 				{
@@ -53,7 +53,7 @@ namespace Pard
 				}
 
 				//** :|<|>
-				return new ScannerToken { Symbol = yy.TokenValue[0] };
+				return new Token { Symbol = yy.TokenValue[0] };
 
 				//** //[^\r\n]*
 				// Ignore remarks.
@@ -70,21 +70,21 @@ namespace Pard
 					ReportError("unexpected input: " + (char)yy.ScanValue);
 				else
 					ReportError("unexpected end of input");
-				return ScannerToken.End;
+				return Token.End;
 			}
 
-			private ScannerToken ReadSectionTwo()
+			private Token ReadSectionTwo()
 			{
 				//** let ws = [\a\b\f\n\r\t\v ]
 
 				//** %prec
-				return new ScannerToken { Symbol = PPrec };
+				return new Token { Symbol = PPrec };
 
 				//** error
-				return new ScannerToken { Symbol = ErrorToken };
+				return new Token { Symbol = ErrorToken };
 
 				//** [A-Za-z_][0-9A-Za-z_]*
-				return new ScannerToken { Symbol = Identifier, Value = yy.TokenValue };
+				return new Token { Symbol = Identifier, Value = yy.TokenValue };
 
 				//** '\\
 				{
@@ -114,13 +114,13 @@ namespace Pard
 				// Ignore white space.
 
 				//** .
-				return new ScannerToken { Symbol = yy.TokenValue[0] };
+				return new Token { Symbol = yy.TokenValue[0] };
 
 				//**
-				return ScannerToken.End;
+				return Token.End;
 			}
 
-			private ScannerToken ReadSectionTwoAction()
+			private Token ReadSectionTwoAction()
 			{
 				for(int scopeLevel = 1;;)
 				{
@@ -146,21 +146,21 @@ namespace Pard
 					//** \}
 					currentAction.Append('}');
 					if(--scopeLevel == 0)
-						return new ScannerToken { Symbol = CodeBlock, Value = currentAction.ToString() };
+						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
 
 					//** \n
 					currentAction.Append('\n');
 					if(scopeLevel == 0)
-						return new ScannerToken { Symbol = CodeBlock, Value = currentAction.ToString() };
+						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
 
 					//** .
 					currentAction.Append(yy.TokenValue[0]);
 
 					//**
 					if(scopeLevel == 0)
-						return new ScannerToken { Symbol = CodeBlock, Value = currentAction.ToString() };
+						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
 					ReportError("unmatched action braces at EOF");
-					return ScannerToken.End;
+					return Token.End;
 				}
 			}
 
