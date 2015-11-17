@@ -69,7 +69,7 @@
     <Compile Include="Token.cs" />
     <None Include="Post-build.cmd" />
     <None Include="Pre-build.cmd" />
-    <None Include="Resources\Skeleton.cs" />
+    <None Include="Properties\Skeleton.cs" />
     <Compile Include="ScannerWriter.cs" />
     <Compile Include="Symbol.cs" />
   </ItemGroup>
