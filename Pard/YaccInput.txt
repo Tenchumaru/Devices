@@ -11,11 +11,11 @@ namespace Pard
 		}
 		public partial class Scanner
 		{
-			public ScannerToken ReadSectionOne()
+			public Token ReadSectionOne()
 			{
 				throw new System.NotImplementedException();
 			}
-			public ScannerToken ReadSectionTwo()
+			public Token ReadSectionTwo()
 			{
 				throw new System.NotImplementedException();
 			}
