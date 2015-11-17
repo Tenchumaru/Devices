@@ -11,8 +11,8 @@ CD /D "%~dp0"
 SET OUTPUT=YaccInput.xml.cs
 SET PARD="..\TestResults\Pard.exe"
 SET T=%TEMP%\%RANDOM%.make
-find "goto" %OUTPUT% > nul
-IF ERRORLEVEL 1 DEL /F /Q %OUTPUT%
+CALL :check %OUTPUT%
+CALL :check YaccInput.l.cs
 REM I need Lad to create the scanner for the Yacc parser.
 IF EXIST "..\TestResults\Lad.exe" (
 	IF EXIST %PARD% (
@@ -30,6 +30,11 @@ IF EXIST "..\TestResults\Lad.exe" (
 ECHO XML-only parser
 ECHO using System; > YaccInput.l.cs
 COPY /Y YaccInput.txt %OUTPUT%
+EXIT /B 0
+:check
+IF NOT EXIST %1 EXIT /B 0
+find "goto" %1 > nul
+IF ERRORLEVEL 1 DEL /F /Q %1
 EXIT /B 0
 */
 function REM() {
