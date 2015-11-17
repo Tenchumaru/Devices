@@ -113,7 +113,7 @@ namespace Pard
 
         class CommandLine
         {
-            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "grammar-input-type", ShortName = 'g', Usage = "the type of the grammar; one of xml and yacc")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "grammar-input-type", ShortName = 't', Usage = "the type of the grammar; one of xml and yacc")]
             public string GrammarInputType { get; set; }
 
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace into which to put the classes")]
@@ -128,7 +128,7 @@ namespace Pard
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "state-output-file", ShortName = 'o', Usage = "the path of the state output file; assumes -v")]
             public string StateOutputFilePath { get; set; }
 
-            [Adrezdi.CommandLine.FlagArgument(LongName = "generate-token", ShortName = 't', Usage = "create a Token class")]
+            [Adrezdi.CommandLine.FlagArgument(LongName = "generate-token", ShortName = 'g', Usage = "create a Token class")]
             public bool WantsTokenClass { get; set; }
 
             [Adrezdi.CommandLine.FlagArgument(LongName = "verbose", ShortName = 'v', Usage = "create a state output file (default outputFilePath.txt)")]
