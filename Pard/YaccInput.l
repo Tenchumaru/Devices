@@ -19,16 +19,16 @@ namespace Pard
 				return ReadRestOfLine(PUsing);
 
 				//** %left
-				return new ScannerToken { Symbol = PToken, Value = Associativity.Left };
+				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.Left };
 
 				//** %right
-				return new ScannerToken { Symbol = PToken, Value = Associativity.Right };
+				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.Right };
 
 				//** %nonassoc
-				return new ScannerToken { Symbol = PToken, Value = Associativity.Nonassociative };
+				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.Nonassociative };
 
 				//** %token
-				return new ScannerToken { Symbol = PToken, Value = Associativity.None };
+				return new ScannerToken { Symbol = PToken, Value = Grammar.Associativity.None };
 
 				//** %type
 				return new ScannerToken { Symbol = PType };
