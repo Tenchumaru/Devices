@@ -104,16 +104,18 @@ namespace Lad
             Environment.Exit(2);
         }
 
-        [Adrezdi.CommandLine.Usage(Epilog = "The line-file and no-lines options are incompatible with each other.")]
+        [Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  The
+namespace and class-name options are for lex input only.  The signal-comment
+option is for inline input only.")]
         class CommandLine
         {
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-input-type", ShortName = 't', Usage = "the type of the scanner; one of inline and lex")]
             public string ScannerInputType { get; set; }
 
-            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace into which to put the class (lex only)")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace into which to put the class")]
             public string NamespaceName { get; set; }
 
-            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "class-name", ShortName = 'c', Usage = "the name of the scanner class (lex only)")]
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "class-name", ShortName = 'c', Usage = "the name of the scanner class")]
             public string ScannerClassName { get; set; }
 
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "line-file", ShortName = 'f', Usage = "emit line directives for file")]
