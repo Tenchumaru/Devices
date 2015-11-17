@@ -65,7 +65,7 @@ continue;
 					case -1:
 						return false;
 					default:
-						bool? result = HandleError(token_.Symbol);
+						bool? result = HandleError(token_.Symbol, token_.Value);
 						if(result.HasValue)
 							return result.Value;
 						token_.Symbol = -2;
@@ -76,9 +76,9 @@ continue;
 					return false;
 			}
 		}
-		private bool? HandleError(int token)
+		private bool? HandleError(int symbol, object value)
 		{
-			var eventArgs = new ParseErrorEventArgs(token);
+			var eventArgs = new ParseErrorEventArgs(symbol, value);
 			if(Error != null)
 				Error(this, eventArgs);
 			return eventArgs.Result;
@@ -102,11 +102,13 @@ continue;
 		}
 		public class ParseErrorEventArgs : EventArgs
 		{
-			public readonly int Token;
+			public readonly int Symbol;
+			public readonly object Value;
 			public bool? Result;
-			public ParseErrorEventArgs(int token)
+			public ParseErrorEventArgs(int symbol, object value)
 			{
-				Token = token;
+				Symbol = symbol;
+				Value = value;
 			}
 		}
 	}
