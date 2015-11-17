@@ -29,7 +29,7 @@ namespace Pard
             precedence = 0;
             knownTerminals.Clear();
             knownNonterminals.Clear();
-            scanner = new YaccScanner(reader);
+            scanner = new Scanner(reader);
             return Parse() ? productions : null;
         }
 
@@ -135,13 +135,13 @@ namespace Pard
 
         private enum InputState { Section1, Section2Declaration, Section2Definition }
 
-        public partial class YaccScanner : IScanner
+        public partial class Scanner : IScanner
         {
             private YY yy;
-            private ScannerMode mode;
+            private ScannerMode mode = ScannerMode.SectionOne;
             private StringBuilder currentAction = new StringBuilder();
 
-            public YaccScanner(TextReader reader)
+            public Scanner(TextReader reader)
             {
                 yy = new YY(reader);
             }

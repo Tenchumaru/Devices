@@ -8,14 +8,12 @@ IF "%~1" == "" (
 )
 PATH %PATH%;C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin
 CD /D "%~dp0"
-SET OUTPUT=YaccInput.xml.cs
-SET PARD="..\TestResults\Pard.exe"
-SET T=%TEMP%\%RANDOM%.make
-CALL :check %OUTPUT%
+SET T=%TEMP%\Pard.%RANDOM%.make
+CALL :check YaccInput.xml.cs
 CALL :check YaccInput.l.cs
 REM I need Lad to create the scanner for the Yacc parser.
 IF EXIST "..\TestResults\Lad.exe" (
-	IF EXIST %PARD% (
+	IF EXIST "..\TestResults\Pard.exe" (
 		cscript //nologo //E:JScript %0 > %T%
 		nmake -nologo "ConfigurationName=%~1" -f %T%
 		IF ERRORLEVEL 1 (
@@ -29,7 +27,7 @@ IF EXIST "..\TestResults\Lad.exe" (
 )
 ECHO XML-only parser
 ECHO using System; > YaccInput.l.cs
-COPY /Y YaccInput.txt %OUTPUT%
+COPY /Y YaccInput.txt YaccInput.xml.cs
 EXIT /B 0
 :check
 IF NOT EXIST %1 EXIT /B 0
@@ -45,9 +43,9 @@ function REM() {
 	fout.WriteLine();
 	fout.WriteLine(yaccCsFileName + ": " + yaccXmlFileName);
 	fout.WriteLine('\tIF EXIST ' + yaccCsFileName + ' DEL /F /Q ' + yaccCsFileName);
-	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Pard --parser-class-name=YaccInput --scanner-class-name=YaccScanner ' + yaccXmlFileName + ' ' + yaccCsFileName);
+	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Pard --parser-class-name=YaccInput --scanner-class-name=Scanner ' + yaccXmlFileName + ' ' + yaccCsFileName);
 	fout.WriteLine();
 	fout.WriteLine(lexCsFileName + ": " + lexLexFileName);
 	fout.WriteLine('\tIF EXIST ' + lexCsFileName + ' DEL /F /Q ' + lexCsFileName);
-	fout.WriteLine('\t"..\\TestResults\\Lad.exe" --namespace=Pard --class-name=YaccScanner --scanner-input-type=inline ' + lexLexFileName + ' ' + lexCsFileName);
+	fout.WriteLine('\t"..\\TestResults\\Lad.exe" --namespace=Pard --class-name=Scanner --scanner-input-type=inline ' + lexLexFileName + ' ' + lexCsFileName);
 }
