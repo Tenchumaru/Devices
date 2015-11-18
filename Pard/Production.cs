@@ -10,24 +10,24 @@ namespace Pard
     {
         internal readonly Nonterminal Lhs;
         internal readonly IReadOnlyList<Symbol> Rhs;
-        public readonly int RuleIndex;
+        public readonly int Index;
         public readonly string ActionCode;
         internal readonly Grammar.Associativity Associativity;
         public readonly int Precedence;
 
-        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int ruleIndex, string actionCode, Grammar.Associativity associativity, int precedence)
-            : this(lhs, rhs, ruleIndex, actionCode)
+        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, string actionCode, Grammar.Associativity associativity, int precedence)
+            : this(lhs, rhs, index, actionCode)
         {
             Associativity = associativity;
             Precedence = precedence;
         }
 
-        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int ruleIndex, string actionCode = null)
+        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, string actionCode = null)
             : base(String.Format("{0} -> {1}", lhs, String.Join(" ", rhs)))
         {
             Lhs = lhs;
             Rhs = new List<Symbol>(rhs);
-            RuleIndex = ruleIndex;
+            Index = index;
             ActionCode = actionCode;
             var precedenceTerminal = (Terminal)Rhs.LastOrDefault(s => s is Terminal);
             if(precedenceTerminal != null)

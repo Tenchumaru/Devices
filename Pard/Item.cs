@@ -112,16 +112,16 @@ namespace Pard
                 set.UnionWith(items);
             }
 
-            internal string ToString(IReadOnlyList<Production> productions)
+            internal string ToString(IDictionary<int, Production> productions)
             {
                 var sb = new StringBuilder();
                 foreach(var item in set)
                 {
-                    if(item.ProductionIndex == 0)
+                    if(item.ProductionIndex < 0)
                         sb.AppendFormat("start {0}", item.DotPosition == 0 ? "before" : "after");
                     else
                     {
-                        var production = productions[item.ProductionIndex - 1];
+                        var production = productions[item.ProductionIndex];
                         sb.AppendFormat("{0} ->", production.Lhs);
                         var before = production.Rhs.Take(item.DotPosition);
                         foreach(var rhe in before)

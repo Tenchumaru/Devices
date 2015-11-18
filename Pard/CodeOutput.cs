@@ -53,7 +53,7 @@ namespace Pard
             // Map the productions to reduction table entries.
             var reducedProductions = from e in actions
                                      where e.Action == Grammar.Action.Reduce
-                                     select productions[e.Value - 1];
+                                     select productions[e.Value];
             var productionIndices = reducedProductions.Distinct().Select((p, i) => new { P = p, I = i }).ToDictionary(a => a.P, a => a.I);
 
             // Construct the reduction table and replace it in the skeleton.
@@ -75,7 +75,7 @@ namespace Pard
                     stateRowLists[entry.StateIndex].Add("case -1:return true;");
                     break;
                 case Grammar.Action.Reduce:
-                    stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto reduce1;", terminal.Value, productionIndices[productions[entry.Value - 1]]));
+                    stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto reduce1;", terminal.Value, productionIndices[productions[entry.Value]]));
                     break;
                 case Grammar.Action.Shift:
                     stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto shift;", terminal.Value, entry.Value));

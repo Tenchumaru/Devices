@@ -43,7 +43,7 @@ namespace Pard
             }
 
             // Create the augmented grammar (p. 222) using only referenced productions.
-            var augmented = new Augmented(productions[0], referencedProductions.OrderBy(p => p.RuleIndex));
+            var augmented = new Augmented(productions[0], referencedProductions.OrderBy(p => p.Index));
 
             // Algorithm 4.9, p. 231
             var items = augmented.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
@@ -59,7 +59,7 @@ namespace Pard
                     let y = from i in p.Key.AsEnumerable()
                             where i.DotPosition == augmented.Productions[i.ProductionIndex].Rhs.Count
                             let t = i.Lookahead
-                            let s = i.ProductionIndex == 0
+                            let s = i.ProductionIndex < 0
                             where !s || t == Terminal.AugmentedEnd
                             select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = s ? Action.Accept : Action.Reduce, Value = i.ProductionIndex }
                     from z in x.Concat(y)
@@ -93,7 +93,7 @@ namespace Pard
             gotos = b.ToList();
         }
 
-        private ActionEntry ResolveConflict(int stateIndex, Terminal terminal, List<ActionEntry> list, IReadOnlyList<Production> productions, ref int shiftReduceConflictCount, ref int reduceReduceConflictCount)
+        private ActionEntry ResolveConflict(int stateIndex, Terminal terminal, List<ActionEntry> list, IDictionary<int, Production> productions, ref int shiftReduceConflictCount, ref int reduceReduceConflictCount)
         {
             switch(list.Count)
             {
@@ -136,7 +136,7 @@ namespace Pard
             throw new Exception();
         }
 
-        private ActionEntry ResolveShiftReduceConflict(ActionEntry shift, ActionEntry reduce, IReadOnlyList<Production> productions)
+        private ActionEntry ResolveShiftReduceConflict(ActionEntry shift, ActionEntry reduce, IDictionary<int, Production> productions)
         {
             if(shift.Terminal.Precedence > productions[reduce.Value].Precedence)
                 return shift;
@@ -163,20 +163,16 @@ namespace Pard
 
         class Augmented
         {
-            internal IReadOnlyList<Production> Productions { get { return productions; } }
-            private readonly IReadOnlyList<Production> productions;
+            internal IDictionary<int, Production> Productions { get { return productions; } }
+            private readonly IDictionary<int, Production> productions;
             private readonly IDictionary<Nonterminal, List<Production>> productionsByNonterminal;
             private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets;
 
             internal Augmented(Production startProduction, IEnumerable<Production> referencedProductions)
             {
-                var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, 0) };
+                var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
                 productions.AddRange(referencedProductions);
-                var q = from r in productions.Select((p, i) => new { Production = p, Index = i })
-                        let p = r.Production
-                        select new Production(p.Lhs, p.Rhs, r.Index, p.ActionCode, p.Associativity, p.Precedence);
-                productions = q.ToList();
-                this.productions = productions;
+                this.productions = productions.ToDictionary(p => p.Index);
                 productionsByNonterminal = productions.GroupBy(p => p.Lhs).ToDictionary(g => g.Key, g => g.ToList());
                 firstSets = CollectFirstSets(productions);
                 firstSets.Add(Terminal.AugmentedEnd, new HashSet<Terminal> { Terminal.AugmentedEnd });
@@ -204,7 +200,7 @@ namespace Pard
                             let f = First(ip.Rhs.Skip(i.DotPosition + 1).Concat(new[] { i.Lookahead }))
                             from p in productionsByNonterminal[n]
                             from b in f
-                            select new Item(p.RuleIndex, 0, b);
+                            select new Item(p.Index, 0, b);
 
                     // add [B → ∙γ, b] to I;
                     items.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
@@ -235,14 +231,14 @@ namespace Pard
             internal IReadOnlyList<Item.Set> Items()
             {
                 // Create a collection of symbols used in the grammar.
-                var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Rhs));
+                var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Value.Rhs));
 
                 // Create a list to hold the items added to the closure.  Their
                 // indicies will be the state indicies.
                 var items = new List<Item.Set>();
 
                 // C := {closure({[S' → ∙S, $]})};
-                var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(0, 0, Terminal.AugmentedEnd) })) });
+                var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) })) });
                 items.Add(c.First());
 
                 // repeat

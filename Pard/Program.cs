@@ -34,12 +34,13 @@ namespace Pard
             {
                 using(var writer = new StreamWriter(options.StateOutputFilePath, false, Encoding.UTF8))
                 {
+                    var dict = productions.ToDictionary(p => p.Index);
                     var states = grammar.States.Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
                     foreach(var item in states)
                     {
                         writer.WriteLine();
                         writer.WriteLine("state {0}:", item.Value);
-                        writer.WriteLine(item.Key.ToString(productions));
+                        writer.WriteLine(item.Key.ToString(dict));
                         writer.WriteLine();
                         foreach(var pair in item.Key.Gotos)
                         {
