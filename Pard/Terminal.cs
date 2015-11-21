@@ -12,11 +12,11 @@ namespace Pard
         public readonly int Precedence;
         public readonly int Value;
 
-        private static int lastValue;
+        private static int lastValue = 1;
 
-        public static readonly Terminal AugmentedEnd = new Terminal("(end)", null, Grammar.Associativity.None, 0);
         public static readonly Terminal Epsilon = new Terminal("(epsilon)", null, Grammar.Associativity.None, 0);
-        public static readonly Terminal Error = new Terminal("(error)", null, Grammar.Associativity.None, 0);
+        public static readonly Terminal AugmentedEnd = new Terminal("(end)", null, Grammar.Associativity.None, 0);
+        public static readonly Terminal Error = new Terminal("error", null, Grammar.Associativity.None, 0);
 
         public Terminal(string name, string typeName, Grammar.Associativity associativity, int precedence)
             : this(name, typeName, associativity, precedence, --lastValue)
