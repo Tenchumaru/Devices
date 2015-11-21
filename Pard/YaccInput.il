@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -149,7 +150,7 @@ namespace Pard
 						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
 
 					//** \n
-					currentAction.Append('\n');
+					currentAction.Append(Environment.NewLine);
 					if(scopeLevel == 0)
 						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
 
@@ -169,12 +170,12 @@ namespace Pard
 				//** let hex = [0-9A-Fa-f]
 				//** u{hex}{4}
 				{
-					var value = int.Parse(yy.TokenValue, NumberStyles.AllowHexSpecifier);
+					var value = Int32.Parse(yy.TokenValue, NumberStyles.AllowHexSpecifier);
 					return (char)value;
 				}
 				//** x{hex}{2}
 				{
-					var value = int.Parse(yy.TokenValue, NumberStyles.AllowHexSpecifier);
+					var value = Int32.Parse(yy.TokenValue, NumberStyles.AllowHexSpecifier);
 					return (char)value;
 				}
 				//** 0[01]?[0-7]{0,5}
