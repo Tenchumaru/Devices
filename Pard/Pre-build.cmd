@@ -47,5 +47,5 @@ function REM() {
 	fout.WriteLine();
 	fout.WriteLine(lexCsFileName + ": " + lexLexFileName);
 	fout.WriteLine('\tIF EXIST ' + lexCsFileName + ' DEL /F /Q ' + lexCsFileName);
-	fout.WriteLine('\t"..\\TestResults\\Lad.exe" --namespace=Pard --class-name=Scanner --scanner-input-type=inline ' + lexLexFileName + ' ' + lexCsFileName);
+	fout.WriteLine('\t"..\\TestResults\\Lad.exe" --scanner-input-type=inline ' + lexLexFileName + ' ' + lexCsFileName);
 }
