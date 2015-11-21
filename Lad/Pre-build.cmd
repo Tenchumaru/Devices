@@ -17,18 +17,22 @@ IF EXIST %OUTPUT% (
 )
 REM I need Pard to create the Expression and Lex parsers.
 IF EXIST %PARD% (
-	cscript //nologo //E:JScript %0 ExpressionParser.xml > %T%
+	cscript //nologo //E:JScript %0 > %T%
 	nmake -nologo "ConfigurationName=%~1" -f %T%
 	IF ERRORLEVEL 1 (
 		DEL /F /Q %T%
 		EXIT /B 1
 	) ELSE (
+		REM I need Lad to create the scanner for the Lex parser.
+		IF EXIST "..\TestResults\Lad.exe" (
+			nmake -nologo "ConfigurationName=%~1" -f %T% LexGenerator.il.cs
+			IF ERRORLEVEL 1 (
+				DEL /F /Q %T%
+				EXIT /B 1
+			)
+		)
 		DEL /F /Q %T%
 		EXIT /B 0
-	)
-	REM I need Lad to create the scanner for the Lex parser.
-	IF EXIST "..\TestResults\Lad.exe" (
-		ECHO have Lad
 	)
 )
 ECHO Non-functional Expression parser
@@ -36,9 +40,20 @@ COPY /Y ExpressionParser.txt %OUTPUT%
 EXIT /B 0
 */
 function REM() {
-	var xmlFileName = WScript.Arguments(0);
-	var csFileName = xmlFileName + ".cs";
+	var yaccFileName = "LexGenerator.y", lexFileName = "LexGenerator.il";
+	var yaccCsFileName = yaccFileName + ".cs", lexCsFileName = lexFileName + ".cs";
+	var xmlFileName = "ExpressionParser.xml", csFileName = xmlFileName + ".cs";
 	var fout = WScript.StdOut;
+	fout.WriteLine("parsers: " + yaccCsFileName + ' ' + csFileName);
+	fout.WriteLine();
+	fout.WriteLine(lexCsFileName + ": " + lexFileName);
+	fout.WriteLine('\tIF EXIST ' + lexCsFileName + ' DEL /F /Q ' + lexCsFileName);
+	fout.WriteLine('\t"..\\TestResults\\Lad.exe" --scanner-input-type=inline ' + lexFileName + ' ' + lexCsFileName);
+	fout.WriteLine();
+	fout.WriteLine(yaccCsFileName + ": " + yaccFileName);
+	fout.WriteLine('\tIF EXIST ' + yaccCsFileName + ' DEL /F /Q ' + yaccCsFileName);
+	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Lad --parser-class-name=LexGenerator --scanner-class-name=Scanner ' + yaccFileName + ' ' + yaccCsFileName);
+	fout.WriteLine();
 	fout.WriteLine(csFileName + ": " + xmlFileName);
 	fout.WriteLine('\tIF EXIST ' + csFileName + ' DEL /F /Q ' + csFileName);
 	fout.WriteLine('\t"..\\TestResults\\Pard.exe" --namespace=Lad --parser-class-name=ExpressionParser --scanner-class-name=ExpressionScanner ' + xmlFileName + ' ' + csFileName);

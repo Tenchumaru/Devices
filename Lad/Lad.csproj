@@ -55,6 +55,16 @@
     <Compile Include="InlineGenerator.cs" />
     <Compile Include="IGenerator.cs" />
     <Compile Include="LexGenerator.cs" />
+    <Compile Include="LexGenerator.il.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>LexGenerator.il</DependentUpon>
+    </Compile>
+    <Compile Include="LexGenerator.y.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>LexGenerator.y</DependentUpon>
+    </Compile>
     <Compile Include="Multimap.cs" />
     <Compile Include="Nfa.cs" />
     <Compile Include="NfaState.cs" />
@@ -70,6 +80,8 @@
     <None Include="..\Post-build.cmd">
       <Link>Post-build.cmd</Link>
     </None>
+    <None Include="LexGenerator.il" />
+    <None Include="LexGenerator.y" />
     <None Include="Pre-build.cmd" />
     <None Include="Properties\Skeleton.cs" />
     <Compile Include="ScannerWriter.cs" />

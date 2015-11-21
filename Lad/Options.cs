@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Lad
 {
-    class Options
+    public class Options
     {
         // Command line parameters
         public readonly string NamespaceName;
