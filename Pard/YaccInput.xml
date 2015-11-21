@@ -5,7 +5,7 @@
   <symbols>
     <terminal name="PToken" type="Grammar.Associativity"/>
     <terminal name="Identifier" type="string"/>
-    <terminal name="CodeBlock" type="string"/>
+    <terminal name="CodeBlock" type="ActionCode"/>
     <terminal name="PDefine" type="string"/>
     <terminal name="PUsing" type="string"/>
     <terminal name="PP"/>

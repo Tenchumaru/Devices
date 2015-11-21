@@ -11,18 +11,18 @@ namespace Pard
         internal readonly Nonterminal Lhs;
         internal readonly IReadOnlyList<Symbol> Rhs;
         public readonly int Index;
-        public readonly string ActionCode;
+        internal readonly ActionCode ActionCode;
         internal readonly Grammar.Associativity Associativity;
         public readonly int Precedence;
 
-        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, string actionCode, Grammar.Associativity associativity, int precedence)
+        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode actionCode, Grammar.Associativity associativity, int precedence)
             : this(lhs, rhs, index, actionCode)
         {
             Associativity = associativity;
             Precedence = precedence;
         }
 
-        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, string actionCode = null)
+        internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode actionCode = null)
             : base(String.Format("{0} -> {1}", lhs, String.Join(" ", rhs)))
         {
             Lhs = lhs;

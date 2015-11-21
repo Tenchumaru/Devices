@@ -65,17 +65,17 @@ namespace Pard
                 {
                     string subruleName = string.Format("{0}.{1}", ruleName, i + 1);
                     var subruleSymbol = new Nonterminal(subruleName, null);
-                    var subruleProduction = new Production(subruleSymbol, new Symbol[0], productions.Count, innerCodeBlock.ToString());
+                    var subruleProduction = new Production(subruleSymbol, new Symbol[0], productions.Count, innerCodeBlock.ActionCode);
                     productions.Add(subruleProduction);
                     rhs[i] = subruleSymbol;
                 }
             }
             var lastCodeBlock = rhs.LastOrDefault() as CodeBlockSymbol;
-            string actionCode = null;
+            ActionCode actionCode = null;
             if(lastCodeBlock != null)
             {
                 rhs.RemoveAt(rhs.Count - 1);
-                actionCode = lastCodeBlock.TypeName;
+                actionCode = lastCodeBlock.ActionCode;
             }
             var nonterminal = new Nonterminal(ruleName, null);
             if(!knownNonterminals.Add(nonterminal))
@@ -113,9 +113,12 @@ namespace Pard
 
         private class CodeBlockSymbol : Symbol
         {
-            internal CodeBlockSymbol(string text)
-                : base(Guid.NewGuid().ToString(), text)
+            internal readonly ActionCode ActionCode;
+
+            internal CodeBlockSymbol(ActionCode actionCode)
+                : base(Guid.NewGuid().ToString(), null)
             {
+                ActionCode = actionCode;
             }
         }
 
@@ -130,6 +133,7 @@ namespace Pard
 
         public partial class Scanner
         {
+            public int LineNumber { get { return yy.LineNumber; } }
             private readonly YY yy;
             private readonly StringBuilder currentAction = new StringBuilder();
             private ScannerMode mode = ScannerMode.SectionOne;
@@ -174,19 +178,20 @@ namespace Pard
 
             private void ReportError(string message)
             {
-                Console.Error.WriteLine(message);
+                Console.Error.WriteLine("{0} in line {1}", message, LineNumber);
             }
 
             private void ReportError(string format, params object[] args)
             {
-                Console.Error.WriteLine(format, args);
+                ReportError(String.Format(format, args));
             }
 
             private class YY
             {
+                public int LineNumber { get { return lineNumber; } }
                 public int ScanValue { get; private set; }
                 public string TokenValue { get; private set; }
-                private int marker, position;
+                private int marker, position, lineNumber = 1;
                 private readonly TextReader reader;
                 private readonly StringBuilder buffer = new StringBuilder();
 
@@ -216,7 +221,9 @@ namespace Pard
                         int ch = reader.Read();
                         if(ch == '\r')
                             ch = reader.Read();
-                        if(ch < 0)
+                        if(ch == '\n')
+                            ++lineNumber;
+                        else if(ch < 0)
                             return ScanValue = -1;
                         buffer.Append((char)ch);
                     }

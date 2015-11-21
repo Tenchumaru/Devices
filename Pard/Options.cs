@@ -15,6 +15,7 @@ namespace Pard
         public readonly string InputFilePath;
         public readonly string OutputFilePath;
         public readonly string StateOutputFilePath;
+        public readonly string LineDirectivesFilePath;
         public readonly bool WantsTokenClass;
         internal readonly IGrammarInput GrammarInput;
         private const string defaultParserClassName = "Parser";
@@ -55,6 +56,9 @@ namespace Pard
             }
             else
                 StateOutputFilePath = commandLine.StateOutputFilePath;
+            LineDirectivesFilePath = commandLine.LineDirectivesFilePath;
+            if(LineDirectivesFilePath == null && !commandLine.SkippingLineDirectives)
+                LineDirectivesFilePath = InputFilePath;
             WantsTokenClass = commandLine.WantsTokenClass;
             if(String.IsNullOrWhiteSpace(commandLine.GrammarInputType))
             {
@@ -62,6 +66,7 @@ namespace Pard
                 {
                 case ".xml":
                     GrammarInput = new XmlInput();
+                    LineDirectivesFilePath = null;
                     break;
                 case ".y":
                     GrammarInput = new YaccInput();
@@ -111,6 +116,8 @@ namespace Pard
             Environment.Exit(2);
         }
 
+        [Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  Line
+directives are not available for XML grammars.")]
         class CommandLine
         {
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "grammar-input-type", ShortName = 't', Usage = "the type of the grammar; one of xml and yacc")]
@@ -127,6 +134,12 @@ namespace Pard
 
             [Adrezdi.CommandLine.OptionalValueArgument(LongName = "state-output-file", ShortName = 'o', Usage = "the path of the state output file; assumes -v")]
             public string StateOutputFilePath { get; set; }
+
+            [Adrezdi.CommandLine.OptionalValueArgument(LongName = "line-file", ShortName = 'f', Usage = "emit line directives for file")]
+            public string LineDirectivesFilePath { get; set; }
+
+            [Adrezdi.CommandLine.FlagArgument(LongName = "no-lines", ShortName = 'l', Usage = "don't emit line directives")]
+            public bool SkippingLineDirectives { get; set; }
 
             [Adrezdi.CommandLine.FlagArgument(LongName = "generate-token", ShortName = 'g', Usage = "create a Token class")]
             public bool WantsTokenClass { get; set; }

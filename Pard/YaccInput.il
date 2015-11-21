@@ -102,7 +102,7 @@ namespace Pard
 				//** \{
 				currentAction.Length = 0;
 				currentAction.Append(yy.TokenValue);
-				return ReadSectionTwoAction();
+				return ReadSectionTwoAction(yy.LineNumber);
 
 				//** //[^\n]*
 				// Ignore remarks.
@@ -121,7 +121,7 @@ namespace Pard
 				return Token.End;
 			}
 
-			private Token ReadSectionTwoAction()
+			private Token ReadSectionTwoAction(int lineNumber)
 			{
 				for(int scopeLevel = 1;;)
 				{
@@ -147,19 +147,19 @@ namespace Pard
 					//** \}
 					currentAction.Append('}');
 					if(--scopeLevel == 0)
-						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
+						return new Token { Symbol = CodeBlock, Value = new ActionCode(currentAction.ToString(), lineNumber) };
 
 					//** \n
 					currentAction.Append(Environment.NewLine);
 					if(scopeLevel == 0)
-						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
+						return new Token { Symbol = CodeBlock, Value = new ActionCode(currentAction.ToString(), lineNumber) };
 
 					//** .
 					currentAction.Append(yy.TokenValue[0]);
 
 					//**
 					if(scopeLevel == 0)
-						return new Token { Symbol = CodeBlock, Value = currentAction.ToString() };
+						return new Token { Symbol = CodeBlock, Value = new ActionCode(currentAction.ToString(), lineNumber) };
 					ReportError("unmatched action braces at EOF");
 					return Token.End;
 				}

@@ -83,7 +83,8 @@ namespace Pard
                     Console.Error.WriteLine("warning: {0}; ignoring", item.Error);
                 }
                 var rhs = q.Where(a => a.Symbol != null).Select(a => a.Symbol);
-                var actionCode = (string)rule.Element("action");
+                var action = (string)rule.Element("action");
+                var actionCode = action != null ? new ActionCode(action, 0) : null;
                 Production production;
                 var precedenceTokenName = (string)rule.Attribute("precedence") ?? "";
                 Terminal precedenceToken;

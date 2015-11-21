@@ -97,13 +97,13 @@ namespace Pard
 
             // Collapse outer cases and emit the transitions.
             var outers = stateRows.Select((s, i) => new { S = s, I = i }).GroupBy(a => a.S).Select(g => string.Format("case {0}:switch(token_.Symbol){{ {1} }}break;", string.Join(":case ", g.Select(a => a.I.ToString()).Distinct().ToArray()), g.Key));
-            writer.WriteLine(string.Join(Environment.NewLine, outers.ToArray()));
+            writer.WriteLine(string.Join(writer.NewLine, outers.ToArray()));
             EmitSection(skeleton, writer);
 
             // Emit the actions.
             int actionIndex = -1;
             foreach(var production in productionIndices.Keys.Where(p => p.ActionCode != null))
-                writer.WriteLine("case {1}:{0}{2}{0}goto reduce2;", writer.NewLine, --actionIndex, ConstructAction(production));
+                writer.WriteLine("case {1}:{0}{2}{0}goto reduce2;", writer.NewLine, --actionIndex, ConstructAction(production, options.LineDirectivesFilePath));
             EmitSection(skeleton, writer);
 
             // Emit any terminal definitions.
@@ -123,9 +123,9 @@ namespace Pard
                 writer.WriteLine('}');
         }
 
-        private static string ConstructAction(Production production)
+        private static string ConstructAction(Production production, string lineDirectivesFilePath)
         {
-            string code = string.Join("reductionValue_", production.ActionCode.Split(new[] { "$$" }, StringSplitOptions.None));
+            string code = string.Join("reductionValue_", production.ActionCode.Code.Split(new[] { "$$" }, StringSplitOptions.None));
             string[] parts = code.Split('$');
 
             for(int i = 1; i < parts.Length; ++i)
@@ -185,7 +185,10 @@ namespace Pard
                 parts[i] = s + part.Substring(j);
             }
 
-            return string.Join("", parts);
+            code = string.Join("", parts);
+            if(lineDirectivesFilePath != null)
+                code = String.Format("#line {1} \"{2}\"{0}{3}{0}#line default{0}", Environment.NewLine, production.ActionCode.LineNumber, lineDirectivesFilePath, code);
+            return code;
         }
 
         private static void EmitSection(StringReader skeleton, TextWriter output)
