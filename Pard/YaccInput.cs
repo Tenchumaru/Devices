@@ -95,11 +95,9 @@ namespace Pard
 
         private Symbol GetSymbol(string name)
         {
-            Symbol symbol;
             var terminal = new Terminal(name, null, Grammar.Associativity.None, 0);
-            if(knownTerminals.Contains(terminal))
-                symbol = terminal;
-            else
+            Symbol symbol = knownTerminals.FirstOrDefault(t => t == terminal);
+            if(symbol == null)
             {
                 var nonterminal = new Nonterminal(name, null);
                 symbol = knownNonterminals.Add(nonterminal) ? nonterminal : knownNonterminals.First(n => n == nonterminal);
