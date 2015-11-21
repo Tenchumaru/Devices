@@ -65,7 +65,7 @@ namespace Pard
                 {
                     string subruleName = string.Format("{0}.{1}", ruleName, i + 1);
                     var subruleSymbol = new Nonterminal(subruleName, null);
-                    var subruleProduction = new Production(subruleSymbol, new Symbol[0], Int32.MaxValue, innerCodeBlock.ToString());
+                    var subruleProduction = new Production(subruleSymbol, new Symbol[0], productions.Count, innerCodeBlock.ToString());
                     productions.Add(subruleProduction);
                     rhs[i] = subruleSymbol;
                 }
@@ -80,7 +80,7 @@ namespace Pard
             var nonterminal = new Nonterminal(ruleName, null);
             if(!knownNonterminals.Add(nonterminal))
                 nonterminal = knownNonterminals.First(n => n == nonterminal);
-            productions.Add(new Production(nonterminal, rhs, Int32.MaxValue, actionCode,
+            productions.Add(new Production(nonterminal, rhs, productions.Count, actionCode,
                 terminal != null ? terminal.Associativity : Grammar.Associativity.None,
                 terminal != null ? terminal.Precedence : 0));
         }
