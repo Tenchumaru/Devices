@@ -108,7 +108,7 @@ namespace Pard
         private Symbol GetLiteral(char ch)
         {
             // TODO:  escape character.
-            return new Terminal("'" + ch + "'", null, Grammar.Associativity.None, 0);
+            return new Terminal("'" + ch + "'", null, Grammar.Associativity.None, 0, ch);
         }
 
         private class CodeBlockSymbol : Symbol
