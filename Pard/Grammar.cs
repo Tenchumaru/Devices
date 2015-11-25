@@ -265,9 +265,7 @@ namespace Pard
                             {
                                 // Add it as a target state of the source state.
                                 if(!itemSet.Gotos.ContainsKey(symbol))
-                                {
                                     itemSet.Gotos.Add(symbol, g);
-                                }
                                 else if(itemSet.Gotos[symbol] != g)
                                 {
                                     Console.Error.WriteLine("warning: goto conflict between {0} -> {1} and {0} -> {2} on {3}",
@@ -319,20 +317,19 @@ namespace Pard
 
                     // For each of those, add to the expanded productions a
                     // production synthesized from each production with that
-                    // symbol as its first right-hand side symbol by excluding
-                    // that symbol as its first right-hand side symbol.
-                    foreach(var epsilonLhs in epsilonLhss)
-                    {
-                        var q = from p in expandedProductions
-                                where p.Rhs.FirstOrDefault() == epsilonLhs
-                                select new Production(p.Lhs, p.Rhs.Skip(1), 0);
-                        expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
-                    }
-
+                    // symbol as its first right-hand side symbol by removing
+                    // that first right-hand side symbol.
+                    var q = from l in epsilonLhss
+                            join p in expandedProductions on l equals p.Rhs.FirstOrDefault()
+                            select new Production(p.Lhs, p.Rhs.Skip(1), 0);
+                    expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
                 } while(count < expandedProductions.Count);
 
                 // Remove from the expanded productions any production whose
-                // initial right-hand side is the left-hand side.
+                // initial right-hand side is the left-hand side.  This must
+                // come after the above since it's possible the symbol removal
+                // above reveals an initial right-hand side that matches its
+                // left-hand side.
                 expandedProductions.RemoveWhere(p => p.Lhs == p.Rhs.FirstOrDefault());
 
                 // Create a list of non-terminal-terminal pairs to construct
@@ -342,27 +339,35 @@ namespace Pard
                 // Remove them from the expanded productions.
                 expandedProductions.RemoveWhere(p => !p.Rhs.Any());
 
-                // Find the terminal of the first production that has a
-                // terminal as the first symbol of its right-hand side.
-                for(Terminal terminal; (terminal = expandedProductions.Select(p => p.Rhs.First()).OfType<Terminal>().FirstOrDefault()) != null; )
+                // Add non-terminal-terminal pairs for each terminal that
+                // appears as the initial right-hand side symbol.  I needn't
+                // use other terminals appearing to the right of those since I
+                // already accounted for ε productions above.
+                foreach(var terminal in expandedProductions.Select(p => p.Rhs.First()).OfType<Terminal>().Distinct().ToList())
                 {
-                    // Find all productions that have that terminal as the
+                    do
+                    {
+                        count = expandedProductions.Count;
+
+                        // Find all productions that have that terminal as the
+                        // first symbol of their right-hand sides.
+                        var x = expandedProductions.Where(p => p.Rhs.First() == terminal).Select(p => new { Nonterminal = p.Lhs, Terminal = terminal });
+
+                        // Add new productions by substituting that terminal
+                        // for the corresponding non-terminal as the first
+                        // symbol of their right-hand sides.
+                        var q = from p in expandedProductions
+                                join a in x on p.Rhs.First() equals a.Nonterminal
+                                select new Production(p.Lhs, new[] { terminal }, 0);
+                        expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
+                    } while(count < expandedProductions.Count);
+
+                    // Update the list of non-terminal-terminal pairs.
+                    pairs.AddRange(expandedProductions.Where(p => p.Rhs.First() == terminal).Select(p => new { Nonterminal = p.Lhs, Terminal = terminal }).Distinct());
+
+                    // Remove all productions that have that terminal as the
                     // first symbol of their right-hand sides.
-                    var list = expandedProductions.Where(p => p.Rhs.First() == terminal).Select(p => new { Nonterminal = p.Lhs, Terminal = terminal }).ToList();
-
-                    // Add them to the list of pairs.
-                    pairs.AddRange(list);
-
-                    // Remove them from the expanded productions.
                     expandedProductions.RemoveWhere(p => p.Rhs.First() == terminal);
-
-                    // Add new productions by substituting that terminal for
-                    // the corresponding non-terminal as the first symbol of
-                    // their right-hand sides.
-                    var q = from p in expandedProductions
-                            join a in list on p.Rhs.First() equals a.Nonterminal
-                            select new Production(p.Lhs, new[] { terminal }, 0);
-                    expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
                 }
 
                 // Create a dictionary of FIRST sets for non-terminals.  The
