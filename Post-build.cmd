@@ -7,7 +7,10 @@ CD /D "%~dp0"
 IF NOT EXIST TestResults MD TestResults
 COPY /Y "%~1\bin\%~2\*.dll" TestResults
 COPY /Y "%~1\bin\%~2\%~1.exe" TestResults
-IF "%~2" == "Release" COPY /Y "%~1\bin\%~2\%~1.exe" \local\bin
+IF "%~2" == "Release" (
+	COPY /Y "%~1\bin\%~2\%~1.exe" \local\bin
+	COPY /Y "%~1\bin\%~2\%~1.pdb" \local\bin
+)
 EXIT /B 0
 :usage
 ECHO usage: %~nx0 TargetName ConfigurationName
