@@ -17,12 +17,26 @@ namespace Pard
 #if !DEBUG
             AppDomain.CurrentDomain.AssemblyResolve += Resolve;
 #endif
+            // Read the productions from the input.
             var options = new Options(args);
             IReadOnlyList<Production> productions;
             using(var reader = File.OpenText(options.InputFilePath))
-            {
                 productions = options.GrammarInput.Read(reader, options);
+
+            // Check the productions for undefined symbols.
+            var q = from n in productions.SelectMany(p => p.Rhs).OfType<Nonterminal>()
+                    where !productions.Any(p => p.Lhs == n)
+                    select n;
+            var undefinedSymbols = q.Distinct().OrderBy(n => n.Name).ToList();
+            if(undefinedSymbols.Any())
+            {
+                Console.Error.WriteLine("error: {0} undefined symbol{1}:", undefinedSymbols.Count, undefinedSymbols.Count == 1 ? "" : "s");
+                foreach(var undefinedSymbol in undefinedSymbols)
+                    Console.Error.WriteLine("\t{0}", undefinedSymbol);
+                Environment.Exit(1);
             }
+
+            // Create the grammar from the productions.
             var grammar = new Grammar(productions);
 
             // Write the parser.
@@ -43,9 +57,7 @@ namespace Pard
                         writer.WriteLine(item.Key.ToString(dict));
                         writer.WriteLine();
                         foreach(var pair in item.Key.Gotos)
-                        {
                             writer.WriteLine("\t{0} -> {1}", pair.Key, states[pair.Value]);
-                        }
                     }
                 }
             }
