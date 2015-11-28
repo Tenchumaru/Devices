@@ -8,7 +8,7 @@
 %token <int> POption
 %token <char> Symbol
 %token <IntPair> Single Double
-%token Default NextAction NegativeClass Gtocb
+%token Default NextExpression NegativeClass Gtocb
 
 %type <StringList> idents csv
 %type <int> opts
@@ -34,7 +34,7 @@ decl:	POption opts '\n' { /* $1, the line number, is an inheritable attribute. *
 //	|	PX idents '\n' { AddRuleGroupNames($2, true); }
 	|	PDefine '\n' { definitions.Add($1); }
 	|	PUsing '\n' { usingDirectives.Add($1); }
-	|	error '\n' { ReportError(scanner.LineNumber - 2, "unexpected characters"); }
+	|	error '\n' { ReportError(scanner.LineNumber - 1, "unexpected characters"); }
 	|	'\n'
 	;
 
@@ -140,6 +140,7 @@ grules:	grule
 grule:	rule
 	|	groups '>' rule { $$= $3; ActivateDefaultRuleGroups(); }
 	|	groups Gtocb rules '}' { $$= $3; ActivateDefaultRuleGroups(); }
+	|	'\n' { $$= new NfaList(); }
 	;
 
 groups:	'<' csv { ActivateRuleGroups($2); }
@@ -155,10 +156,11 @@ rules:	rule
 	;
 
 rule:	rexprs Action { $$= $1; SetRuleActions($1, $2); }
+	|	Action { $$= CheckIgnoredAction($1); }
 	;
 
 rexprs:	rexpr { $$= new NfaList { $1 }; }
-	|	rexprs NextAction rexpr { $$= $1; $1.Add($3); }
+	|	rexprs NextExpression rexpr { $$= $1; $1.Add($3); }
 	;
 
 opt3:	/* nothing */

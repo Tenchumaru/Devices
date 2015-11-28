@@ -26,16 +26,11 @@ namespace Lad
             "System.Text",
         };
 
-        public void Generate(Options options, TextReader reader, TextWriter writer)
-        {
-            throw new NotImplementedException();
-        }
-
         public LexGenerator()
         {
         }
 
-        internal void Parse(Options options, TextReader reader, TextWriter writer)
+        public void Generate(Options options, TextReader reader, TextWriter writer)
         {
             dotIncludesNewline = options.DotIncludesNewline;
             ignoringCase = options.IgnoringCase;
@@ -108,13 +103,20 @@ namespace Lad
 
         private void ParseOption(int lineNumber, string optionText)
         {
-            throw new NotImplementedException();
+            Console.Error.WriteLine("warning: line {0}: '{1}' not implemented", lineNumber, optionText);
         }
 
         private void SetRuleActions(List<Nfa> list, string codeBlock)
         {
             list.ForEach(n => n.Finish(actions.Count));
             actions.Add(codeBlock);
+        }
+
+        private List<Nfa> CheckIgnoredAction(string codeBlock)
+        {
+            if(!String.IsNullOrWhiteSpace(codeBlock) && !codeBlock.Trim().StartsWith("//") && !codeBlock.Trim().StartsWith("/*"))
+                Console.Error.WriteLine("warning: line {0}: discarding action text", scanner.LineNumber);
+            return new List<Nfa>();
         }
 
         private void ParseDefaultOption(int lineNumber, string optionText)
@@ -146,32 +148,23 @@ namespace Lad
 
             private TextReader reader;
             private StringBuilder buffer = new StringBuilder();
-            private int marker, position, lineNumber;
+            private int marker, position, lineNumber = 1;
             private string tokenValue;
             private Scanner yy;
             private int ScanValue;
-            private ScannerMode mode = ScannerMode.SectionOne;
+            private Stack<Func<Token>> mode = new Stack<Func<Token>>();
 
             public Scanner(TextReader reader)
             {
                 this.reader = reader;
                 yy = this;
+                mode.Push(ReadSectionOne);
             }
 
             internal Token Read()
             {
-                switch(mode)
-                {
-                case ScannerMode.SectionOne:
-                    return ReadSectionOne();
-                case ScannerMode.SectionTwoExpression:
-                    return ReadSectionTwoExpression();
-                case ScannerMode.SectionTwoClass:
-                    return ReadSectionTwoClass();
-                case ScannerMode.SectionTwoQuotedExpression:
-                    return ReadSectionTwoQuotedExpression();
-                }
-                throw new Exception("unexpected scanner mode " + mode);
+                var fn = mode.Peek();
+                return fn();
             }
 
             private Token ReadRestOfLine(int tokenSymbol)
@@ -193,6 +186,15 @@ namespace Lad
                 return new Token { Symbol = Take() };
             }
 
+            private Token MakeSymbol()
+            {
+                int value = Take();
+                if(value < 0)
+                    return new Token { Symbol = -1 };
+                else
+                    return new Token { Symbol = Symbol, Value = (char)value };
+            }
+
             private void Save()
             {
                 marker = position;
@@ -211,7 +213,7 @@ namespace Lad
                 {
                     if(ScanValue < 0)
                         return ScanValue;
-                    int ch = reader.Read();
+                    int ch = ReadCooked();
                     if(ch < 0)
                         return ScanValue = -1;
                     if(ch == '\n')
@@ -220,6 +222,12 @@ namespace Lad
                 }
                 ++position;
                 return ScanValue = buffer[position - 1];
+            }
+
+            private int ReadCooked()
+            {
+                int ch = reader.Read();
+                return ch == '\r' ? ReadCooked() : ch;
             }
 
             private int Take()
@@ -239,8 +247,6 @@ namespace Lad
             {
                 Console.Error.WriteLine(format, args);
             }
-
-            private enum ScannerMode { SectionOne, SectionTwoExpression, SectionTwoClass, SectionTwoQuotedExpression }
         }
     }
 }

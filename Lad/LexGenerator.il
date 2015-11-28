@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Globalization;
 using System.Text;
 
@@ -10,7 +11,11 @@ namespace Lad
 		{
 			private Token ReadSectionOne()
 			{
-				//** let ws = [\a\b\f\n\r\t\v ]
+				//** let ws = [\a\b\f\t\v ]
+
+				//** [A-Za-z_][0-9A-Za-z_]*{ws}*
+				mode.Push(ReadExpression);
+				return new Token { Symbol = Identifier, Value = tokenValue.Trim() };
 
 				//** %define
 				return ReadRestOfLine(PDefine);
@@ -19,16 +24,13 @@ namespace Lad
 				return ReadRestOfLine(PUsing);
 
 				//** %option
-				return new Token { Symbol = POption };
+				mode.Push(ReadSectionOneOption);
+				return new Token { Symbol = POption, Value = lineNumber };
 
-				//** default
-				return new Token { Symbol = Default };
-
-				//** [a-z]+
-				return new Token { Symbol = OptionValue, Value = tokenValue };
-
-				//** %%{ws}+
-				mode = ScannerMode.SectionTwoExpression;
+				//** %%
+				mode.Pop();
+				mode.Push(ReadSectionTwoAction);
+				mode.Push(ReadExpression);
 				return new Token { Symbol = PP };
 
 				//** {ws}+
@@ -38,23 +40,39 @@ namespace Lad
 				return HandleNoMatch();
 			}
 
-			private Token ReadSectionTwoExpression()
+			private Token ReadSectionOneOption()
+			{
+				//** default
+				return new Token { Symbol = Default };
+
+				//** [a-z]+
+				return new Token { Symbol = OptionValue, Value = tokenValue };
+
+				//** \n
+				mode.Pop();
+				return new Token { Symbol = '\n' };
+
+				//** [\a\b\f\t\v ]+
+				// Ignore white space.
+
+				//**
+				return HandleNoMatch();
+			}
+
+			private Token ReadExpression()
 			{
 				//** let number = [0-9]+
 
-				//** [\a\b\f\r\t\v ]+
-				return ReadSectionTwoAction();
-
-				//** \n
-				ReportError("expression without action");
-				return Token.End;
+				//** [\a\b\f\t\v ]+
+				mode.Pop();
+				return mode.Peek()();
 
 				//** \[
-				mode = ScannerMode.SectionTwoClass;
-				return new Token { Symbol = ScanValue };
+				mode.Push(ReadClass);
+				return new Token { Symbol = '[' };
 
 				//** \[^
-				mode = ScannerMode.SectionTwoClass;
+				mode.Push(ReadClass);
 				return new Token { Symbol = NegativeClass };
 
 				//** \{{number},{number}\}
@@ -83,42 +101,50 @@ namespace Lad
 					return new Token { Symbol = NamedExpression, Value = parts[1] };
 				}
 
+				//** \*|\?|\+
+				return new Token { Symbol = tokenValue[0] };
+
 				//** \\
 				return new Token { Symbol = Symbol, Value = ReadEscapedValue() };
 
 				//** \"
-				mode = ScannerMode.SectionTwoQuotedExpression;
-				return ReadSectionTwoQuotedExpression();
+				mode.Push(ReadQuotedExpression);
+				return ReadQuotedExpression();
+
+				//** \n
+				if(mode.Skip(1).First() == ReadSectionOne)
+					mode.Pop();
+				return new Token { Symbol = '\n' };
 
 				//**
-				return HandleNoMatch();
+				return MakeSymbol();
 			}
 
-			private Token ReadSectionTwoClass()
+			private Token ReadClass()
 			{
 				//** \]
-				mode = ScannerMode.SectionTwoExpression;
-				return new Token { Symbol = ScanValue };
+				mode.Pop();
+				return new Token { Symbol = ']' };
 
 				//** \\
 				return new Token { Symbol = Symbol, Value = ReadEscapedValue() };
 
 				//** -
-				return new Token { Symbol = ScanValue };
+				return new Token { Symbol = '-' };
 
 				//** \n
 				ReportError("unbalanced brackets");
 				return Token.End;
 
 				//**
-				return new Token { Symbol = Symbol, Value = Take() };
+				return MakeSymbol();
 			}
 
-			private Token ReadSectionTwoQuotedExpression()
+			private Token ReadQuotedExpression()
 			{
 				//** \"
-				mode = ScannerMode.SectionTwoExpression;
-				return ReadSectionTwoExpression();
+				mode.Pop();
+				return mode.Peek()();
 
 				//** \\
 				return new Token { Symbol = Symbol, Value = ReadEscapedValue() };
@@ -128,7 +154,7 @@ namespace Lad
 				return Token.End;
 
 				//**
-				return new Token { Symbol = Symbol, Value = Take() };
+				return MakeSymbol();
 			}
 
 			private StringBuilder currentAction = new StringBuilder();
@@ -137,7 +163,7 @@ namespace Lad
 				currentAction.Length = 0;
 				for(int scopeLevel = 0;;)
 				{
-					//** \"([^"]|(\\.))*"
+					//** \"([^"]|(\\.))*\"
 					// TODO: handle octal, hex, and Unicode escapes.
 					currentAction.Append(tokenValue);
 
@@ -154,21 +180,30 @@ namespace Lad
 					}
 					--scopeLevel;
 
-					//** \|[\a\b\f\n\r\t\v ]*
+					//** \|[\a\b\f\n\t\v ]*
 					if(currentAction.Length == 0)
-						return new Token { Symbol = NextAction };
+					{
+						mode.Push(ReadExpression);
+						return new Token { Symbol = NextExpression };
+					}
 					currentAction.Append(tokenValue);
 
 					//** \n
-					currentAction.Append('\n');
+					currentAction.Append(System.Environment.NewLine);
 					if(scopeLevel == 0)
+					{
+						mode.Push(ReadExpression);
 						return new Token { Symbol = Action, Value = currentAction.ToString() };
+					}
 
 					//**
 					if(ScanValue < 0)
 					{
 						if(scopeLevel == 0)
+						{
+							mode.Push(ReadExpression);
 							return new Token { Symbol = Action, Value = currentAction.ToString() };
+						}
 						ReportError("unmatched action braces");
 						return Token.End;
 					}
