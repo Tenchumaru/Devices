@@ -40,6 +40,12 @@ namespace Lad
             var sb = new StringBuilder();
             using(var skeleton = new StringReader(Properties.Resources.ResourceManager.GetString("Skeleton")))
             {
+                if(options.WantsLineNumberTracking)
+                {
+                    writer.WriteLine("#define TRACKING_LINE_NUMBER");
+                    writer.WriteLine();
+                }
+
                 // Emit the definitions.
                 foreach(string definition in definitions)
                     writer.WriteLine("#define " + definition);

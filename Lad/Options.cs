@@ -18,6 +18,7 @@ namespace Lad
         public readonly string LineDirectivesFilePath;
         public readonly bool DotIncludesNewline;
         public readonly bool IgnoringCase;
+        public readonly bool WantsLineNumberTracking;
         internal readonly IGenerator Generator;
         private const string defaultSignalComment = "//**";
 
@@ -49,6 +50,7 @@ namespace Lad
                 LineDirectivesFilePath = InputFilePath;
             DotIncludesNewline = commandLine.DotIncludesNewline;
             IgnoringCase = commandLine.IgnoringCase;
+            WantsLineNumberTracking = commandLine.WantsLineNumberTracking;
             if(String.IsNullOrWhiteSpace(commandLine.ScannerInputType))
             {
                 switch(Path.GetExtension(InputFilePath ?? "").ToLowerInvariant())
@@ -132,6 +134,9 @@ option is for inline input only.")]
 
             [Adrezdi.CommandLine.FlagArgument(LongName = "no-lines", ShortName = 'l', Usage = "don't emit line directives")]
             public bool SkippingLineDirectives { get; set; }
+
+            [Adrezdi.CommandLine.FlagArgument(LongName = "line-numbers", ShortName = '#', Usage = "track line numbers in a property")]
+            public bool WantsLineNumberTracking { get; set; }
         }
     }
 }
