@@ -22,6 +22,8 @@ namespace Pard
             IReadOnlyList<Production> productions;
             using(var reader = File.OpenText(options.InputFilePath))
                 productions = options.GrammarInput.Read(reader, options);
+            if(productions == null)
+                Environment.Exit(1);
 
             // Check the productions for undefined symbols.
             var q = from n in productions.SelectMany(p => p.Rhs).OfType<Nonterminal>()
