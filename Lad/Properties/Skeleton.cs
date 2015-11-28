@@ -11,12 +11,12 @@ using System.Text;
 			private int marker, position;
 			private StringBuilder buffer = new StringBuilder();
 			private string tokenValue;
-			private int ScanValue;
+			private int scanValue;
 #if TRACKING_LINE_NUMBER
 			private int lineNumber;
 #endif
 #if USES_BOL
-			bool atBol= true;
+			private bool atBol = true;
 #endif
 
 			public YY(TextReader reader)
@@ -32,14 +32,14 @@ using System.Text;
 			internal void Restore()
 			{
 #if TRACKING_LINE_NUMBER
-				for(int i= marker; i < position; ++i)
+				for(int i = marker; i < position; ++i)
 				{
 					if(buffer[i] == '\n')
 						--lineNumber;
 				}
 #endif
 #if USES_BOL
-				atBol= position > 0 && buffer[position - 1] == '\n';
+				atBol = position > 0 && buffer[position - 1] == '\n';
 #endif
 				tokenValue = buffer.ToString(0, marker);
 				buffer.Remove(position = 0, marker);
@@ -51,12 +51,12 @@ using System.Text;
 #if USES_BOL
 				if(atBol)
 				{
-					atBol= false;
+					atBol = false;
 					return BOL;
 				}
-				int ch= PrivateGet();
+				int ch = PrivateGet();
 				if(ch == '\n')
-					atBol= true;
+					atBol = true;
 				return ch;
 			}
 
@@ -65,11 +65,11 @@ using System.Text;
 #endif
 				if(position >= buffer.Length)
 				{
-					if(ScanValue < 0)
-						return ScanValue;
+					if(scanValue < 0)
+						return scanValue;
 					int ch = reader.Read();
 					if(ch < 0)
-						return ScanValue = -1;
+						return scanValue = -1;
 #if TRACKING_LINE_NUMBER
 					if(ch == '\n')
 						++lineNumber;
@@ -77,7 +77,7 @@ using System.Text;
 					buffer.Append((char)ch);
 				}
 				++position;
-				return ScanValue = buffer[position - 1];
+				return scanValue = buffer[position - 1];
 			}
 
 			internal int Take()
@@ -89,24 +89,16 @@ using System.Text;
 			}
 #if TRACKING_LINE_NUMBER
 
-			internal int LineNumber
+			public int LineNumber
 			{
 				get { return lineNumber; }
-			}
-#endif
-#if USES_RULE_GROUPS
-
-			internal RuleGroup RuleGroup
-			{
-				get { return scanner.currentRuleGroup; }
-				set { scanner.currentRuleGroup= value; }
 			}
 #endif
 #if USES_REJECT
 
 			internal void Reject()
 			{
-				scanner.wantsToReject= true;
+				scanner.wantsToReject = true;
 			}
 #endif
 
@@ -118,25 +110,13 @@ using System.Text;
 
 		public class EofEventArgs : EventArgs
 		{
-			private TextReader newReader;
-
-			public TextReader NewReader
-			{
-				get { return newReader; }
-				set { newReader= value; }
-			}
+			public TextReader NewReader { get; set; }
 		}
 
 		public delegate void EofHandler(object sender, EofEventArgs e);
 
 		public event EofHandler Eof;
-		private TextReader reader;
 		private YY yy;
-		private string readerValue, savedValue;
-		private bool wantsMore;
-#if INVOKED_BY_PARSER
-		private Token token;
-#endif
 #if USES_REJECT
 		private bool wantsToReject;
 
@@ -144,8 +124,8 @@ using System.Text;
 		{
 			internal RejectState(int state, int position)
 			{
-				State= state;
-				Position= position;
+				State = state;
+				Position = position;
 			}
 
 			internal int State, Position;
@@ -165,7 +145,7 @@ using System.Text;
 				eof(this, e);
 				if(e.NewReader == null)
 					break;
-				yy = new YY(reader);
+				yy = new YY(e.NewReader);
 				lastCh = yy.Get();
 				if(lastCh != -1)
 					return true;
@@ -173,28 +153,16 @@ using System.Text;
 			return false;
 		}
 
-#if INVOKED_BY_PARSER
-		public Token Scan(Union tokenValue)
-#else
-		public int Scan()
-#endif
+		public Token Read()
 		{
 #if USES_REJECT
-			Stack<RejectState> acceptingStates= new Stack<RejectState>();
+			Stack<RejectState> acceptingStates = new Stack<RejectState>();
 #endif
 #if USES_TRAILING_CONTEXT
 			trailingContextPositions.Initialize();
 #endif
-			if(wantsMore)
-				savedValue += readerValue;
-			else
-				savedValue= "";
 			; // state machine and rule actions $
-#if INVOKED_BY_PARSER
-			return token;
-#else
-			return ch_;
-#endif
+			return null;
 		}
 #if TRACKING_LINE_NUMBER
 
@@ -207,8 +175,10 @@ using System.Text;
 #if WANTS_MAIN
 		static void Main(string[] args)
 		{
-			var scanner= new Scanner(Console.In);
-			scanner.Scan();
+			var scanner = new Scanner(Console.In);
+			scanner.Read();
 		}
+
+		internal class Token {}
 #endif
 	}
