@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using System.Linq;
 
 namespace Pard
 {
@@ -112,7 +111,8 @@ namespace Pard
             if(message != null)
                 Console.WriteLine("{0}: error: {1}", Program.Name, message);
             var commandLineParser = new Adrezdi.CommandLine();
-            commandLineParser.Usage<CommandLine>();
+            Console.WriteLine();
+            Console.WriteLine(commandLineParser.Usage<CommandLine>());
             Environment.Exit(2);
         }
 
