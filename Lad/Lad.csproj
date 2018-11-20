@@ -83,19 +83,15 @@
     <Compile Include="Token.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\Post-build.cmd">
-      <Link>Post-build.cmd</Link>
-    </None>
     <None Include="App.config" />
     <None Include="LexGenerator.il" />
     <None Include="LexGenerator.y" />
-    <None Include="Pre-build.cmd" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="LexGenerator.txt" />
     <EmbeddedResource Include="\local\bin\Adrezdi.dll">
       <Link>Adrezdi.dll</Link>
     </EmbeddedResource>
-    <Content Include="ExpressionParser.txt" />
     <Content Include="ExpressionParser.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -106,9 +102,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>"$(ProjectDir)Pre-build.cmd" "$(ConfigurationName)"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)Post-build.cmd" "$(TargetName)" "$(ConfigurationName)"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>

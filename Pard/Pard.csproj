@@ -62,9 +62,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <None Include="..\Post-build.cmd">
-      <Link>Post-build.cmd</Link>
-    </None>
     <None Include="Properties\Skeleton.cs" />
     <Compile Include="Symbol.cs" />
     <Compile Include="Terminal.cs" />
@@ -83,7 +80,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Pre-build.cmd" />
     <None Include="YaccInput.il" />
   </ItemGroup>
   <ItemGroup>
@@ -101,9 +97,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>"$(ProjectDir)Pre-build.cmd" "$(ConfigurationName)"</PreBuildEvent>
+    <PreBuildEvent>
+    </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)Post-build.cmd" "$(TargetName)" "$(ConfigurationName)"</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
 </Project>
