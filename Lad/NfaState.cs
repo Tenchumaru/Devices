@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Lad
 {
@@ -46,8 +45,7 @@ namespace Lad
 
         private NfaState Clone(Dictionary<NfaState, NfaState> clonedStates, ref NfaState state)
         {
-            NfaState clone;
-            if(!clonedStates.TryGetValue(this, out clone))
+            if(!clonedStates.TryGetValue(this, out NfaState clone))
             {
                 // This state has not yet cloned itself.  Do so now.
                 Debug.Assert(acceptingRuleIndex == null);
@@ -72,8 +70,7 @@ namespace Lad
             while(queue.Count > 0)
             {
                 var pair = queue.Dequeue();
-                DfaState state;
-                if(!dfaStates.TryGetValue(pair.Key.Name, out state))
+                if(!dfaStates.TryGetValue(pair.Key.Name, out DfaState state))
                 {
                     state = pair.Key;
                     dfaStates.Add(state.Name, state);
@@ -104,9 +101,9 @@ namespace Lad
             if(dumpedStates.Contains(this))
                 return;
             dumpedStates.Add(this);
-            Debug.WriteLine(string.Format("{0} {1}:", acceptingRuleIndex, Number));
+            Debug.WriteLine(String.Format("{0} {1}:", acceptingRuleIndex, Number));
             foreach(KeyValuePair<Symbol, NfaState> transition in transitions)
-                Debug.WriteLine(string.Format("\t{0} -> {1}", transition.Key, transition.Value.Number));
+                Debug.WriteLine(String.Format("\t{0} -> {1}", transition.Key, transition.Value.Number));
             foreach(KeyValuePair<Symbol, NfaState> transition in transitions)
                 transition.Value.Dump(dumpedStates);
 #endif

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Lad
 {
@@ -38,9 +37,9 @@ namespace Lad
                         break;
                     case "AnySymbol":
                         if(symbol == AnySymbol.WithoutNewLine)
-                            defaultElse = string.Format("if(ch_!='\\n')goto L{1}i{0}_;goto done_;", scannerNumber, targetIndex);
+                            defaultElse = String.Format("if(ch_!='\\n')goto L{1}i{0}_;goto done_;", scannerNumber, targetIndex);
                         else
-                            defaultElse = string.Format("goto L{1}i{0}_;", scannerNumber, targetIndex);
+                            defaultElse = String.Format("goto L{1}i{0}_;", scannerNumber, targetIndex);
                         break;
                     case "RangeSymbol":
                         var subRanges = ((RangeSymbol)symbol).ComposeSubRanges();

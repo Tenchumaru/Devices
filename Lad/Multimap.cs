@@ -14,8 +14,7 @@ namespace Lad
 
         public void Add(TKey key, TValue value)
         {
-            HashSet<TValue> values;
-            if(!dictionary.TryGetValue(key, out values))
+            if(!dictionary.TryGetValue(key, out HashSet<TValue> values))
                 dictionary.Add(key, values = new HashSet<TValue>());
             values.Add(value);
             list.Add(new KeyValuePair<TKey, TValue>(key, value));
@@ -32,8 +31,7 @@ namespace Lad
         /// </summary>
         public List<TValue> FindAll(TKey key)
         {
-            HashSet<TValue> values;
-            return dictionary.TryGetValue(key, out values) ? new List<TValue>(values) : new List<TValue>();
+            return dictionary.TryGetValue(key, out HashSet<TValue> values) ? new List<TValue>(values) : new List<TValue>();
         }
 
         public Dictionary<TKey, HashSet<TValue>>.KeyCollection Keys
