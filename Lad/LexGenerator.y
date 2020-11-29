@@ -1,4 +1,3 @@
-%using System.Text
 %using IntPair=System.Collections.Generic.KeyValuePair<int, int>
 %using CharPair=System.Collections.Generic.KeyValuePair<char, char>
 %using StringList=System.Collections.Generic.List<string>

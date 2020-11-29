@@ -13,7 +13,6 @@ namespace Pard
             "System",
             "System.Collections.Generic",
             "System.Linq",
-            "System.Text",
         };
 
         public void Write(IReadOnlyList<Grammar.ActionEntry> actions, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options)

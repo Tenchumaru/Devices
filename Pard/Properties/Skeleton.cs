@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Pair_ = System.Collections.Generic.KeyValuePair<int, object>;
 	class Skeleton // using directives, namespace, and class $
 	{

@@ -138,7 +138,6 @@ namespace Lad.Properties {
         ///   Looks up a localized string similar to using System;
         ///using System.Collections.Generic;
         ///using System.IO;
-        ///using System.Text;
         ///
         ///	class Scanner // using directives, namespace, and class declaration $
         ///	{

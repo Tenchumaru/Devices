@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 	class Scanner // using directives, namespace, and class declaration $
 	{

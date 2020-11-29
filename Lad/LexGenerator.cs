@@ -23,7 +23,6 @@ namespace Lad
             "System",
             "System.Collections.Generic",
             "System.IO",
-            "System.Text",
         };
 
         public LexGenerator()
