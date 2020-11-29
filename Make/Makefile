@@ -66,4 +66,4 @@ $(MAKEDIR)\$(Configuration):
 	MD $(MAKEDIR)\\$(Configuration)
 
 clean:
-	RD /Q /S $(MAKEDIR)\\$(Configuration)
+	IF EXIST $(MAKEDIR)\\$(Configuration) RD /Q /S $(MAKEDIR)\\$(Configuration)
