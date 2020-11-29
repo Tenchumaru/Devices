@@ -42,13 +42,11 @@
     <NMakePreprocessorDefinitions>_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeBuildCommandLine>nmake -nologo Configuration=$(Configuration)</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>nmake -nologo Configuration=$(Configuration) clean</NMakeCleanCommandLine>
-    <NMakeReBuildCommandLine>nmake -nologo -a Configuration=$(Configuration)</NMakeReBuildCommandLine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <NMakePreprocessorDefinitions>NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
     <NMakeBuildCommandLine>nmake -nologo Configuration=$(Configuration)</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>nmake -nologo Configuration=$(Configuration) clean</NMakeCleanCommandLine>
-    <NMakeReBuildCommandLine>nmake -nologo -a Configuration=$(Configuration)</NMakeReBuildCommandLine>
   </PropertyGroup>
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
