@@ -104,8 +104,7 @@ simple:	Symbol
 	|	'.' { $$= new Nfa(dotIncludesNewline ? AnySymbol.Value : AnySymbol.WithoutNewLine); }
 	|	NamedExpression
 		{
-			Nfa value_;
-			if(!namedExpressions.TryGetValue($1, out value_))
+			if(!namedExpressions.TryGetValue($1, out Nfa value_))
 			{
 				Console.Error.WriteLine("error: line {0}: cannot find named RE {1}", scanner.LineNumber, $1);
 				return false;

@@ -6,7 +6,7 @@ using Pair_ = System.Collections.Generic.KeyValuePair<int, object>;
 	class Skeleton // using directives, namespace, and class $
 	{
 		public event EventHandler<ParseErrorEventArgs> Error;
-		private IScanner scanner; // scanner field $
+		private readonly IScanner scanner; // scanner field $
 
 		public Skeleton(IScanner scanner) // constructor $
 		{
@@ -79,8 +79,7 @@ continue;
 		private bool? HandleError(int symbol, object value)
 		{
 			var eventArgs = new ParseErrorEventArgs(symbol, value);
-			if(Error != null)
-				Error(this, eventArgs);
+			Error?.Invoke(this, eventArgs);
 			return eventArgs.Result;
 		}
 		// terminal definitions $
