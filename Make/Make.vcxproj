@@ -39,12 +39,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <NMakePreprocessorDefinitions>_DEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>$(NMakePreprocessorDefinitions);_DEBUG</NMakePreprocessorDefinitions>
     <NMakeBuildCommandLine>nmake -nologo Configuration=$(Configuration)</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>nmake -nologo Configuration=$(Configuration) clean</NMakeCleanCommandLine>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <NMakePreprocessorDefinitions>NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+    <NMakePreprocessorDefinitions>$(NMakePreprocessorDefinitions);NDEBUG</NMakePreprocessorDefinitions>
     <NMakeBuildCommandLine>nmake -nologo Configuration=$(Configuration)</NMakeBuildCommandLine>
     <NMakeCleanCommandLine>nmake -nologo Configuration=$(Configuration) clean</NMakeCleanCommandLine>
   </PropertyGroup>
