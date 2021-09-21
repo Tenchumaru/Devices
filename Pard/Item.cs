@@ -12,7 +12,7 @@ namespace Pard
         public readonly int ProductionIndex;
         public readonly int DotPosition;
         public readonly Terminal Lookahead;
-        private string name = "";
+        private readonly string name = "";
 
         public Item(int productionIndex, int dotPosition, Terminal lookahead)
         {
@@ -24,8 +24,7 @@ namespace Pard
 
         public override bool Equals(object obj)
         {
-            var that = obj as Item;
-            return !Object.ReferenceEquals(that, null) && ToString() == that.ToString();
+            return obj is Item that && ToString() == that.ToString();
         }
 
         public override int GetHashCode()
@@ -40,7 +39,7 @@ namespace Pard
 
         public static bool operator ==(Item left, Item right)
         {
-            return Object.ReferenceEquals(left, null) ? Object.ReferenceEquals(right, null) : left.Equals(right);
+            return left is null ? right is null : left.Equals(right);
         }
 
         public static bool operator !=(Item left, Item right)
@@ -53,13 +52,12 @@ namespace Pard
             public int Count { get { return set.Count; } }
             public readonly Dictionary<Symbol, Set> Gotos = new Dictionary<Symbol, Set>();
 
-            private string name = "";
-            private HashSet<Item> set;
+            private readonly string name = "";
+            private readonly HashSet<Item> set;
 
             public override bool Equals(object obj)
             {
-                var that = obj as Set;
-                return !Object.ReferenceEquals(that, null) && ToString() == that.ToString();
+                return obj is Set that && ToString() == that.ToString();
             }
 
             public override int GetHashCode()
@@ -74,7 +72,7 @@ namespace Pard
 
             public static bool operator ==(Set left, Set right)
             {
-                return Object.ReferenceEquals(left, null) ? Object.ReferenceEquals(right, null) : left.Equals(right);
+                return left is null ? right is null : left.Equals(right);
             }
 
             public static bool operator !=(Set left, Set right)

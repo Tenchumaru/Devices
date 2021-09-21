@@ -11,8 +11,8 @@ namespace Lad
     {
         public static bool operator ==(Symbol left, Symbol right)
         {
-            if(object.ReferenceEquals(left, null))
-                return object.ReferenceEquals(right, null);
+            if(left is null)
+                return right is null;
             return left.Equals(right);
         }
 
@@ -23,7 +23,7 @@ namespace Lad
 
         public virtual bool Equals(Symbol other)
         {
-            return !object.ReferenceEquals(other, null) && GetType() == other.GetType() && ToString() == other.ToString();
+            return other is object && GetType() == other.GetType() && ToString() == other.ToString();
         }
 
         public override bool Equals(object obj)
@@ -94,7 +94,7 @@ namespace Lad
     {
         public static readonly AnySymbol Value = new AnySymbol(true);
         public static readonly AnySymbol WithoutNewLine = new AnySymbol(false);
-        private bool includesNewLine;
+        private readonly bool includesNewLine;
 
         private AnySymbol(bool includesNewLine)
         {
@@ -154,7 +154,7 @@ namespace Lad
 
     public class RangeSymbol : ConcreteSymbol
     {
-        private BitArray isIn;
+        private readonly BitArray isIn;
 
         public RangeSymbol(char first, char last)
         {
@@ -206,8 +206,8 @@ namespace Lad
         {
             if(symbol == this || symbol == BolSymbol.Value || symbol is AnySymbol)
                 return false;
-            if(symbol is SimpleSymbol)
-                return this.Contains((SimpleSymbol)symbol);
+            if(symbol is SimpleSymbol simpleSymbol)
+                return Contains(simpleSymbol);
             var rangeSymbol = (RangeSymbol)symbol;
             for(int i = 0; i < isIn.Length; ++i)
             {
@@ -256,7 +256,7 @@ namespace Lad
 
         public override bool Equals(Symbol other)
         {
-            return !object.ReferenceEquals(other, null) && other.GetType() == typeof(SimpleSymbol) && Value == ((SimpleSymbol)other).Value;
+            return other is object && other.GetType() == typeof(SimpleSymbol) && Value == ((SimpleSymbol)other).Value;
         }
 
         public override string ToString()

@@ -10,12 +10,12 @@ namespace Pard
     {
         private List<string> defineDirectives;
         private List<string> usingStatements;
-        private List<Production> productions = new List<Production>();
+        private readonly List<Production> productions = new List<Production>();
         private Grammar.Associativity terminalAssociativity;
         private string terminalTypeName;
         private int precedence;
-        private HashSet<Terminal> knownTerminals = new HashSet<Terminal>();
-        private HashSet<Nonterminal> knownNonterminals = new HashSet<Nonterminal>();
+        private readonly HashSet<Terminal> knownTerminals = new HashSet<Terminal>();
+        private readonly HashSet<Nonterminal> knownNonterminals = new HashSet<Nonterminal>();
 
         public YaccInput()
             : this(null)
@@ -180,12 +180,6 @@ namespace Pard
             {
                 Console.Error.WriteLine("{0} in line {1}", message, LineNumber);
             }
-
-            private void ReportError(string format, params object[] args)
-            {
-                ReportError(String.Format(format, args));
-            }
-
             private class YY
             {
                 public int LineNumber { get { return lineNumber; } }

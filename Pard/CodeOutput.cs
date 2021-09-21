@@ -164,8 +164,7 @@ namespace Pard
                 }
                 for(; j < part.Length && char.IsDigit(part[j]); ++j)
                     sb.Append(part[j]);
-                int symbolNumber;
-                if(!int.TryParse(sb.ToString(), out symbolNumber))
+                if (!int.TryParse(sb.ToString(), out int symbolNumber))
                     throw new MalformedSubstitutionException(production);
                 int symbolIndex = symbolNumber - 1;
                 if(symbolIndex >= production.Rhs.Count)

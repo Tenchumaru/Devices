@@ -17,8 +17,7 @@ namespace Pard
 
         public override bool Equals(object obj)
         {
-            var that = obj as NamedObject;
-            return !Object.ReferenceEquals(that, null) && GetType() == that.GetType() && Name == that.Name;
+            return obj is NamedObject that && GetType() == that.GetType() && Name == that.Name;
         }
 
         public override int GetHashCode()
@@ -33,7 +32,7 @@ namespace Pard
 
         public static bool operator ==(NamedObject left, NamedObject right)
         {
-            return Object.ReferenceEquals(left, null) ? Object.ReferenceEquals(right, null) : left.Equals(right);
+            return left is null ? right is null : left.Equals(right);
         }
 
         public static bool operator !=(NamedObject left, NamedObject right)

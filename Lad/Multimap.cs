@@ -9,8 +9,8 @@ namespace Lad
 {
     public class Multimap<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
-        private Dictionary<TKey, HashSet<TValue>> dictionary = new Dictionary<TKey, HashSet<TValue>>();
-        private List<KeyValuePair<TKey, TValue>> list = new List<KeyValuePair<TKey, TValue>>();
+        private readonly Dictionary<TKey, HashSet<TValue>> dictionary = new Dictionary<TKey, HashSet<TValue>>();
+        private readonly List<KeyValuePair<TKey, TValue>> list = new List<KeyValuePair<TKey, TValue>>();
 
         public void Add(TKey key, TValue value)
         {

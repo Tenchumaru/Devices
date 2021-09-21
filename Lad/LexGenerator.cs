@@ -10,12 +10,12 @@ namespace Lad
     {
         private bool dotIncludesNewline;
         private bool ignoringCase;
-        private Dictionary<string, Nfa> namedExpressions = new Dictionary<string, Nfa>();
+        private readonly Dictionary<string, Nfa> namedExpressions = new Dictionary<string, Nfa>();
         private bool usesBol, usesTrailingContext;
-        private List<string> definitions = new List<string>();
-        private List<string> usingDirectives = new List<string>();
-        private List<string> activeRuleGroupNames = new List<string>();
-        private List<string> actions = new List<string>();
+        private readonly List<string> definitions = new List<string>();
+        private readonly List<string> usingDirectives = new List<string>();
+        private readonly List<string> activeRuleGroupNames = new List<string>();
+        private readonly List<string> actions = new List<string>();
         private string finalCodeBlock;
         private Nfa machine;
         private static readonly string[] requiredUsingDirectives =
@@ -151,13 +151,13 @@ namespace Lad
                 get { return lineNumber; }
             }
 
-            private TextReader reader;
-            private StringBuilder buffer = new StringBuilder();
+            private readonly TextReader reader;
+            private readonly StringBuilder buffer = new StringBuilder();
             private int marker, position, lineNumber = 1;
             private string tokenValue;
-            private Scanner yy;
+            private readonly Scanner yy;
             private int ScanValue;
-            private Stack<Func<Token>> mode = new Stack<Func<Token>>();
+            private readonly Stack<Func<Token>> mode = new Stack<Func<Token>>();
 
             public Scanner(TextReader reader)
             {

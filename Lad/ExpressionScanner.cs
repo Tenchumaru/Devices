@@ -9,7 +9,7 @@ namespace Lad
 {
     public class ExpressionScanner
     {
-        private TextReader reader;
+        private readonly TextReader reader;
         private int? savedChar;
         private ScannerMode mode;
 
@@ -20,8 +20,7 @@ namespace Lad
 
         internal Token Read()
         {
-            char ch;
-            while(Peek(out ch))
+            while(Peek(out char ch))
             {
                 Get();
                 if(mode == ScannerMode.Starting)
@@ -186,8 +185,7 @@ namespace Lad
 
         private int GetUnicode()
         {
-            int x1, x2, x3, x4;
-            if(GetHexDigit(out x1) && GetHexDigit(out x2) && GetHexDigit(out x3) && GetHexDigit(out x4))
+            if (GetHexDigit(out int x1) && GetHexDigit(out int x2) && GetHexDigit(out int x3) && GetHexDigit(out int x4))
                 return (x1 << 12) | (x2 << 8) | (x3 << 4) | x4;
             ReportError("invalid Unicode escape");
             return -1;
@@ -195,8 +193,7 @@ namespace Lad
 
         private int GetHex()
         {
-            int x1, x2;
-            if(GetHexDigit(out x1) && GetHexDigit(out x2))
+            if (GetHexDigit(out int x1) && GetHexDigit(out int x2))
                 return (x1 << 4) | x2;
             ReportError("invalid hex escape");
             return -1;
@@ -222,8 +219,7 @@ namespace Lad
         private int GetOctal()
         {
             int value = 0;
-            char ch;
-            while(Peek(out ch))
+            while(Peek(out char ch))
             {
                 if(ch >= '0' && ch < '8')
                     value += ch - '0';
@@ -245,13 +241,6 @@ namespace Lad
             if(ch >= 0)
                 savedChar = null;
             return ch;
-        }
-
-        private bool Get(out char ch)
-        {
-            int i = Get();
-            ch = (char)i;
-            return i >= 0;
         }
 
         private int Peek()

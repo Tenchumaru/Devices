@@ -63,17 +63,15 @@ namespace Pard
             var nonterminals = knownNonterminals.ToDictionary(t => t.Name);
             foreach(var rule in xml.Element("rules").Elements("rule"))
             {
-                Nonterminal nonterminal;
-                Terminal terminal;
                 var name = (string)rule.Attribute("name");
-                var lhs = nonterminals.TryGetValue(name, out nonterminal) ? nonterminal : new Nonterminal(name, null);
+                var lhs = nonterminals.TryGetValue(name, out Nonterminal nonterminal) ? nonterminal : new Nonterminal(name, null);
                 var q = from x in rule.Elements()
                         where x.Name != "action"
                         let n = (string)x.Attribute("name")
                         let v = (string)x.Attribute("value")
                         let l = v != null ? Terminal.FormatLiteralName(v) : null
                         let s = x.Name == "nonterminal" ? nonterminals.TryGetValue(n, out nonterminal) ? (Symbol)nonterminal : new Nonterminal(n, null) :
-                        x.Name == "literal" && l != null ? terminals.TryGetValue(l, out terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0, v[0]) :
+                        x.Name == "literal" && l != null ? terminals.TryGetValue(l, out Terminal terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0, v[0]) :
                         x.Name == "terminal" ? terminals.TryGetValue(n, out terminal) ? terminal : new Terminal(n, null, Grammar.Associativity.None, 0) : null
                         let e = s == null ? x.Name == "literal" && v == null ? "missing literal value" : String.Format("unknown symbol element '{0}'", x.Name) : null
                         select new { Symbol = s, Error = e };
@@ -87,12 +85,11 @@ namespace Pard
                 var actionCode = action != null ? new ActionCode(action, 0) : null;
                 Production production;
                 var precedenceTokenName = (string)rule.Attribute("precedence") ?? "";
-                Terminal precedenceToken;
-                if(terminals.TryGetValue(precedenceTokenName, out precedenceToken))
+                if (terminals.TryGetValue(precedenceTokenName, out Terminal precedenceToken))
                     production = new Production(lhs, rhs, productions.Count, actionCode, precedenceToken.Associativity, precedenceToken.Precedence);
                 else
                 {
-                    if(precedenceTokenName != "")
+                    if (precedenceTokenName != "")
                         Console.Error.WriteLine("warning: precedence token '{0}' not found; ignoring", precedenceTokenName);
                     production = new Production(lhs, rhs, productions.Count, actionCode);
                 }

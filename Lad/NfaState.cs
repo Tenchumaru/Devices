@@ -12,8 +12,8 @@ namespace Lad
     public class NfaState
     {
         public int Number { get; private set; }
-        private Multimap<Symbol, NfaState> transitions = new Multimap<Symbol, NfaState>();
-        private int? acceptingRuleIndex;
+        private readonly Multimap<Symbol, NfaState> transitions = new Multimap<Symbol, NfaState>();
+        private readonly int? acceptingRuleIndex;
         private static int nextNumber;
 
         public NfaState()

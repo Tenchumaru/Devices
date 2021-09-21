@@ -25,8 +25,7 @@ namespace Lad
 
         private Nfa CloneNamedNfa(string name)
         {
-            Nfa nfa;
-            if(!namedExpressions.TryGetValue(name, out nfa))
+            if (!namedExpressions.TryGetValue(name, out Nfa nfa))
                 throw new Exception(string.Format("named expression \"{0}\" not defined", name));
             return new Nfa(nfa);
         }
