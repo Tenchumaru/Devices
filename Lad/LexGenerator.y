@@ -4,9 +4,9 @@
 %using NfaList=System.Collections.Generic.List<Lad.Nfa>
 
 %token <string> Identifier NamedExpression OptionValue Action PDefine PUsing PP
-%token <int> POption
+%token <int> POption Single
 %token <char> Symbol
-%token <IntPair> Single Double
+%token <IntPair> Double
 %token Default NextExpression NegativeClass Gtocb
 
 %type <StringList> idents csv
@@ -77,7 +77,7 @@ kleene:	simple
 	|	simple '*' { $$= $1; $1.Kleene(); }
 	|	simple '+' { $$= $1; $1.Plus(); }
 	|	simple '?' { $$= $1; $1.Count(0, 1); }
-	|	simple Single { $$= $1; $1.Count($2.Key, $2.Value); }
+	|	simple Single { $$= $1; $1.Count($2, $2); }
 	|	simple Double { $$= $1; $1.Count($2.Key, $2.Value); }
 	;
 
