@@ -1,0 +1,8 @@
+@ECHO OFF
+SETLOCAL
+
+IF "%~1" == "" EXIT /B 2
+IF NOT "%~3" == "" EXIT /B 2
+SET CONFIGURATION=%~1
+SET DIRECTORY=%~2
+IF "%CONFIGURATION%" == "Release" COPY /Y "%DIRECTORY%*" %SystemDrive%\local\bin

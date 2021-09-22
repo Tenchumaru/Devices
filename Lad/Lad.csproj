@@ -107,7 +107,6 @@
     </PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>"$(SolutionDir)Post-build.cmd" "$(Configuration)" "$(TargetDir)"</PostBuildEvent>
   </PropertyGroup>
 </Project>
