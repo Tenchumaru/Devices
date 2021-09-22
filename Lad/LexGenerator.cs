@@ -16,7 +16,9 @@ namespace Lad
         private readonly List<string> usingDirectives = new List<string>();
         private readonly List<string> activeRuleGroupNames = new List<string>();
         private readonly List<string> actions = new List<string>();
+#pragma warning disable CS0649 // Line 165 in LexGenerator.y (line 365 in LexGenerator.y.g.cs) sets this field.
         private string finalCodeBlock;
+#pragma warning restore CS0649
         private Nfa machine;
         private static readonly string[] requiredUsingDirectives =
         {
