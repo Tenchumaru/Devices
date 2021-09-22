@@ -177,15 +177,18 @@ namespace Lad
             private Token ReadRestOfLine(int tokenSymbol)
             {
                 // Read the rest of the line as the token value.
-                var sb = new StringBuilder();
                 for(int ch; ; )
                 {
                     ch = Get();
                     if(ch < 0 || ch == '\r' || ch == '\n')
                         break;
-                    sb.Append((char)ch);
                 }
-                return new Token { Symbol = tokenSymbol, Value = sb.ToString() };
+                if (buffer.Length > 0)
+                {
+                    marker = position - 1;
+                    Restore();
+                }
+                return new Token { Symbol = tokenSymbol, Value = tokenValue };
             }
 
             private Token HandleNoMatch()
