@@ -2,7 +2,7 @@ REM(); /*
 @ECHO OFF
 SETLOCAL
 
-FOR /F "delims=" %%I IN ('DIR /B /S "C:\Program Files (x86)\Microsoft Visual Studio\nmake.exe"') DO PATH %PATH%;%%~dpI
+FOR /F "delims=" %%I IN ('DIR /B /S "%SystemDrive%\Program Files (x86)\Microsoft Visual Studio\vcvars64.bat"') DO CALL "%%~I"
 CD /D "%~dp0"
 SET T=%TEMP%\Pard.Test.%RANDOM%.make
 find ".xml" "%~dp0Pard.Test.csproj" | find "Content" | cscript //nologo //E:JScript "%~nx0" %1 > %T%
