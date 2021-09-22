@@ -18,20 +18,20 @@ function REM() {
 		var s = fin.ReadLine();
 		xmlFileNames.push(s.split('"')[1]);
 	}
-	fout.WriteLine("ConfigurationName=" + WScript.Arguments(0));
-	fout.Write("all:");
+	fout.WriteLine('ConfigurationName=' + WScript.Arguments(0));
+	fout.Write('all:');
 	for(var i = 0, n = xmlFileNames.length; i < n; ++i) {
 		var xmlFileName = xmlFileNames[i];
-		var csFileName = xmlFileName + ".cs";
+		var csFileName = xmlFileName + '.g.cs';
 		fout.Write(' ' + csFileName);
 	}
 	fout.WriteLine();
 	for(var i = 0, n = xmlFileNames.length; i < n; ++i) {
 		var xmlFileName = xmlFileNames[i];
 		var parserName = xmlFileName.split('.')[0];
-		var csFileName = xmlFileName + ".cs";
+		var csFileName = xmlFileName + '.g.cs';
 		fout.WriteLine();
-		fout.WriteLine(csFileName + ": " + xmlFileName);
+		fout.WriteLine(csFileName + ': ' + xmlFileName);
 		fout.WriteLine('\tIF EXIST ' + csFileName + ' DEL /F /Q ' + csFileName);
 		fout.WriteLine('\t"..\\Pard\\bin\\$(ConfigurationName)\\Pard.exe" --namespace=Pard.Test --parser-class-name=' +
 			parserName + ' --scanner-class-name=Scanner ' + xmlFileName + ' ' + csFileName);

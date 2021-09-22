@@ -48,7 +48,7 @@
   <ItemGroup>
     <Compile Include="DfaState.cs" />
     <Compile Include="ExpressionParser.cs" />
-    <Compile Include="ExpressionParser.xml.cs">
+    <Compile Include="ExpressionParser.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ExpressionParser.xml</DependentUpon>
@@ -57,12 +57,12 @@
     <Compile Include="IGenerator.cs" />
     <Compile Include="InlineGenerator.cs" />
     <Compile Include="LexGenerator.cs" />
-    <Compile Include="LexGenerator.il.cs">
+    <Compile Include="LexGenerator.il.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>LexGenerator.il</DependentUpon>
+      <DependentUpon>LexGenerator.il.cs</DependentUpon>
     </Compile>
-    <Compile Include="LexGenerator.y.cs">
+    <Compile Include="LexGenerator.y.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>LexGenerator.y</DependentUpon>
@@ -85,11 +85,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="LexGenerator.il" />
+    <None Include="LexGenerator.il.cs" />
+    <None Include="LexGenerator.x.cs" />
     <None Include="LexGenerator.y" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="LexGenerator.txt" />
     <EmbeddedResource Include="\local\bin\Adrezdi.dll">
       <Link>Adrezdi.dll</Link>
     </EmbeddedResource>

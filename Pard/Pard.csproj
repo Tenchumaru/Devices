@@ -68,12 +68,12 @@
     <Compile Include="Terminal.cs" />
     <Compile Include="XmlInput.cs" />
     <Compile Include="YaccInput.cs" />
-    <Compile Include="YaccInput.il.cs">
+    <Compile Include="YaccInput.il.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>YaccInput.il</DependentUpon>
+      <DependentUpon>YaccInput.il.cs</DependentUpon>
     </Compile>
-    <Compile Include="YaccInput.xml.cs">
+    <Compile Include="YaccInput.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>YaccInput.xml</DependentUpon>
@@ -81,13 +81,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="YaccInput.il" />
+    <None Include="YaccInput.il.cs" />
+    <None Include="YaccInput.xml.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="\local\bin\Adrezdi.dll">
       <Link>Adrezdi.dll</Link>
     </EmbeddedResource>
-    <Content Include="YaccInput.txt" />
     <Content Include="YaccInput.xml" />
   </ItemGroup>
   <ItemGroup>

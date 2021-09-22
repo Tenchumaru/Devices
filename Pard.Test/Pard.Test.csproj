@@ -49,52 +49,52 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Parser422.xml.cs">
+    <Compile Include="Parser422.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Parser422.xml</DependentUpon>
     </Compile>
-    <Compile Include="Parser424.xml.cs">
+    <Compile Include="Parser424.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Parser424.xml</DependentUpon>
     </Compile>
-    <Compile Include="Parser425.xml.cs">
+    <Compile Include="Parser425.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Parser425.xml</DependentUpon>
     </Compile>
-    <Compile Include="Parser433.xml.cs">
+    <Compile Include="Parser433.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Parser433.xml</DependentUpon>
     </Compile>
-    <Compile Include="Parser439.xml.cs">
+    <Compile Include="Parser439.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Parser439.xml</DependentUpon>
     </Compile>
-    <Compile Include="Parser442.xml.cs">
+    <Compile Include="Parser442.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Parser442.xml</DependentUpon>
     </Compile>
-    <Compile Include="ParserAB.xml.cs">
+    <Compile Include="ParserAB.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ParserAB.xml</DependentUpon>
     </Compile>
-    <Compile Include="ParserEmbeddedAction.xml.cs">
+    <Compile Include="ParserEmbeddedAction.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ParserEmbeddedAction.xml</DependentUpon>
     </Compile>
-    <Compile Include="ParserEpsilon.xml.cs">
+    <Compile Include="ParserEpsilon.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ParserEpsilon.xml</DependentUpon>
     </Compile>
-    <Compile Include="ParserExpression.xml.cs">
+    <Compile Include="ParserExpression.xml.g.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>ParserExpression.xml</DependentUpon>
