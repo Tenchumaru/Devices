@@ -124,7 +124,8 @@ namespace Pard
 
         private static string ConstructAction(Production production, string lineDirectivesFilePath)
         {
-            string code = string.Join("reductionValue_", production.ActionCode.Code.Split(new[] { "$$" }, StringSplitOptions.None));
+            var code = production.ActionCode.Code.Replace("$$.", string.Format("(({0})reductionValue_).", production.Lhs.TypeName));
+            code = code.Replace("$$", "reductionValue_");
             string[] parts = code.Split('$');
 
             for(int i = 1; i < parts.Length; ++i)
