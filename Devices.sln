@@ -1,12 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30717.126
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lad", "Lad\Lad.csproj", "{451419A6-3E85-428C-99B2-FF2304386E45}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8C96E5F1-4C1C-4597-8642-023398E12699} = {8C96E5F1-4C1C-4597-8642-023398E12699}
 	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lad.Test", "Lad.Test\Lad.Test.csproj", "{51A38BB9-33E7-491F-9944-14DCDC88413A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pard", "Pard\Pard.csproj", "{C5ABA6AD-8D28-4123-8106-0D7FDE8BEEA0}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -38,6 +40,10 @@ Global
 		{451419A6-3E85-428C-99B2-FF2304386E45}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{451419A6-3E85-428C-99B2-FF2304386E45}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{451419A6-3E85-428C-99B2-FF2304386E45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51A38BB9-33E7-491F-9944-14DCDC88413A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51A38BB9-33E7-491F-9944-14DCDC88413A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51A38BB9-33E7-491F-9944-14DCDC88413A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51A38BB9-33E7-491F-9944-14DCDC88413A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C5ABA6AD-8D28-4123-8106-0D7FDE8BEEA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C5ABA6AD-8D28-4123-8106-0D7FDE8BEEA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C5ABA6AD-8D28-4123-8106-0D7FDE8BEEA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
