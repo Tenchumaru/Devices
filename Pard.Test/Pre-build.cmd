@@ -2,7 +2,12 @@ REM(); /*
 @ECHO OFF
 SETLOCAL
 
-FOR /F "delims=" %%I IN ('DIR /B /S "%SystemDrive%\Program Files (x86)\Microsoft Visual Studio\vcvars64.bat"') DO CALL "%%~I"
+FOR /F "delims=" %%I IN ('DIR /B /S "%SystemDrive%\Program Files\Microsoft Visual Studio\vcvars64.bat"') DO SET VCVARS=%%~I
+IF "%VCVARS%" == "" (
+	ECHO Cannot find vcvars64.bat
+	EXIT /B 1
+)
+CALL "%VCVARS%"
 CD /D "%~dp0"
 SET T=%TEMP%\Pard.Test.%RANDOM%.make
 find ".xml" "%~dp0Pard.Test.csproj" | find "Content" | cscript //nologo //E:JScript "%~nx0" %1 > %T%

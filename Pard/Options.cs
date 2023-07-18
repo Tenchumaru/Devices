@@ -110,9 +110,8 @@ namespace Pard
         {
             if(message != null)
                 Console.WriteLine("{0}: error: {1}", Program.Name, message);
-            var commandLineParser = new Adrezdi.CommandLine();
             Console.WriteLine();
-            Console.WriteLine(commandLineParser.Usage<CommandLine>());
+            Console.WriteLine(Adrezdi.CommandLine.Usage<CommandLine>());
             Environment.Exit(2);
         }
 

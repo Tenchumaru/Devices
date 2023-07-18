@@ -101,8 +101,7 @@ namespace Lad
         {
             if(message != null)
                 Console.WriteLine("{0}: error: {1}", Program.Name, message);
-            var commandLineParser = new Adrezdi.CommandLine();
-            commandLineParser.Usage<CommandLine>();
+            Adrezdi.CommandLine.Usage<CommandLine>();
             Environment.Exit(2);
         }
 
