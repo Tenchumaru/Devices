@@ -63,6 +63,9 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <None Include="Parser.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Properties\Skeleton.cs" />
     <Compile Include="Symbol.cs" />
     <Compile Include="Terminal.cs" />
