@@ -27,7 +27,7 @@ namespace Pard
         public Options(string[] args)
         {
             var commandLineParser = new Adrezdi.CommandLine();
-            var commandLine = commandLineParser.Parse<CommandLine>(args, true);
+            var commandLine = commandLineParser.Parse<CommandLine>(args, Adrezdi.CommandLine.FailureBehavior.ExitWithUsage);
             if(commandLineParser.ExtraOptions.Any())
                 Usage("unexpected options: " + String.Join(", ", commandLineParser.ExtraOptions));
             if(commandLineParser.ExtraArguments.Skip(2).Any())
