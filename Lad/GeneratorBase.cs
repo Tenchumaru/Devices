@@ -34,28 +34,30 @@ namespace Lad {
 		protected abstract void WriteHeader(StringWriter writer);
 		protected abstract (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text);
 
-		private static string MakeIfStatement(string name, KeyValuePair<ConcreteSymbol, DfaState> pair, string defaultState, Func<string, string> makeState, ref bool needsBreak) {
+		private static string MakeIfStatement(string name, KeyValuePair<ConcreteSymbol, DfaState> pair, string defaultState, Func<string, string> makeState, ref bool needsExit) {
 			string expression = pair.Key.MakeExpression("ch_");
-			string statement = $"if({expression}){{";
 			string targetState = makeState(pair.Value.Name);
-			string s = name == pair.Value.Name ? "continue" : $"state_={targetState}";
-			statement += pair.Value.SaveForAcceptance == 0 ? "" : $"saves_[-{pair.Value.SaveForAcceptance}]=reader_.Position;";
-			if (pair.Value.Acceptance == 0) {
-				if (pair.Key is BolSymbol) {
-					s += $";goto case {targetState}";
-				} else {
-					needsBreak |= s != "continue";
-				}
-				return $"{statement}{s};}}";
-			} else {
-				string savesStatement = $"saves_[{pair.Value.Acceptance}]=reader_.Position;";
-				if (pair.Value.Transitions.Any()) {
-					needsBreak |= s != "continue";
-					return $"{statement}{savesStatement}{s};}}";
-				} else {
-					return $"{statement}{savesStatement}state_={defaultState};goto case {defaultState};}}";
-				}
+			var statement = new StringBuilder("if(").Append(expression).Append("){");
+			if (pair.Value.SaveForAcceptance != 0) {
+				statement.Append("saves_[-").Append(pair.Value.SaveForAcceptance).Append("]=reader_.Position;");
 			}
+			if (pair.Value.Acceptance != 0) {
+				statement.Append("saves_[").Append(pair.Value.Acceptance).Append("]=reader_.Position;");
+			}
+			if (pair.Value.Acceptance == 0 || pair.Value.Transitions.Any()) {
+				if (name != pair.Value.Name) {
+					statement.Append("state_=").Append(targetState);
+				}
+				if (pair.Key is BolSymbol) {
+					statement.Append(";goto case ").Append(targetState);
+				} else {
+					needsExit = true;
+				}
+			} else {
+				statement.Append("goto case ").Append(defaultState);
+			}
+			statement.Append(";}");
+			return statement.ToString();
 		}
 
 		protected bool MakeNamedExpression(string line, Regex namedExpressionRx) {
@@ -87,8 +89,8 @@ namespace Lad {
 			startState.Dump(sb);
 			Console.Error.WriteLine(sb.ToString());
 			writer.WriteLine("if(reader_==null)reader_=new Reader_(reader);");
-			writer.WriteLine($"var state_={makeState(startState.Name)};Dictionary<int,int>saves_=new Dictionary<int,int>();");
-			writer.WriteLine($"System.Func<KeyValuePair<int,int>,int>fn_=p=>{valueMultiplier}*p.Value-p.Key;");
+			string startStateName = makeState(startState.Name);
+			writer.WriteLine($"var state_={startStateName};");
 			writer.WriteLine("for(;;){");
 			writer.WriteLine("int ch_=reader_.Read();");
 			writer.WriteLine("switch(state_){");
@@ -96,7 +98,7 @@ namespace Lad {
 			writer.WriteLine($"case {defaultState}:");
 			writer.WriteLine("var longest_=saves_.Where(p=>p.Key>0).Aggregate(new KeyValuePair<int,int>(int.MaxValue,1),(a,b)=>a.Value<b.Value?b:b.Value<a.Value?a:a.Key<b.Key?a:b);");
 			writer.WriteLine("if(!saves_.TryGetValue(-longest_.Key,out int consumptionValue))consumptionValue=longest_.Value;");
-			writer.WriteLine("string tokenValue=reader_.Consume(consumptionValue);");
+			writer.WriteLine($"string tokenValue=reader_.Consume(consumptionValue);saves_.Clear();state_={startStateName};");
 			writer.WriteLine("if(!tokenValue.Any())return default;");
 			writer.WriteLine("switch(longest_.Key){");
 		}
@@ -134,15 +136,15 @@ namespace Lad {
 				hashSet.Add(dfa.Name);
 				if (dfa.Transitions.Any()) {
 					writer.WriteLine($"case {makeState(dfa.Name)}:");
-					bool needsBreak = false;
-					IEnumerable<string> ifs = dfa.Transitions.OrderBy(p => p.Key.Order).Select(p => MakeIfStatement(dfa.Name, p, defaultState, makeState, ref needsBreak));
+					bool needsExit = false;
+					IEnumerable<string> ifs = dfa.Transitions.OrderBy(p => p.Key.Order).Select(p => MakeIfStatement(dfa.Name, p, defaultState, makeState, ref needsExit));
 					string s = string.Join("else ", ifs);
 					if (dfa.Transitions.All(p => p.Key is not AnySymbol)) {
-						s += $"else{{state_={defaultState};goto case {defaultState};}}";
+						s += $"else goto case {defaultState};";
 					}
 					writer.WriteLine(s);
-					if (needsBreak) {
-						writer.WriteLine("break;");
+					if (needsExit) {
+						writer.WriteLine("continue;");
 					}
 					foreach (KeyValuePair<ConcreteSymbol, DfaState> transition in dfa.Transitions) {
 						WriteTransitions(transition.Value, hashSet, defaultState, makeState, writer);

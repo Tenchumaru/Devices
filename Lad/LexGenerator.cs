@@ -82,12 +82,12 @@ namespace Lad {
 			}
 			writer.Write(bones[0]);
 			if (options.NamespaceName != null) {
-				writer.WriteLine($"namespace {options.NamespaceName} {{");
+				writer.WriteLine($"namespace {options.NamespaceName}{{");
 			}
-			writer.WriteLine($"{options.ScannerClassAccess} partial class {options.ScannerClassName} {{");
+			writer.WriteLine($"{options.ScannerClassAccess} partial class {options.ScannerClassName}{{");
 			writer.Write(sectionOneCode.ToString());
 			writer.Write(bones[1]);
-			writer.WriteLine("internal Token Read() {");
+			writer.WriteLine("internal Token Read(){");
 		}
 
 		protected override void WriteFooter(StringWriter writer) {
