@@ -85,16 +85,13 @@ namespace Lad {
 				}
 				codes.Add(switchSection.Statements.ToFullString());
 			}
-			var r = from g in firstSwitch.DescendantNodes().OfType<GotoStatementSyntax>()
-							where g.Expression is not null && labelTexts.ContainsKey(g.Expression.ToString())
-							select g;
-			foreach (var item in firstSwitch.DescendantNodes().OfType<GotoStatementSyntax>()) {
-				var expression = item.Expression?.ToString();
-				if (expression is not null && labelTexts.ContainsKey(expression)) {
-					codes = codes.Select(s => s.Replace(item.ToString(), $"goto case {labelTexts[expression] + 1};")).ToList();
+			if (!isDebug) {
+				foreach (var item in firstSwitch.DescendantNodes().OfType<GotoStatementSyntax>()) {
+					var expression = item.Expression?.ToString();
+					if (expression is not null && labelTexts.ContainsKey(expression)) {
+						codes = codes.Select(s => s.Replace(item.ToString(), $"goto case {labelTexts[expression] + 1};")).ToList();
+					}
 				}
-				var s = item.ToString();
-				var span = item.Span;
 			}
 			if (defaultIndex.HasValue) {
 				defaultCode = codes[defaultIndex.Value];

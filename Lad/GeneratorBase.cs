@@ -4,19 +4,23 @@ using System.Text.RegularExpressions;
 namespace Lad {
 	internal abstract class GeneratorBase {
 		protected readonly Dictionary<string, Nfa> namedExpressions = new();
-		protected Options options;
-		protected string[] bones;
+		protected readonly string[] bones;
+		protected readonly bool isDebug;
+		private readonly string? inputFilePath;
+		private readonly string? outputFilePath;
 
 		protected GeneratorBase(Options options) {
 			// Derivations parse options in their constructors.
-			this.options = options;
+			inputFilePath = options.InputFilePath;
+			outputFilePath = options.OutputFilePath;
+			isDebug = options.IsDebug;
 			string skeleton = Properties.Resources.Skeleton;
 			var parts = skeleton.Split('$');
 			bones = parts.Select(s => s[..(s.LastIndexOf('\n') + 1)]).ToArray();
 		}
 
 		public bool Generate() {
-			string text = options.InputFilePath == null ? Console.In.ReadToEnd() : File.ReadAllText(options.InputFilePath);
+			string text = inputFilePath == null ? Console.In.ReadToEnd() : File.ReadAllText(inputFilePath);
 			(IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) = ProcessInput(text);
 			if (rules == null || codes == null) {
 				return false;
@@ -26,7 +30,7 @@ namespace Lad {
 			WriteStateMachine(rules.GroupBy(p => p.Value).Select(CombineNfas), writer);
 			WriteActions(codes, writer);
 			WriteFooter(writer);
-			WriteOutput(writer, options.OutputFilePath);
+			WriteOutput(writer, outputFilePath);
 			return true;
 		}
 
@@ -82,8 +86,8 @@ namespace Lad {
 			int valueMultiplier = array.Length + 1;
 			Nfa nfa = Nfa.Or(array);
 			(DfaState startState, Dictionary<string, int> caseValues) = nfa.MakeDfa();
-			string defaultState = options.IsDebug ? "null" : "0";
-			string makeState(string s) => options.IsDebug ? $"\"{s}\"" : $"{caseValues[s]}";
+			string defaultState = isDebug ? "null" : "0";
+			string makeState(string s) => isDebug ? $"\"{s}\"" : $"{caseValues[s]}";
 			Console.Error.WriteLine("DFA:");
 			StringBuilder sb = new();
 			startState.Dump(sb);

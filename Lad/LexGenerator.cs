@@ -8,8 +8,20 @@ namespace Lad {
 		private readonly StringBuilder sectionOneCode = new();
 		private readonly StringBuilder moreCode = new();
 		private readonly int? tabStop;
+		private readonly List<string> defineDirectives;
+		private readonly List<string> additionalUsingDirectives;
+		private readonly string? namespaceName;
+		private readonly string scannerClassAccess;
+		private readonly string scannerClassName;
 
-		public LexGenerator(Options options) : base(options) => tabStop = options.TabStop;
+		public LexGenerator(Options options) : base(options) {
+			tabStop = options.TabStop;
+			defineDirectives = options.DefineDirectives;
+			additionalUsingDirectives = options.AdditionalUsingDirectives;
+			namespaceName = options.NamespaceName;
+			scannerClassAccess = options.ScannerClassAccess;
+			scannerClassName = options.ScannerClassName;
+		}
 
 		protected override (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text) {
 			string[] lines = text.Split('\n').Select(s => s.TrimEnd()).ToArray();
@@ -74,17 +86,17 @@ namespace Lad {
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
-			foreach (var directive in options.DefineDirectives) {
+			foreach (var directive in defineDirectives) {
 				writer.WriteLine(directive);
 			}
-			foreach (var directive in options.AdditionalUsingDirectives) {
+			foreach (var directive in additionalUsingDirectives) {
 				writer.WriteLine(directive);
 			}
 			writer.Write(bones[0]);
-			if (options.NamespaceName != null) {
-				writer.WriteLine($"namespace {options.NamespaceName}{{");
+			if (namespaceName != null) {
+				writer.WriteLine($"namespace {namespaceName}{{");
 			}
-			writer.WriteLine($"{options.ScannerClassAccess} partial class {options.ScannerClassName}{{");
+			writer.WriteLine($"{scannerClassAccess} partial class {scannerClassName}{{");
 			writer.Write(sectionOneCode.ToString());
 			writer.Write(bones[1]);
 			writer.WriteLine("internal Token Read(){");
@@ -94,7 +106,7 @@ namespace Lad {
 			writer.WriteLine(bones[2]);
 			writer.Write(moreCode.ToString());
 			writer.WriteLine(bones[3]);
-			if (options.NamespaceName != null) {
+			if (namespaceName != null) {
 				writer.WriteLine('}');
 			}
 		}
