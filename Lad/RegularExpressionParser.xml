@@ -23,19 +23,6 @@
 			<action />
 		</rule>
 		<rule name="rx">
-			<literal value="^" />
-			<action><![CDATA[result = new Nfa(BolSymbol.Value);]]></action>
-		</rule>
-		<rule name="rx">
-			<literal value="$" />
-			<action><![CDATA[result = new Nfa(EolSymbol.Value);]]></action>
-		</rule>
-		<rule name="rx">
-			<literal value="^" />
-			<literal value="$" />
-			<action><![CDATA[result = new Nfa(BolSymbol.Value) + new Nfa(EolSymbol.Value);]]></action>
-		</rule>
-		<rule name="rx">
 			<nonterminal name="slash" />
 			<action><![CDATA[result = $1;]]></action>
 		</rule>
@@ -47,13 +34,13 @@
 		<rule name="rx">
 			<nonterminal name="slash" />
 			<literal value="$" />
-			<action><![CDATA[result = $1 + new Nfa(EolSymbol.Value);]]></action>
+			<action><![CDATA[result = $1 / new Nfa(new SimpleSymbol('\n'));]]></action>
 		</rule>
 		<rule name="rx">
 			<literal value="^" />
 			<nonterminal name="slash" />
 			<literal value="$" />
-			<action><![CDATA[result = new Nfa(BolSymbol.Value) + $2 + new Nfa(EolSymbol.Value);]]></action>
+			<action><![CDATA[result = (new Nfa(BolSymbol.Value) + $2) / new Nfa(new SimpleSymbol('\n'));]]></action>
 		</rule>
 		<rule name="slash">
 			<nonterminal name="choice" />

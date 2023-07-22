@@ -152,16 +152,20 @@ namespace Lad {
 			return new EpsilonClosure(string.Join(", ", numbers), closure, saveForAcceptance);
 		}
 
-		public void SetSavePointValue(int acceptanceValue, HashSet<NfaState> nfaStates) {
+		public bool SetSavePointValue(int acceptanceValue, HashSet<NfaState> nfaStates) {
 			if (!nfaStates.Contains(this)) {
 				nfaStates.Add(this);
 				foreach (var pair in transitions) {
 					if (pair.Key is EpsilonSymbol epsilon && epsilon.IsSavePoint) {
 						epsilon.SaveForAcceptance = acceptanceValue;
+						return true;
 					}
-					pair.Value.SetSavePointValue(acceptanceValue, nfaStates);
+					if(pair.Value.SetSavePointValue(acceptanceValue, nfaStates)) {
+						return true;
+					}
 				}
 			}
+			return false;
 		}
 
 		private class EpsilonClosure {

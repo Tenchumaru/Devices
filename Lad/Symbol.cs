@@ -130,16 +130,6 @@ namespace Lad {
 		public override string ToString() => "(bol)";
 	}
 
-	public class EolSymbol : ConcreteSymbol {
-		public static readonly EolSymbol Value = new();
-
-		private EolSymbol() { }
-
-		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
-
-		public override string ToString() => "(eol)";
-	}
-
 	public class RangeSymbol : ConcreteSymbol {
 		public override int Order => 2;
 		private readonly BitArray includedCharacters = new(char.MaxValue + 1);
