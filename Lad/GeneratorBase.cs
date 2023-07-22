@@ -37,10 +37,15 @@ namespace Lad {
 		private static string MakeIfStatement(string name, KeyValuePair<ConcreteSymbol, DfaState> pair, string defaultState, Func<string, string> makeState, ref bool needsBreak) {
 			string expression = pair.Key.MakeExpression("ch_");
 			string statement = $"if({expression}){{";
-			string s = name == pair.Value.Name ? "continue" : $"state_={makeState(pair.Value.Name)}";
+			string targetState = makeState(pair.Value.Name);
+			string s = name == pair.Value.Name ? "continue" : $"state_={targetState}";
 			statement += pair.Value.SaveForAcceptance == 0 ? "" : $"saves_[-{pair.Value.SaveForAcceptance}]=reader_.Position;";
 			if (pair.Value.Acceptance == 0) {
-				needsBreak |= s != "continue";
+				if (pair.Key is BolSymbol) {
+					s += $";goto case {targetState}";
+				} else {
+					needsBreak |= s != "continue";
+				}
 				return $"{statement}{s};}}";
 			} else {
 				string savesStatement = $"saves_[{pair.Value.Acceptance}]=reader_.Position;";

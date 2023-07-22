@@ -58,7 +58,7 @@ namespace Lad {
 
 		public virtual string MakeExpression(string name) => throw new NotImplementedException();
 
-		internal virtual bool IsIn(Symbol symbol) => false;
+		internal virtual bool IsIn(Symbol that) => false;
 	}
 
 	public class AcceptingSymbol : ConcreteSymbol {
@@ -88,12 +88,12 @@ namespace Lad {
 
 		public override string MakeExpression(string name) => includesNewLine ? "true" : $"{name}!='\\n'";
 
-		internal override bool IsIn(Symbol symbol) {
-			if (symbol == Value) {
+		internal override bool IsIn(Symbol that) {
+			if (that == Value) {
 				return true;
-			} else if (symbol == WithoutNewLine) {
+			} else if (that == WithoutNewLine) {
 				return this == WithoutNewLine;
-			} else if (symbol is RangeSymbol range) {
+			} else if (that is RangeSymbol range) {
 				RangeSymbol anyRange = includesNewLine ? new(char.MinValue, char.MaxValue) : ~new RangeSymbol('\n');
 				return anyRange.IsIn(range);
 			}
@@ -121,9 +121,22 @@ namespace Lad {
 	}
 
 	public class BolSymbol : ConcreteSymbol {
+		public override int Order => 0;
 		public static readonly BolSymbol Value = new();
 
 		private BolSymbol() { }
+
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+			return that as BolSymbol;
+		}
+
+		internal override bool IsIn(Symbol that) {
+			return that is BolSymbol;
+		}
+
+		public override string MakeExpression(string name) {
+			return "reader_.IsAtBol";
+		}
 
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
@@ -219,16 +232,16 @@ namespace Lad {
 
 		internal bool Includes(char value) => includedCharacters[value];
 
-		internal override bool IsIn(Symbol symbol) {
-			if (symbol == AnySymbol.Value) {
+		internal override bool IsIn(Symbol that) {
+			if (that == AnySymbol.Value) {
 				return true;
-			} else if (symbol == AnySymbol.WithoutNewLine) {
+			} else if (that == AnySymbol.WithoutNewLine) {
 				return includedCharacters['\n'];
-			} else if (symbol is RangeSymbol range) {
+			} else if (that is RangeSymbol range) {
 				BitArray combined = new(includedCharacters);
 				combined = combined.And(range.includedCharacters);
 				return combined.Cast<bool>().SequenceEqual(includedCharacters.Cast<bool>());
-			} else if (symbol is SimpleSymbol simple) {
+			} else if (that is SimpleSymbol simple) {
 				if (!includedCharacters[simple.Value]) {
 					return false;
 				}
@@ -290,15 +303,15 @@ namespace Lad {
 
 		public override string MakeExpression(string name) => $"{name}=={this}";
 
-		internal override bool IsIn(Symbol symbol) {
-			if (symbol == AnySymbol.Value) {
+		internal override bool IsIn(Symbol that) {
+			if (that == AnySymbol.Value) {
 				return true;
-			} else if (symbol == AnySymbol.WithoutNewLine) {
+			} else if (that == AnySymbol.WithoutNewLine) {
 				return Value != '\n';
-			} else if (symbol is RangeSymbol range) {
+			} else if (that is RangeSymbol range) {
 				return range.Includes(Value);
-			} else if (symbol is SimpleSymbol that) {
-				return Value == that.Value;
+			} else if (that is SimpleSymbol simple) {
+				return Value == simple.Value;
 			}
 			return false;
 		}
