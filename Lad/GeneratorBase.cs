@@ -2,13 +2,17 @@
 using System.Text.RegularExpressions;
 
 namespace Lad {
-	internal abstract class GeneratorBase<T> {
+	internal abstract class GeneratorBase {
 		protected readonly Dictionary<string, Nfa> namedExpressions = new();
 		protected Options options;
+		protected string[] bones;
 
 		protected GeneratorBase(Options options) {
 			// Derivations parse options in their constructors.
 			this.options = options;
+			string skeleton = Properties.Resources.Skeleton;
+			var parts = skeleton.Split('$');
+			bones = parts.Select(s => s[..(s.LastIndexOf('\n') + 1)]).ToArray();
 		}
 
 		public bool Generate() {
@@ -18,16 +22,16 @@ namespace Lad {
 				return false;
 			}
 			StringWriter writer = new();
-			T state = WriteHeader(writer);
+			WriteHeader(writer);
 			WriteStateMachine(rules.GroupBy(p => p.Value).Select(CombineNfas), writer);
 			WriteActions(codes, writer);
-			WriteFooter(state, writer);
+			WriteFooter(writer);
 			WriteOutput(writer, options.OutputFilePath);
 			return true;
 		}
 
-		protected abstract void WriteFooter(T state, StringWriter writer);
-		protected abstract T WriteHeader(StringWriter writer);
+		protected abstract void WriteFooter(StringWriter writer);
+		protected abstract void WriteHeader(StringWriter writer);
 		protected abstract (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text);
 
 		private static string MakeIfStatement(string name, KeyValuePair<ConcreteSymbol, DfaState> pair, string defaultState, Func<string, string> makeState, ref bool needsBreak) {

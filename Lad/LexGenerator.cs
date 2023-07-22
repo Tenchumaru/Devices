@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 
 namespace Lad {
-	internal class LexGenerator : GeneratorBase<string[]>, IGenerator {
+	internal class LexGenerator : GeneratorBase, IGenerator {
 		private readonly Regex continuationRx = new(@"\s*\|");
 		private readonly Regex namedExpressionRx = new(@"^([A-Za-z]\w+)\s+(.+)");
 		private readonly StringBuilder sectionOneCode = new();
@@ -73,31 +73,27 @@ namespace Lad {
 			return foundError ? default : (rules, codes.Select(s => s.ToString()));
 		}
 
-		protected override string[] WriteHeader(StringWriter writer) {
+		protected override void WriteHeader(StringWriter writer) {
 			foreach (var directive in options.DefineDirectives) {
 				writer.WriteLine(directive);
 			}
 			foreach (var directive in options.AdditionalUsingDirectives) {
 				writer.WriteLine(directive);
 			}
-			string skeleton = Properties.Resources.Skeleton;
-			var parts = skeleton.Split('$');
-			int index = parts[0].LastIndexOf('\n');
-			writer.Write(parts[0][..(index + 1)]);
+			writer.Write(bones[0]);
 			if (options.NamespaceName != null) {
 				writer.WriteLine($"namespace {options.NamespaceName} {{");
 			}
 			writer.WriteLine($"{options.ScannerClassAccess} partial class {options.ScannerClassName} {{");
 			writer.Write(sectionOneCode.ToString());
-			index = parts[1].LastIndexOf('\n');
-			writer.Write(parts[1][..(index + 1)]);
-			return parts;
+			writer.Write(bones[1]);
+			writer.WriteLine("internal Token Read() {");
 		}
 
-		protected override void WriteFooter(string[] parts, StringWriter writer) {
-			writer.WriteLine(parts[2]);
+		protected override void WriteFooter(StringWriter writer) {
+			writer.WriteLine(bones[2]);
 			writer.Write(moreCode.ToString());
-			writer.WriteLine(parts[3]);
+			writer.WriteLine(bones[3]);
 			if (options.NamespaceName != null) {
 				writer.WriteLine('}');
 			}

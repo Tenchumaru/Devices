@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Lad {
-	internal class InlineGenerator : GeneratorBase<int>, IGenerator {
+	internal class InlineGenerator : GeneratorBase, IGenerator {
 		private string? defaultCode;
 		private string? methodDeclarationText;
 		private string? classDeclarationText;
@@ -11,42 +11,24 @@ namespace Lad {
 
 		public InlineGenerator(Options options) : base(options) { }
 
-		protected override void WriteFooter(int nnamespaces, StringWriter writer) {
+		protected override void WriteFooter(StringWriter writer) {
 			if (defaultCode is not null) {
 				writer.WriteLine("default:");
 				writer.WriteLine(defaultCode);
 			}
-			writer.WriteLine("}break;}}}}");
-			while (--nnamespaces >= 0) {
-				writer.WriteLine('}');
-			}
+			writer.Write(bones[2]);
+			writer.Write(bones[3]);
+			writer.WriteLine(new string('}', namespaceNames.Length));
 		}
 
-		protected override int WriteHeader(StringWriter writer) {
-			writer.WriteLine("using System.Collections.Generic;");
-			writer.WriteLine("using System.Linq;");
+		protected override void WriteHeader(StringWriter writer) {
+			writer.Write(bones[0]);
 			foreach (string namespaceName in namespaceNames) {
 				writer.WriteLine($"namespace {namespaceName}{{");
 			}
-			writer.WriteLine($"{classDeclarationText}{{");
-			writer.WriteLine("private class Reader_{");
-			writer.WriteLine("internal int Position=>index;");
-			writer.WriteLine("private IEnumerator<char>enumerator;");
-			writer.WriteLine("private System.Text.StringBuilder buffer=new System.Text.StringBuilder();");
-			writer.WriteLine("private int index=0;");
-			writer.WriteLine("internal string Consume(int position){");
-			writer.WriteLine("index=0;position=System.Math.Min(position,buffer.Length);if(position==0)return\"\";");
-			writer.WriteLine("var s=buffer.ToString(0,position);buffer.Remove(0,position);return s;}");
-			writer.WriteLine("internal int Read(){");
-			writer.WriteLine("if(index<buffer.Length)return buffer[index++];");
-			writer.WriteLine("if(enumerator.MoveNext()){buffer.Append(enumerator.Current);return buffer[index++];}");
-			writer.WriteLine("return-1;}");
-			writer.WriteLine("internal Reader_(IEnumerable<char>reader){enumerator=reader.GetEnumerator();}");
-			writer.WriteLine("internal Reader_(System.IO.TextReader reader){enumerator=Enumerable.");
-			writer.WriteLine("Repeat<System.Func<int>>(reader.Read,int.MaxValue).Select(f=>f()).TakeWhile(v=>v>=0).Cast<char>().GetEnumerator();}");
-			writer.WriteLine("}private Reader_ reader_;");
+			writer.Write($"{classDeclarationText}{{");
+			writer.Write(bones[1]);
 			writer.WriteLine($"{methodDeclarationText}{{");
-			return namespaceNames.Length;
 		}
 
 		protected override (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text) {
