@@ -20,8 +20,7 @@ internal Reader_(IEnumerable<char>reader){enumerator=reader.GetEnumerator();}
 internal Reader_(System.IO.TextReader reader){enumerator=Enumerable.Repeat<System.Func<int>>(reader.Read,int.MaxValue).
 Select(f=>f()).TakeWhile(v=>v>=0).Select(v=>(char)v).GetEnumerator();}
 }private Reader_ reader_;
-private Dictionary<int,int>saves_=new Dictionary<int,int>();
-internal Token Read() {{switch(index){case 0:{ // state machine and rule actions $
+internal Token Read() {{switch(index){case 0:{ // method declaration, state machine, and rule actions $
 }break;}}}
 // additional code (section three) $
 #if WANTS_MAIN

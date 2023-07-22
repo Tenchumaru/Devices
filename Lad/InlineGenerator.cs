@@ -4,19 +4,12 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Lad {
 	internal class InlineGenerator : GeneratorBase, IGenerator {
-		private string? defaultCode;
-		private string? methodDeclarationText;
 		private string? classDeclarationText;
 		private string[] namespaceNames = Array.Empty<string>();
 
 		public InlineGenerator(Options options) : base(options) { }
 
 		protected override void WriteFooter(StringWriter writer) {
-			if (defaultCode is not null) {
-				writer.WriteLine("default:");
-				writer.WriteLine(defaultCode);
-			}
-			writer.Write(bones[2]);
 			writer.Write(bones[3]);
 			writer.WriteLine(new string('}', namespaceNames.Length));
 		}
@@ -28,43 +21,56 @@ namespace Lad {
 			}
 			writer.Write($"{classDeclarationText}{{");
 			writer.Write(bones[1]);
-			writer.WriteLine($"{methodDeclarationText}{{");
 		}
 
-		protected override (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text) {
-			bool foundError = false;
+		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
 			Dictionary<Nfa, int> rules = new();
 			List<string> codes = new();
 			CompilationUnitSyntax root = CSharpSyntaxTree.ParseText(text).GetCompilationUnitRoot();
-			var firstSwitch = root.DescendantNodes().OfType<SwitchStatementSyntax>().FirstOrDefault();
-			if (firstSwitch == null) {
-				Console.Error.WriteLine("Cannot find switch statement");
-				return default;
-			}
-			var classDeclaration = firstSwitch.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+			var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
 			if (classDeclaration == null) {
-				Console.Error.WriteLine("No enclosing class");
+				Console.Error.WriteLine("No class in file");
 				return default;
 			}
-			var methodDeclaration = firstSwitch.Ancestors().OfType<MethodDeclarationSyntax>().First();
-			methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodDeclaration.Identifier}()";
 			classDeclarationText = $"{classDeclaration.Modifiers} class {classDeclaration.Identifier.Value}";
 			namespaceNames = classDeclaration.Ancestors().OfType<NamespaceDeclarationSyntax>().Select(n => n.Name.ToString()).Reverse().ToArray();
-			var q = from a in firstSwitch.Ancestors().OfType<ClassDeclarationSyntax>()
-							from f in a.DescendantNodes().OfType<FieldDeclarationSyntax>()
+			var methodDeclarations = classDeclaration.DescendantNodes().OfType<MethodDeclarationSyntax>().ToArray();
+			if (!methodDeclarations.Any()) {
+				Console.Error.WriteLine("No methods in class");
+				return default;
+			}
+			var q = from f in classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>()
 							from v in f.Declaration.Variables
 							let i = v.Initializer
 							where i is not null
 							select (v.Identifier.ToString(), i.Value.ToString());
+			bool foundError = false;
 			foreach ((string name, string rx) in q) {
 				RegularExpressionParser parser = new(new RegularExpressionScanner(rx[1..^1]), namedExpressions);
 				if (parser.Parse()) {
 					namedExpressions.Add(name, parser.Result);
 				} else {
-					Console.Error.WriteLine($"failed to parse named regular expression");
+					Console.Error.WriteLine($"failed to parse named regular expression '{name}'");
 					foundError = true;
 				}
 			}
+			StateMachine?[] stateMachines = methodDeclarations.Select(ProcessMethod).ToArray();
+			if (foundError || stateMachines.Any(s => s is null)) {
+				return default;
+			}
+			return stateMachines!;
+		}
+
+		private StateMachine? ProcessMethod(MethodDeclarationSyntax methodDeclaration) {
+			bool foundError = false;
+			Dictionary<Nfa, int> rules = new();
+			List<string> codes = new();
+			var firstSwitch = methodDeclaration.DescendantNodes().OfType<SwitchStatementSyntax>().FirstOrDefault();
+			if (firstSwitch == null) {
+				Console.Error.WriteLine("Cannot find switch statement");
+				return default;
+			}
+			string methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodDeclaration.Identifier}()";
 			Dictionary<string, int> labelTexts = new();
 			int? defaultIndex = null;
 			foreach (var switchSection in firstSwitch.Sections) {
@@ -72,11 +78,12 @@ namespace Lad {
 					if (switchLabel is CaseSwitchLabelSyntax caseSwitchLabel) {
 						var labelText = caseSwitchLabel.Value.ToString();
 						labelTexts.Add(labelText, codes.Count);
-						RegularExpressionParser parser = new(new RegularExpressionScanner(labelText[1..^1]), namedExpressions);
+						string value = labelText[1..^1];
+						RegularExpressionParser parser = new(new RegularExpressionScanner(value), namedExpressions);
 						if (parser.Parse()) {
 							rules.Add(parser.Result, codes.Count);
 						} else {
-							Console.Error.WriteLine($"failed to parse regular expression");
+							Console.Error.WriteLine($"failed to parse regular expression '{value}'");
 							foundError = true;
 						}
 					} else if (switchLabel is DefaultSwitchLabelSyntax) {
@@ -93,10 +100,8 @@ namespace Lad {
 					}
 				}
 			}
-			if (defaultIndex.HasValue) {
-				defaultCode = codes[defaultIndex.Value];
-			}
-			return foundError ? default : (rules, codes);
+			string? defaultCode = defaultIndex.HasValue ? codes[defaultIndex.Value] : null;
+			return foundError ? default : new StateMachine(methodDeclarationText, rules, codes, defaultCode);
 		}
 	}
 }

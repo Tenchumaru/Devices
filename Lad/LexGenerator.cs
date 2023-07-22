@@ -23,7 +23,7 @@ namespace Lad {
 			scannerClassName = options.ScannerClassName;
 		}
 
-		protected override (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text) {
+		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
 			string[] lines = text.Split('\n').Select(s => s.TrimEnd()).ToArray();
 			bool foundError = false;
 			Dictionary<Nfa, int> rules = new();
@@ -82,7 +82,7 @@ namespace Lad {
 						break;
 				}
 			}
-			return foundError ? default : (rules, codes.Select(s => s.ToString()));
+			return foundError ? default : new[] { new StateMachine("internal Token Read()", rules, codes.Select(s => s.ToString()), null) };
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
@@ -99,16 +99,31 @@ namespace Lad {
 			writer.WriteLine($"{scannerClassAccess} partial class {scannerClassName}{{");
 			writer.Write(sectionOneCode.ToString());
 			writer.Write(bones[1]);
-			writer.WriteLine("internal Token Read(){");
 		}
 
 		protected override void WriteFooter(StringWriter writer) {
-			writer.WriteLine(bones[2]);
 			writer.Write(moreCode.ToString());
 			writer.WriteLine(bones[3]);
 			if (namespaceName != null) {
 				writer.WriteLine('}');
 			}
+		}
+
+		private bool MakeNamedExpression(string line, Regex namedExpressionRx) {
+			var match = namedExpressionRx.Match(line);
+			if (match is not null) {
+				if (match.Groups.Count == 3) {
+					var name = match.Groups[1].Value;
+					var rx = match.Groups[2].Value;
+					RegularExpressionParser parser = new(new RegularExpressionScanner(rx), namedExpressions);
+					if (parser.Parse()) {
+						namedExpressions.Add(name, parser.Result);
+						return true;
+					}
+				}
+			}
+			Console.Error.WriteLine($"cannot parse named expression");
+			return false;
 		}
 
 		private string? StartWithRegularExpression(string line, Dictionary<Nfa, int> rules, List<StringBuilder> codes) {

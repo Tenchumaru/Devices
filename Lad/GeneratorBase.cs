@@ -1,8 +1,21 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Lad {
 	internal abstract class GeneratorBase {
+		protected class StateMachine {
+			public string MethodDeclarationText;
+			public KeyValuePair<Nfa, int>[] Rules { get; }
+			public string[] Codes { get; }
+			public string? DefaultActionCode { get; }
+
+			public StateMachine(string methodDeclarationText, IEnumerable<KeyValuePair<Nfa, int>> rules, IEnumerable<string> codes, string? defaultActionCode) {
+				MethodDeclarationText = methodDeclarationText;
+				Rules = rules.ToArray();
+				Codes = codes.ToArray();
+				DefaultActionCode = defaultActionCode;
+			}
+		}
+
 		protected readonly Dictionary<string, Nfa> namedExpressions = new();
 		protected readonly string[] bones;
 		protected readonly bool isDebug;
@@ -21,14 +34,16 @@ namespace Lad {
 
 		public bool Generate() {
 			string text = inputFilePath == null ? Console.In.ReadToEnd() : File.ReadAllText(inputFilePath);
-			(IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) = ProcessInput(text);
-			if (rules == null || codes == null) {
+			IEnumerable<StateMachine>? stateMachines = ProcessInput(text);
+			if (stateMachines == null) {
 				return false;
 			}
 			StringWriter writer = new();
 			WriteHeader(writer);
-			WriteStateMachine(rules.GroupBy(p => p.Value).Select(CombineNfas), writer);
-			WriteActions(codes, writer);
+			foreach (var stateMachine in stateMachines) {
+				WriteStateMachine(stateMachine.MethodDeclarationText, stateMachine.Rules.GroupBy(p => p.Value).Select(CombineNfas), writer);
+				WriteActions(stateMachine, writer);
+			}
 			WriteFooter(writer);
 			WriteOutput(writer, outputFilePath);
 			return true;
@@ -36,7 +51,7 @@ namespace Lad {
 
 		protected abstract void WriteFooter(StringWriter writer);
 		protected abstract void WriteHeader(StringWriter writer);
-		protected abstract (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text);
+		protected abstract IEnumerable<StateMachine>? ProcessInput(string text);
 
 		private static string MakeIfStatement(string name, KeyValuePair<ConcreteSymbol, DfaState> pair, string defaultState, Func<string, string> makeState, ref bool needsExit) {
 			string expression = pair.Key.MakeExpression("ch_");
@@ -64,24 +79,7 @@ namespace Lad {
 			return statement.ToString();
 		}
 
-		protected bool MakeNamedExpression(string line, Regex namedExpressionRx) {
-			var match = namedExpressionRx.Match(line);
-			if (match is not null) {
-				if (match.Groups.Count == 3) {
-					var name = match.Groups[1].Value;
-					var rx = match.Groups[2].Value;
-					RegularExpressionParser parser = new(new RegularExpressionScanner(rx), namedExpressions);
-					if (parser.Parse()) {
-						namedExpressions.Add(name, parser.Result);
-						return true;
-					}
-				}
-			}
-			Console.Error.WriteLine($"cannot parse named expression");
-			return false;
-		}
-
-		protected void WriteStateMachine(IEnumerable<Nfa> nfas, StringWriter writer) {
+		private void WriteStateMachine(string methodDeclarationText, IEnumerable<Nfa> nfas, StringWriter writer) {
 			Nfa[] array = nfas.ToArray();
 			int valueMultiplier = array.Length + 1;
 			Nfa nfa = Nfa.Or(array);
@@ -92,6 +90,8 @@ namespace Lad {
 			StringBuilder sb = new();
 			startState.Dump(sb);
 			Console.Error.WriteLine(sb.ToString());
+			writer.WriteLine($"{methodDeclarationText}{{");
+			writer.WriteLine("Dictionary<int,int>saves_=new Dictionary<int,int>();");
 			writer.WriteLine("if(reader_==null)reader_=new Reader_(reader);");
 			string startStateName = makeState(startState.Name);
 			writer.WriteLine($"var state_={startStateName};");
@@ -107,23 +107,28 @@ namespace Lad {
 			writer.WriteLine("switch(longest_.Key){");
 		}
 
-		protected static void WriteActions(IEnumerable<string> codes, StringWriter writer) {
+		private void WriteActions(StateMachine stateMachine, StringWriter writer) {
 			writer.WriteLine("#pragma warning disable CS0162 // Unreachable code detected");
-			foreach ((string code, int ruleNumber) in codes.Select((s, i) => (s, i + 1))) {
+			foreach ((string code, int ruleNumber) in stateMachine.Codes.Select((s, i) => (s, i + 1))) {
 				writer.WriteLine($"case {ruleNumber}:");
 				writer.WriteLine(code);
 				writer.WriteLine("break;");
 			}
+			if (stateMachine.DefaultActionCode is not null) {
+				writer.WriteLine("default:");
+				writer.WriteLine(stateMachine.DefaultActionCode);
+			}
+			writer.Write(bones[2]);
 			writer.WriteLine("#pragma warning restore CS0162 // Unreachable code detected");
 		}
 
-		protected static void WriteOutput(StringWriter writer, string? outputFilePath) {
+		private static void WriteOutput(StringWriter writer, string? outputFilePath) {
 			using TextWriter streamWriter = outputFilePath == null ? Console.Out : new StreamWriter(outputFilePath, false);
 			string s = writer.ToString();
 			streamWriter.Write(s);
 		}
 
-		protected static Nfa CombineNfas(IGrouping<int, KeyValuePair<Nfa, int>> groups) {
+		private static Nfa CombineNfas(IGrouping<int, KeyValuePair<Nfa, int>> groups) {
 			var rv = Nfa.Or(groups.Select(p => p.Key).ToArray());
 			int acceptanceValue = groups.Key + 1;
 			Console.Error.WriteLine($"for acceptance value {acceptanceValue}:");
