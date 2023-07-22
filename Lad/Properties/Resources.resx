@@ -117,52 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AcceptingFinalState" xml:space="preserve">
-    <value>L{1}i{0}_:
-accept_ = {2};
-yy.Save();
-M{1}i{0}_:
-{3}</value>
-  </data>
-  <data name="AcceptingState" xml:space="preserve">
-    <value>L{1}i{0}_:
-accept_ = {2};
-yy.Save();
-M{1}i{0}_:
-switch(ch_ = yy.Get())
-{{
-{3}
-}}</value>
-  </data>
-  <data name="NonAcceptingFinalState" xml:space="preserve">
-    <value>L{1}i{0}_:
-M{1}i{0}_:
-{2}</value>
-  </data>
-  <data name="NonAcceptingState" xml:space="preserve">
-    <value>L{1}i{0}_:
-M{1}i{0}_:
-switch(ch_ = yy.Get())
-{{
-{2}
-}}</value>
-  </data>
-  <data name="Prologue" xml:space="preserve">
-    <value>int ch_, accept_ = -1;
-goto M0i{0}_;
-done_:
-yy.Restore();
-#pragma warning disable 162
-switch(accept_)
-{{
-{1}
-case -1: goto X{0}_;
-}}
-accept_ = -1;
-#pragma warning restore 162</value>
-  </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="Skeleton" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Properties\Skeleton.cs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
+    <value>Skeleton.cs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
   </data>
 </root>

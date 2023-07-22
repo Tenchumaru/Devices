@@ -8,3 +8,4 @@ x64/
 *.g.cs
 *.sw[op]
 *.user
+Resources.Designer.cs

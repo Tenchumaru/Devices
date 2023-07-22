@@ -1,222 +1,336 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Lad {
 	public abstract class Symbol : IEquatable<Symbol> {
-		public static bool operator ==(Symbol left, Symbol right) {
-			if (left is null)
-				return right is null;
-			return left.Equals(right);
+		public virtual Symbol MakeDegenerate() => this;
+		public static bool operator ==(Symbol? left, Symbol? right) => left is null ? right is null : left.Equals(right);
+
+		public static bool operator !=(Symbol? left, Symbol? right) => !(left == right);
+
+		public virtual bool Equals(Symbol? other) => other is not null && GetType() == other.GetType() && ToString() == other.ToString();
+
+		public override bool Equals(object? obj) {
+			Symbol? that = obj as Symbol;
+			return that is not null && Equals(that);
 		}
 
-		public static bool operator !=(Symbol left, Symbol right) {
-			return !(left == right);
-		}
+		public override int GetHashCode() => ToString().GetHashCode();
 
-		public virtual bool Equals(Symbol other) {
-			return other is object && GetType() == other.GetType() && ToString() == other.ToString();
-		}
-
-		public override bool Equals(object obj) {
-			var that = obj as Symbol;
-			return that != null && Equals(that);
-		}
-
-		public override int GetHashCode() {
-			return ToString().GetHashCode();
-		}
+		public abstract override string ToString();
 	}
 
 	public class EpsilonSymbol : Symbol {
-		public static readonly EpsilonSymbol Value = new EpsilonSymbol();
+		public bool IsSavePoint { get; set; }
+		public int SaveForAcceptance { get; set; }
 
-		private EpsilonSymbol() {
-		}
-
-		public override bool Equals(Symbol other) {
-			return object.ReferenceEquals(this, other);
-		}
-
-		public override string ToString() {
-			return "(epsilon)";
-		}
+		public override string ToString() => IsSavePoint ? $"(save {SaveForAcceptance})" : "(epsilon)";
 	}
 
 	public abstract class ConcreteSymbol : Symbol {
+		public virtual int Order => throw new NotImplementedException();
+
+		public static ConcreteSymbol? operator -(ConcreteSymbol left, ConcreteSymbol right) => left.Difference(right);
+
+		public static ConcreteSymbol? operator &(ConcreteSymbol left, ConcreteSymbol right) => left.Intersect(right);
+
+		public virtual ConcreteSymbol? Intersect(ConcreteSymbol that) => throw new NotImplementedException();
+
+		public virtual ConcreteSymbol? Difference(ConcreteSymbol that) => throw new NotImplementedException();
+
 		public static string Escape(char ch) {
-			if (ch < ' ')
-				return string.Format(@"\x{0:x2}", (int)ch);
-			if (ch == '\'')
+			if (ch < ' ') {
+				return $@"\x{(int)ch:x2}";
+			} else if (ch == '\'') {
 				return @"\'";
-			if (ch == '\\')
+			} else if (ch == '\\') {
 				return @"\\";
-			if (ch > '\xff')
-				return string.Format(@"\u{0:x4}", (int)ch);
-			if (ch > '~')
-				return string.Format(@"\x{0:x}", (int)ch);
+			} else if (ch > '\x7f') {
+				return $@"\u{(int)ch:x4}";
+			} else if (ch > '~') {
+				return $@"\x{(int)ch:x}";
+			}
 			return ch.ToString();
 		}
 
-		public virtual bool Contains(ConcreteSymbol symbol) {
-			return false;
+		public static string Escape(int ch) => Escape((char)ch);
+
+		public virtual string MakeExpression(string name) => throw new NotImplementedException();
+
+		internal virtual bool IsIn(Symbol symbol) => false;
+	}
+
+	public class AcceptingSymbol : ConcreteSymbol {
+		public int Value { get; }
+
+		public AcceptingSymbol(int value) => Value = value;
+
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+			Debug.Assert(Value != (that as AcceptingSymbol)?.Value);
+			return null;
 		}
 
-		public virtual ConcreteSymbol Remove(IEnumerable<ConcreteSymbol> symbols) {
-			throw new NotImplementedException();
-		}
-
-		public virtual void RemoveFrom(BitArray isIn) {
-			throw new NotImplementedException();
-		}
+		public override string ToString() => $"(accept {Value})";
 	}
 
 	public class AnySymbol : ConcreteSymbol {
-		public static readonly AnySymbol Value = new AnySymbol(true);
-		public static readonly AnySymbol WithoutNewLine = new AnySymbol(false);
+		public override int Order => 3;
+		public static readonly AnySymbol Value = new(true);
+		public static readonly AnySymbol WithoutNewLine = new(false);
 		private readonly bool includesNewLine;
 
-		private AnySymbol(bool includesNewLine) {
-			this.includesNewLine = includesNewLine;
-		}
+		private AnySymbol(bool includesNewLine) => this.includesNewLine = includesNewLine;
 
-		public override bool Contains(ConcreteSymbol symbol) {
-			if (symbol == this || symbol == BolSymbol.Value)
-				return false;
-			if (includesNewLine)
+		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
+
+		public override string ToString() => includesNewLine ? "(any)" : "(any-nl)";
+
+		public override string MakeExpression(string name) => includesNewLine ? "true" : $"{name}!='\\n'";
+
+		internal override bool IsIn(Symbol symbol) {
+			if (symbol == Value) {
 				return true;
-			var simple = symbol as SimpleSymbol;
-			if (simple != null)
-				return simple.Value != '\n';
-			var range = (RangeSymbol)symbol;
-			return !range.Contains(new SimpleSymbol('\n'));
+			} else if (symbol == WithoutNewLine) {
+				return this == WithoutNewLine;
+			} else if (symbol is RangeSymbol range) {
+				RangeSymbol anyRange = includesNewLine ? new(char.MinValue, char.MaxValue) : ~new RangeSymbol('\n');
+				return anyRange.IsIn(range);
+			}
+			return false;
 		}
 
-		public override ConcreteSymbol Remove(IEnumerable<ConcreteSymbol> symbols) {
-			var range = new RangeSymbol(char.MinValue, char.MaxValue);
-			if (!includesNewLine)
-				range = (RangeSymbol)range.Remove(new[] { new SimpleSymbol('\n') });
-			return range.Remove(symbols);
+		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
+			if (that is AnySymbol any) {
+				Debug.Assert(includesNewLine != any.includesNewLine);
+				return includesNewLine ? new SimpleSymbol('\n') : null;
+			}
+			RangeSymbol range = includesNewLine ? new(char.MinValue, char.MaxValue) : ~new RangeSymbol('\n');
+			return range.Difference(that);
 		}
 
-		public override bool Equals(Symbol other) {
-			return object.ReferenceEquals(this, other);
-		}
-
-		public override string ToString() {
-			return includesNewLine ? "(any)" : "(any-nl)";
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+			if (that == Value) {
+				return includesNewLine ? this : WithoutNewLine;
+			} else if (that == WithoutNewLine) {
+				return WithoutNewLine;
+			}
+			RangeSymbol range = includesNewLine ? new(char.MinValue, char.MaxValue) : ~new RangeSymbol('\n');
+			return range.Intersect(that);
 		}
 	}
 
 	public class BolSymbol : ConcreteSymbol {
-		public static readonly BolSymbol Value = new BolSymbol();
+		public static readonly BolSymbol Value = new();
 
-		private BolSymbol() {
-		}
+		private BolSymbol() { }
 
-		public override bool Equals(Symbol other) {
-			return object.ReferenceEquals(this, other);
-		}
+		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
-		public override string ToString() {
-			return "^";
-		}
+		public override string ToString() => "(bol)";
+	}
+
+	public class EolSymbol : ConcreteSymbol {
+		public static readonly EolSymbol Value = new();
+
+		private EolSymbol() { }
+
+		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
+
+		public override string ToString() => "(eol)";
 	}
 
 	public class RangeSymbol : ConcreteSymbol {
-		private readonly BitArray isIn;
+		public override int Order => 2;
+		private readonly BitArray includedCharacters = new(char.MaxValue + 1);
 
 		public RangeSymbol(char first, char last) {
-			isIn = new BitArray(char.MaxValue + 1);
-			for (int i = first; i <= last; ++i)
-				isIn[i] = true;
-		}
-
-		private RangeSymbol(BitArray isIn) {
-			this.isIn = new BitArray(isIn);
-		}
-
-		public static RangeSymbol operator +(RangeSymbol left, RangeSymbol right) {
-			return new RangeSymbol(new BitArray(left.isIn).Or(right.isIn));
-		}
-
-		public static RangeSymbol operator -(RangeSymbol range) {
-			return new RangeSymbol(new BitArray(range.isIn).Not());
-		}
-
-		public List<KeyValuePair<char, char>> ComposeSubRanges() {
-			var subRanges = new List<KeyValuePair<char, char>>();
-			char? first = null;
-			for (int i = 0; i < isIn.Length; ++i) {
-				if (isIn[i] && first == null)
-					first = (char)i;
-				else if (!isIn[i] && first != null) {
-					subRanges.Add(new KeyValuePair<char, char>(first.Value, (char)(i - 1)));
-					first = null;
+			if (last < first) {
+				for (int i = last; i <= first; ++i) {
+					includedCharacters[i] = true;
+				}
+			} else {
+				for (int i = first; i <= last; ++i) {
+					includedCharacters[i] = true;
 				}
 			}
-			if (first != null)
-				subRanges.Add(new KeyValuePair<char, char>(first.Value, char.MaxValue));
-			return subRanges;
 		}
 
-		public bool Contains(SimpleSymbol symbol) {
-			return isIn[symbol.Value];
+		public RangeSymbol(char ch) {
+			includedCharacters[ch] = true;
 		}
 
-		public override bool Contains(ConcreteSymbol symbol) {
-			if (symbol == this || symbol == BolSymbol.Value || symbol is AnySymbol)
-				return false;
-			if (symbol is SimpleSymbol simpleSymbol)
-				return Contains(simpleSymbol);
-			var rangeSymbol = (RangeSymbol)symbol;
-			for (int i = 0; i < isIn.Length; ++i) {
-				if (!isIn[i] && rangeSymbol.isIn[i])
-					return false;
-			}
-			return true;
-		}
+		private RangeSymbol(BitArray includedCharacters) => this.includedCharacters = includedCharacters;
 
-		public override ConcreteSymbol Remove(IEnumerable<ConcreteSymbol> symbols) {
-			var isIn = new BitArray(this.isIn);
-			foreach (ConcreteSymbol symbol in symbols)
-				symbol.RemoveFrom(isIn);
-			return isIn.Cast<bool>().Any(b => b) ? new RangeSymbol(isIn) : null;
-		}
+		public static RangeSymbol operator +(RangeSymbol left, RangeSymbol right) => new(left.includedCharacters.Or(right.includedCharacters));
 
-		public override void RemoveFrom(BitArray isIn) {
-			var complement = new BitArray(this.isIn).Not();
-			isIn.And(complement);
-		}
+		public static RangeSymbol operator ~(RangeSymbol range) => new(range.includedCharacters.Not());
 
 		public override string ToString() {
-			var sb = new StringBuilder("[");
-			foreach (var pair in ComposeSubRanges())
-				sb.AppendFormat("{0}-{1}", Escape(pair.Key), Escape(pair.Value));
+			StringBuilder sb = new("[");
+			for (int i = 1; i < includedCharacters.Length; ++i) {
+				if (!includedCharacters[i - 1] && includedCharacters[i] && (i + 1 == includedCharacters.Length || !includedCharacters[i + 1])) {
+					sb.Append(Escape(i));
+					++i;
+				} else if (includedCharacters[i - 1] != includedCharacters[i]) {
+					if (includedCharacters[i]) {
+						sb.Append(Escape(i));
+					} else {
+						sb.Append($"-{Escape(i - 1)}");
+					}
+				}
+			}
+			if (includedCharacters[includedCharacters.Count - 1]) {
+				sb.Append('-');
+			}
 			return sb.Append(']').ToString();
+		}
+
+		public override Symbol MakeDegenerate() {
+			if (includedCharacters.Cast<bool>().All(b => b)) {
+				return AnySymbol.Value;
+			} else if (includedCharacters.Cast<bool>().Select((b, i) => new { b, i }).All(a => a.b ^ a.i == '\n')) {
+				return AnySymbol.WithoutNewLine;
+			} else if (includedCharacters.Cast<bool>().All(b => !b)) {
+				return new EpsilonSymbol();
+			} else {
+				int[] a = includedCharacters.Cast<bool>().Select((b, i) => new { b, i }).Where(a => a.b).Select(a => a.i).ToArray();
+				if (a.Length == 1) {
+					return new SimpleSymbol((char)a[0]);
+				}
+			}
+			return this;
+		}
+
+		public override string MakeExpression(string name) {
+			StringBuilder sb = new("(");
+			for (int i = 1; i < includedCharacters.Length; ++i) {
+				if (includedCharacters[i - 1] != includedCharacters[i]) {
+					if (!includedCharacters[i - 1] && includedCharacters[i] && (i + 1 == includedCharacters.Length || !includedCharacters[i + 1])) {
+						sb.AppendFormat("{0}=='{1}')||(", name, Escape(i));
+						++i;
+					} else if (includedCharacters[i]) {
+						sb.AppendFormat("{0}>='{1}'&&", name, Escape(i));
+					} else {
+						sb.AppendFormat("{0}<'{1}')||(", name, Escape(i));
+					}
+				}
+			}
+			if (sb.Length == 1) {
+				return includedCharacters[0] ? "true" : "false";
+			} else if (sb[^1] == '&') {
+				sb[^2] = ')';
+				--sb.Length;
+			} else {
+				sb.Length -= 3;
+			}
+			return sb.ToString();
+		}
+
+		internal bool Includes(char value) => includedCharacters[value];
+
+		internal override bool IsIn(Symbol symbol) {
+			if (symbol == AnySymbol.Value) {
+				return true;
+			} else if (symbol == AnySymbol.WithoutNewLine) {
+				return includedCharacters['\n'];
+			} else if (symbol is RangeSymbol range) {
+				BitArray combined = new(includedCharacters);
+				combined = combined.And(range.includedCharacters);
+				return combined.Cast<bool>().SequenceEqual(includedCharacters.Cast<bool>());
+			} else if (symbol is SimpleSymbol simple) {
+				if (!includedCharacters[simple.Value]) {
+					return false;
+				}
+				return includedCharacters.Cast<bool>().Select((b, i) => new { b, i }).All(a => !a.b || a.i == simple.Value);
+			}
+			return false;
+		}
+
+		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
+			if (that == AnySymbol.Value) {
+				return null;
+			} else if (that == AnySymbol.WithoutNewLine) {
+				return includedCharacters['\n'] ? new SimpleSymbol('\n') : null;
+			} else if (that is RangeSymbol range) {
+				BitArray ba = new(includedCharacters.Cast<bool>().Zip(range.includedCharacters.Cast<bool>()).Select(a => a.First && !a.Second).ToArray());
+				if (ba.Cast<bool>().All(b => !b)) {
+					return null;
+				}
+				Symbol symbol = new RangeSymbol(ba).MakeDegenerate();
+				return symbol as ConcreteSymbol;
+			} else if (that is SimpleSymbol simple) {
+				if (includedCharacters[simple.Value]) {
+					BitArray ba = new(includedCharacters);
+					ba[simple.Value] = false;
+					Symbol symbol = new RangeSymbol(ba).MakeDegenerate();
+					return symbol as ConcreteSymbol;
+				}
+				return this;
+			}
+			throw new NotImplementedException();
+		}
+
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+			if (that == AnySymbol.Value) {
+				return this;
+			} else if (that == AnySymbol.WithoutNewLine) {
+				return includedCharacters['\n'] ? AnySymbol.WithoutNewLine.Intersect(this) : this;
+			} else if (that is RangeSymbol range) {
+				BitArray ba = new(includedCharacters.Cast<bool>().Zip(range.includedCharacters.Cast<bool>()).Select(a => a.First && a.Second).ToArray());
+				if (ba.Cast<bool>().All(b => !b)) {
+					return null;
+				}
+				Symbol symbol = new RangeSymbol(ba).MakeDegenerate();
+				return symbol as ConcreteSymbol;
+			} else if (that is SimpleSymbol simple) {
+				return includedCharacters[simple.Value] ? simple : null;
+			}
+			return that.Intersect(this);
 		}
 	}
 
 	public class SimpleSymbol : ConcreteSymbol {
+		public override int Order => 1;
 		public char Value { get; private set; }
 
-		public SimpleSymbol(char ch) {
-			Value = ch;
+		public SimpleSymbol(char ch) => Value = ch;
+
+		public override string ToString() => $"'{Escape(Value)}'";
+
+		public override string MakeExpression(string name) => $"{name}=={this}";
+
+		internal override bool IsIn(Symbol symbol) {
+			if (symbol == AnySymbol.Value) {
+				return true;
+			} else if (symbol == AnySymbol.WithoutNewLine) {
+				return Value != '\n';
+			} else if (symbol is RangeSymbol range) {
+				return range.Includes(Value);
+			} else if (symbol is SimpleSymbol that) {
+				return Value == that.Value;
+			}
+			return false;
 		}
 
-		public override void RemoveFrom(BitArray isIn) {
-			isIn.Set(Value, false);
+		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
+			if (that == AnySymbol.Value) {
+				return null;
+			} else if (that == AnySymbol.WithoutNewLine) {
+				return Value == '\n' ? this : null;
+			} else if (that is RangeSymbol range) {
+				return range.Includes(Value) ? null : this;
+			} else if (that is SimpleSymbol simple) {
+				return Value == simple.Value ? null : this;
+			}
+			throw new NotImplementedException();
 		}
 
-		public override bool Equals(Symbol other) {
-			return other is object && other.GetType() == typeof(SimpleSymbol) && Value == ((SimpleSymbol)other).Value;
-		}
-
-		public override string ToString() {
-			return string.Format("'{0}'", Escape(Value));
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+			if (that is SimpleSymbol simple) {
+				return Value == simple.Value ? this : null;
+			}
+			return that.Intersect(this);
 		}
 	}
 }

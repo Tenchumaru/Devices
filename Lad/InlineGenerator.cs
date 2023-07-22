@@ -1,88 +1,123 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Lad {
-	class InlineGenerator : IGenerator {
-		public void Generate(Options options, TextReader reader, TextWriter writer) {
-			bool emittingLineDirectives = options.LineDirectivesFilePath != null;
-			if (emittingLineDirectives)
-				writer.WriteLine("#line 1 \"{0}\"", options.LineDirectivesFilePath);
-			int scannerNumber = 0;
-			int lineNumber = 1;
-			int acceptingRuleIndex = 0;
-			var list = new List<Nfa>();
-			var actions = new List<KeyValuePair<int, string>>();
-			var action = new KeyValuePair<int, StringBuilder>();
-			var namedExpressions = new Dictionary<string, Nfa>();
-			for (string line = reader.ReadLine(); line != null; line = reader.ReadLine(), ++lineNumber) {
-				string trimmedLine = line.TrimStart();
-				if (trimmedLine.StartsWith(options.SignalComment)) {
-					line = trimmedLine.Substring(options.SignalComment.Length).Trim();
-					if (line.StartsWith("let ")) {
-						string[] parts = line.Split(new[] { '=' }, 2);
-						if (parts.Length < 2)
-							throw new GeneratorException(lineNumber, "invalid named expression specification");
-						string name = parts[0].Substring(4).TrimEnd();
-						var machine = CreateMachine(lineNumber, parts[1].TrimStart(), options, namedExpressions);
-						namedExpressions.Add(name, machine);
-					} else {
-						if (action.Value != null) {
-							actions.Add(new KeyValuePair<int, string>(action.Key, action.Value.ToString()));
-							action.Value.Length = 0;
-							action = new KeyValuePair<int, StringBuilder>(lineNumber, action.Value);
-						} else
-							action = new KeyValuePair<int, StringBuilder>(lineNumber, new StringBuilder());
-						var machine = CreateMachine(lineNumber, line, options, namedExpressions);
-						if (machine != null) {
-							machine.Finish(acceptingRuleIndex);
-							++acceptingRuleIndex;
-							list.Add(machine);
-						} else {
-							StringBuilder sb = action.Value;
-							for (int i = 0, count = actions.Count; i < count; ++i) {
-								if (emittingLineDirectives)
-									sb.AppendFormat("case {0}:{4}#line {3} \"{2}\"{4}{1}{4}#line default{4}break;", i, actions[i].Value, options.LineDirectivesFilePath, actions[i].Key + 1, writer.NewLine);
-								else
-									sb.AppendFormat("case {0}:{2}{1}{2}break;", i, actions[i].Value, writer.NewLine);
-							}
-							if (emittingLineDirectives)
-								writer.WriteLine("#line default");
-							writer.WriteLine(Properties.Resources.Prologue, scannerNumber, sb);
-							machine = new Nfa(list);
-							ScannerWriter.Write(machine, writer, sb, scannerNumber);
-							if (emittingLineDirectives)
-								writer.WriteLine("#line {1} \"{0}\"", options.LineDirectivesFilePath, lineNumber + 1);
-							++scannerNumber;
-							acceptingRuleIndex = 0;
-							list = new List<Nfa>();
-							actions = new List<KeyValuePair<int, string>>();
-							action = new KeyValuePair<int, StringBuilder>();
-							namedExpressions.Clear();
-						}
-					}
-				} else if (action.Value != null)
-					action.Value.AppendLine(line);
-				else
-					writer.WriteLine(line);
+	internal class InlineGenerator : GeneratorBase<int>, IGenerator {
+		private string? defaultCode;
+		private string? methodDeclarationText;
+		private string? classDeclarationText;
+		private string[] namespaceNames = Array.Empty<string>();
+
+		public InlineGenerator(Options options) : base(options) { }
+
+		protected override void WriteFooter(int nnamespaces, StringWriter writer) {
+			if (defaultCode is not null) {
+				writer.WriteLine("default:");
+				writer.WriteLine(defaultCode);
+			}
+			writer.WriteLine("}break;}}}}");
+			while (--nnamespaces >= 0) {
+				writer.WriteLine('}');
 			}
 		}
 
-		private static Nfa CreateMachine(int lineNumber, string line, Options options, Dictionary<string, Nfa> namedExpressions) {
-			var scanner = new ExpressionScanner(new StringReader(line));
-			var parser = new ExpressionParser(scanner, options.DotIncludesNewline, options.IgnoringCase, namedExpressions);
-			try {
-				return parser.CreateMachine();
-			} catch (Exception ex) {
-#if DEBUG
-				throw new GeneratorException(lineNumber, ex.ToString());
-#else
-                throw new GeneratorException(lineNumber, ex.Message);
-#endif
+		protected override int WriteHeader(StringWriter writer) {
+			writer.WriteLine("using System.Collections.Generic;");
+			writer.WriteLine("using System.Linq;");
+			foreach (string namespaceName in namespaceNames) {
+				writer.WriteLine($"namespace {namespaceName}{{");
 			}
-			throw new GeneratorException(lineNumber, "failed to parse " + line);
+			writer.WriteLine($"{classDeclarationText}{{");
+			writer.WriteLine("private class Reader_{");
+			writer.WriteLine("internal int Position=>index;");
+			writer.WriteLine("private IEnumerator<char>enumerator;");
+			writer.WriteLine("private System.Text.StringBuilder buffer=new System.Text.StringBuilder();");
+			writer.WriteLine("private int index=0;");
+			writer.WriteLine("internal string Consume(int position){");
+			writer.WriteLine("index=0;position=System.Math.Min(position,buffer.Length);if(position==0)return\"\";");
+			writer.WriteLine("var s=buffer.ToString(0,position);buffer.Remove(0,position);return s;}");
+			writer.WriteLine("internal int Read(){");
+			writer.WriteLine("if(index<buffer.Length)return buffer[index++];");
+			writer.WriteLine("if(enumerator.MoveNext()){buffer.Append(enumerator.Current);return buffer[index++];}");
+			writer.WriteLine("return-1;}");
+			writer.WriteLine("internal Reader_(IEnumerable<char>reader){enumerator=reader.GetEnumerator();}");
+			writer.WriteLine("internal Reader_(System.IO.TextReader reader){enumerator=Enumerable.");
+			writer.WriteLine("Repeat<System.Func<int>>(reader.Read,int.MaxValue).Select(f=>f()).TakeWhile(v=>v>=0).Cast<char>().GetEnumerator();}");
+			writer.WriteLine("}private Reader_ reader_;");
+			writer.WriteLine($"{methodDeclarationText}{{");
+			return namespaceNames.Length;
+		}
+
+		protected override (IEnumerable<KeyValuePair<Nfa, int>>? rules, IEnumerable<string>? codes) ProcessInput(string text) {
+			bool foundError = false;
+			Dictionary<Nfa, int> rules = new();
+			List<string> codes = new();
+			CompilationUnitSyntax root = CSharpSyntaxTree.ParseText(text).GetCompilationUnitRoot();
+			var firstSwitch = root.DescendantNodes().OfType<SwitchStatementSyntax>().FirstOrDefault();
+			if (firstSwitch == null) {
+				Console.Error.WriteLine("Cannot find switch statement");
+				return default;
+			}
+			var classDeclaration = firstSwitch.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+			if (classDeclaration == null) {
+				Console.Error.WriteLine("No enclosing class");
+				return default;
+			}
+			var methodDeclaration = firstSwitch.Ancestors().OfType<MethodDeclarationSyntax>().First();
+			methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodDeclaration.Identifier}()";
+			classDeclarationText = $"{classDeclaration.Modifiers} class {classDeclaration.Identifier.Value}";
+			namespaceNames = classDeclaration.Ancestors().OfType<NamespaceDeclarationSyntax>().Select(n => n.Name.ToString()).Reverse().ToArray();
+			var q = from a in firstSwitch.Ancestors().OfType<ClassDeclarationSyntax>()
+							from f in a.DescendantNodes().OfType<FieldDeclarationSyntax>()
+							from v in f.Declaration.Variables
+							let i = v.Initializer
+							where i is not null
+							select (v.Identifier.ToString(), i.Value.ToString());
+			foreach ((string name, string rx) in q) {
+				RegularExpressionParser parser = new(new RegularExpressionScanner(rx[1..^1]), namedExpressions);
+				if (parser.Parse()) {
+					namedExpressions.Add(name, parser.Result);
+				} else {
+					Console.Error.WriteLine($"failed to parse named regular expression");
+					foundError = true;
+				}
+			}
+			Dictionary<string, int> labelTexts = new();
+			int? defaultIndex = null;
+			foreach (var switchSection in firstSwitch.Sections) {
+				foreach (var switchLabel in switchSection.Labels) {
+					if (switchLabel is CaseSwitchLabelSyntax caseSwitchLabel) {
+						var labelText = caseSwitchLabel.Value.ToString();
+						labelTexts.Add(labelText, codes.Count);
+						RegularExpressionParser parser = new(new RegularExpressionScanner(labelText[1..^1]), namedExpressions);
+						if (parser.Parse()) {
+							rules.Add(parser.Result, codes.Count);
+						} else {
+							Console.Error.WriteLine($"failed to parse regular expression");
+							foundError = true;
+						}
+					} else if (switchLabel is DefaultSwitchLabelSyntax) {
+						defaultIndex = codes.Count;
+					}
+				}
+				codes.Add(switchSection.Statements.ToFullString());
+			}
+			var r = from g in firstSwitch.DescendantNodes().OfType<GotoStatementSyntax>()
+							where g.Expression is not null && labelTexts.ContainsKey(g.Expression.ToString())
+							select g;
+			foreach (var item in firstSwitch.DescendantNodes().OfType<GotoStatementSyntax>()) {
+				var expression = item.Expression?.ToString();
+				if (expression is not null && labelTexts.ContainsKey(expression)) {
+					codes = codes.Select(s => s.Replace(item.ToString(), $"goto case {labelTexts[expression] + 1};")).ToList();
+				}
+				var s = item.ToString();
+				var span = item.Span;
+			}
+			if (defaultIndex.HasValue) {
+				defaultCode = codes[defaultIndex.Value];
+			}
+			return foundError ? default : (rules, codes);
 		}
 	}
 }

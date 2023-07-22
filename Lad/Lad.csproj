@@ -1,112 +1,58 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{451419A6-3E85-428C-99B2-FF2304386E45}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Lad</RootNamespace>
-    <AssemblyName>Lad</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Properties\Skeleton.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Skeleton.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.6.0" />
+  </ItemGroup>
+
   <ItemGroup>
     <Reference Include="Adrezdi">
       <HintPath>\local\bin\Adrezdi.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="DfaState.cs" />
-    <Compile Include="ExpressionParser.cs" />
-    <Compile Include="ExpressionParser.xml.g.cs">
+    <Compile Update="RegularExpressionParser.g.cs">
       <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>ExpressionParser.xml</DependentUpon>
+      <DependentUpon>RegularExpressionParser.cs</DependentUpon>
     </Compile>
-    <Compile Include="ExpressionScanner.cs" />
-    <Compile Include="IGenerator.cs" />
-    <Compile Include="InlineGenerator.cs" />
-    <Compile Include="LexGenerator.cs" />
-    <Compile Include="LexGenerator.il.g.cs">
-      <AutoGen>True</AutoGen>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
-      <DependentUpon>LexGenerator.il.cs</DependentUpon>
-    </Compile>
-    <Compile Include="LexGenerator.y.g.cs">
       <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>LexGenerator.y</DependentUpon>
-    </Compile>
-    <Compile Include="Multimap.cs" />
-    <Compile Include="Nfa.cs" />
-    <Compile Include="NfaState.cs" />
-    <Compile Include="Options.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="Properties\Skeleton.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="ScannerWriter.cs" />
-    <Compile Include="Symbol.cs" />
-    <Compile Include="Token.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="App.config" />
-    <None Include="LexGenerator.il.cs" />
-    <None Include="LexGenerator.x.cs" />
-    <None Include="LexGenerator.y" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="\local\bin\Adrezdi.dll">
-      <Link>Adrezdi.dll</Link>
-    </EmbeddedResource>
-    <Content Include="ExpressionParser.xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
+    <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PostBuildEvent>"$(ProjectDir)..\Post-build.cmd" "$(Configuration)" "$(TargetDir)"</PostBuildEvent>
-  </PropertyGroup>
+  
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="CALL &quot;$(ProjectDir)Pre-build.cmd&quot;" />
+  </Target>
+  
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="CALL &quot;$(ProjectDir)..\Post-build.cmd&quot; &quot;$(Configuration)&quot; &quot;$(TargetDir)&quot;" />
+  </Target>
+
 </Project>

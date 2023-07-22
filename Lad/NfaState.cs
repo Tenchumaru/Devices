@@ -1,157 +1,181 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Text;
 
 namespace Lad {
 	/// <summary>
-	/// A collection of transitions on symbols to other NFA states.
+	/// This class represents a state of a NFA.  It contains a collection of transitions on symbols to other NFA states and a unique
+	/// identifying number.
 	/// </summary>
 	public class NfaState {
-		public int Number { get; private set; }
-		private readonly Multimap<Symbol, NfaState> transitions = new Multimap<Symbol, NfaState>();
-		private readonly int? acceptingRuleIndex;
+		public int Number { get; }
+		private readonly Multimap<Symbol, NfaState> transitions = new();
 		private static int nextNumber;
 
-		public NfaState() {
-			Number = ++nextNumber;
-		}
+		public NfaState() => Number = ++nextNumber;
 
-		public NfaState(int acceptingRuleIndex)
-				: this() {
-			this.acceptingRuleIndex = acceptingRuleIndex;
-		}
+		public void AddTarget(NfaState state) => AddTarget(new EpsilonSymbol(), state);
 
-		public void AddTarget(NfaState state) {
-			AddTarget(EpsilonSymbol.Value, state);
-		}
+		public void AddTarget(Symbol symbol, NfaState state) => transitions.Add(symbol.MakeDegenerate(), state);
 
-		public void AddTarget(Symbol symbol, NfaState state) {
-			transitions.Add(symbol, state);
-		}
-
-		public NfaState Clone(ref NfaState state) {
-			var clonedStates = new Dictionary<NfaState, NfaState>();
-			return Clone(clonedStates, ref state);
-		}
+		public NfaState Clone(ref NfaState state) => Clone(new Dictionary<NfaState, NfaState>(), ref state);
 
 		private NfaState Clone(Dictionary<NfaState, NfaState> clonedStates, ref NfaState state) {
-			if (!clonedStates.TryGetValue(this, out NfaState clone)) {
+			if (!clonedStates.TryGetValue(this, out NfaState? clone)) {
 				// This state has not yet cloned itself.  Do so now.
-				Debug.Assert(acceptingRuleIndex == null);
 				clone = new NfaState();
 				clonedStates.Add(this, clone);
-				foreach (KeyValuePair<Symbol, NfaState> target in transitions)
+				foreach (KeyValuePair<Symbol, NfaState> target in transitions) {
 					clone.transitions.Add(target.Key, target.Value.Clone(clonedStates, ref state));
+				}
 			}
-			if (state == this)
+			if (state == this) {
 				state = clone;
+			}
 			return clone;
 		}
 
-		public DfaState CreateDfa() {
-			var dfaStates = new Dictionary<string, DfaState>();
-			var queue = new Queue<KeyValuePair<DfaState, HashSet<NfaState>>>();
-			HashSet<NfaState> closure = CreateEpsilonClosure();
-			string closureName = CreateClosureName(closure);
-			var startState = new DfaState(closureName, GetAcceptingRuleIndices(closure));
-			queue.Enqueue(new KeyValuePair<DfaState, HashSet<NfaState>>(startState, closure));
+		/// <summary>
+		/// Implement the subset construction algorithm given in figure 3.25 on page 118 of the Dragon book.
+		/// </summary>
+		/// <returns>The DFA from applying the algorithm to this initial NFA state.</returns>
+		public DfaState MakeDfa() {
+			// p. 118, Fig. 3.25
+			Queue<EpsilonClosure> queue = new();
+			EpsilonClosure startClosure = MakeEpsilonClosure(new[] { this });
+			DfaState startState = new(startClosure.Name, startClosure.SaveForAcceptance);
+			startClosure.Dfa = startState;
+			Dictionary<string, DfaState> dfaStates = new() {
+				{ startClosure.Name, startState },
+			};
+			queue.Enqueue(startClosure);
 			while (queue.Count > 0) {
-				var pair = queue.Dequeue();
-				if (!dfaStates.TryGetValue(pair.Key.Name, out DfaState state)) {
-					state = pair.Key;
-					dfaStates.Add(state.Name, state);
-					IDictionary<ConcreteSymbol, HashSet<NfaState>> transitions = CreateTargetEpsilonClosures(pair.Value);
-					foreach (var transition in transitions) {
-						string targetName = CreateClosureName(transition.Value);
-						DfaState targetState = queue.FirstOrDefault(p => p.Key.Name == targetName).Key;
-						if (targetState != null)
-							state.Transitions.Add(transition.Key, targetState);
-						else {
-							if (!dfaStates.TryGetValue(targetName, out targetState))
-								targetState = new DfaState(targetName, GetAcceptingRuleIndices(transition.Value));
-							state.Transitions.Add(transition.Key, targetState);
-							queue.Enqueue(new KeyValuePair<DfaState, HashSet<NfaState>>(targetState, transition.Value));
-						}
+				EpsilonClosure closure = queue.Dequeue();
+				var q = closure.Nfas.SelectMany(s => s.transitions).Select(p => p.Key).OfType<ConcreteSymbol>();
+
+				// Add this extra step not in the algorithm to split overlapping symbols.  Certain mixtures of any, range, and simple
+				// symbols can overlap. Although these split symbols might not appear in the grammar, the Move method uses inclusion,
+				// not identity.
+				HashSet<ConcreteSymbol> inputSymbols = SplitOverlappingSymbols(q);
+
+				foreach (ConcreteSymbol inputSymbol in inputSymbols) {
+					HashSet<NfaState> nfaTargets = Move(closure.Nfas, inputSymbol);
+					EpsilonClosure targetClosure = MakeEpsilonClosure(nfaTargets);
+					if (!dfaStates.TryGetValue(targetClosure.Name, out DfaState? dfaState)) {
+						dfaState = new DfaState(targetClosure.Name, targetClosure.SaveForAcceptance);
+						dfaStates.Add(targetClosure.Name, dfaState);
+						targetClosure.Dfa = dfaState;
+						queue.Enqueue(targetClosure);
 					}
+					Debug.Assert(!closure.Dfa!.Transitions.ContainsKey(inputSymbol));
+					closure.Dfa.Transitions.Add(inputSymbol, dfaState);
 				}
 			}
 			return startState;
 		}
 
-		[Conditional("DEBUG")]
-		public void Dump(HashSet<NfaState> dumpedStates) {
-#if DEBUG
-			if (dumpedStates.Contains(this))
-				return;
-			dumpedStates.Add(this);
-			Debug.WriteLine(String.Format("{0} {1}:", acceptingRuleIndex, Number));
-			foreach (KeyValuePair<Symbol, NfaState> transition in transitions)
-				Debug.WriteLine(String.Format("\t{0} -> {1}", transition.Key, transition.Value.Number));
-			foreach (KeyValuePair<Symbol, NfaState> transition in transitions)
-				transition.Value.Dump(dumpedStates);
-#endif
-		}
-
-		private static IEnumerable<int> GetAcceptingRuleIndices(HashSet<NfaState> closure) {
-			return closure.Where(n => n.acceptingRuleIndex.HasValue).Select(n => n.acceptingRuleIndex.Value);
-		}
-
-#if DEBUG
-		public override string ToString() {
-			return Number.ToString();
-		}
-#endif
-
-		private static Dictionary<ConcreteSymbol, HashSet<NfaState>> CreateTargetEpsilonClosures(HashSet<NfaState> closure) {
-			// Create the target closures.
-			var q1 = from c in closure
-							 from t in c.transitions
-							 let s = t.Key as ConcreteSymbol
-							 where s != null
-							 group new { Symbol = s, State = t.Value } by s;
-			var targetClosures = q1.ToDictionary(g => g.Key, g => new HashSet<NfaState>(g.SelectMany(e => e.State.CreateEpsilonClosure())));
-
-			// If any symbols contain other symbols, have the contained symbols
-			// also transition to the same states as the containing symbols.
-			var q2 = from s1 in targetClosures.Keys
-							 from s2 in targetClosures.Keys
-							 where s1 != s2 && s1.Contains(s2)
-							 select new { ContainingSymbol = s1, ContainedSymbol = s2, TargetStates = targetClosures[s1] };
-			var list = q2.ToList();
-			list.ForEach(e => targetClosures[e.ContainedSymbol].UnionWith(e.TargetStates));
-
-			// Remove the contained symbols from the containing symbols.
-			var groupings = list.GroupBy(a => a.ContainingSymbol, a => a.ContainedSymbol);
-			foreach (var g in groupings) {
-				HashSet<NfaState> targets = targetClosures[g.Key];
-				ConcreteSymbol symbol = g.Key.Remove(g.AsEnumerable());
-				targetClosures.Remove(g.Key);
-				if (symbol != null)
-					targetClosures.Add(symbol, targets);
+		private static HashSet<ConcreteSymbol> SplitOverlappingSymbols(IEnumerable<ConcreteSymbol> inputSymbols) {
+			var l = new HashSet<ConcreteSymbol>(inputSymbols).ToList();
+			for (int i = 0; i < l.Count - 1; ++i) {
+				for (int j = i + 1; j < l.Count; ++j) {
+					ConcreteSymbol? intersection = l[i] & l[j];
+					if (intersection != null) {
+						ConcreteSymbol? left = l[i] - l[j];
+						if (left is not null) {
+							l.Add(left);
+						}
+						ConcreteSymbol? right = l[j] - l[i];
+						if (right is not null) {
+							l.Add(right);
+						}
+						l[i] = intersection;
+						l[j] = l.Last();
+						l.RemoveAt(l.Count - 1);
+						--i;
+						break;
+					}
+				}
 			}
-
-			return targetClosures;
+			return new HashSet<ConcreteSymbol>(l);
 		}
 
-		private HashSet<NfaState> CreateEpsilonClosure() {
-			var closure = new HashSet<NfaState>();
-			var queue = new Queue<NfaState>();
-			queue.Enqueue(this);
+		private static HashSet<NfaState> Move(HashSet<NfaState> value, ConcreteSymbol inputSymbol) {
+#if DEBUG
+			var q = from s in value
+							from t in s.transitions
+							where inputSymbol.IsIn(t.Key)
+							select t.Value;
+#else
+			var q = value.SelectMany(s => s.transitions).Where(t => inputSymbol.IsIn(t.Key)).Select(t => t.Value);
+#endif
+			return new HashSet<NfaState>(q);
+		}
+
+		[Conditional("DEBUG")]
+		public void Dump(StringBuilder sb, HashSet<NfaState> dumpedStates) {
+#if DEBUG
+			if (!dumpedStates.Contains(this)) {
+				dumpedStates.Add(this);
+				sb.AppendLine($"{Number}:");
+				foreach (KeyValuePair<Symbol, NfaState> transition in transitions) {
+					sb.AppendLine($"\t{transition.Key} -> {transition.Value.Number}");
+				}
+				foreach (KeyValuePair<Symbol, NfaState> transition in transitions) {
+					transition.Value.Dump(sb, dumpedStates);
+				}
+			}
+#endif
+		}
+
+#if DEBUG
+		public override string ToString() => Number.ToString();
+#endif
+
+		private static EpsilonClosure MakeEpsilonClosure(IEnumerable<NfaState> nfaStates) {
+			// p. 119, Fig. 3.26
+			HashSet<NfaState> closure = new();
+			Queue<NfaState> queue = new(nfaStates);
+			List<int> numbers = new();
+			int saveForAcceptance = 0;
 			while (queue.Count > 0) {
 				NfaState next = queue.Dequeue();
-				if (closure.Add(next))
-					next.transitions.FindAll(EpsilonSymbol.Value).ForEach(s => queue.Enqueue(s));
+				if (closure.Add(next)) {
+					numbers.Add(next.Number);
+					foreach (var epsilonTransition in next.transitions.Where(p => p.Key is EpsilonSymbol).Select(p => new { Key = (EpsilonSymbol)p.Key, p.Value })) {
+						queue.Enqueue(epsilonTransition.Value);
+						if (epsilonTransition.Key.IsSavePoint) {
+							saveForAcceptance = epsilonTransition.Key.SaveForAcceptance;
+						}
+					}
+				}
 			}
-			return closure;
+			numbers.Sort();
+			return new EpsilonClosure(string.Join(", ", numbers), closure, saveForAcceptance);
 		}
 
-		private string CreateClosureName(IEnumerable<NfaState> closure) {
-			var sb = new StringBuilder();
-			foreach (NfaState state in closure)
-				sb.AppendFormat("{0},", state.Number);
-			return sb.ToString(0, sb.Length - 1);
+		public void SetSavePointValue(int acceptanceValue, HashSet<NfaState> nfaStates) {
+			if (!nfaStates.Contains(this)) {
+				nfaStates.Add(this);
+				foreach (var pair in transitions) {
+					if (pair.Key is EpsilonSymbol epsilon && epsilon.IsSavePoint) {
+						epsilon.SaveForAcceptance = acceptanceValue;
+					}
+					pair.Value.SetSavePointValue(acceptanceValue, nfaStates);
+				}
+			}
+		}
+
+		private class EpsilonClosure {
+			public readonly string Name;
+			public readonly HashSet<NfaState> Nfas;
+			public DfaState? Dfa;
+			public readonly int SaveForAcceptance;
+
+			public EpsilonClosure(string name, HashSet<NfaState> nfas, int saveForAcceptance) {
+				Name = name;
+				Nfas = nfas;
+				Dfa = null;
+				SaveForAcceptance = saveForAcceptance;
+			}
 		}
 	}
 }
