@@ -3,14 +3,10 @@ using System.Linq;
 using System.Globalization;
 using System.Text;
 
-namespace Lad
-{
-	partial class LexGenerator
-	{
-		partial class Scanner
-		{
-			private Token ReadSectionOne()
-			{
+namespace Lad {
+	partial class LexGenerator {
+		partial class Scanner {
+			private Token ReadSectionOne() {
 				//** let ws = [\a\b\f\t\v ]
 
 				//** [A-Za-z_][0-9A-Za-z_]*{ws}*
@@ -40,8 +36,7 @@ namespace Lad
 				return HandleNoMatch();
 			}
 
-			private Token ReadSectionOneOption()
-			{
+			private Token ReadSectionOneOption() {
 				//** default
 				return new Token { Symbol = Default };
 
@@ -59,8 +54,7 @@ namespace Lad
 				return HandleNoMatch();
 			}
 
-			private Token ReadExpression()
-			{
+			private Token ReadExpression() {
 				//** let number = [0-9]+
 
 				//** [\a\b\f\t\v ]+
@@ -80,7 +74,7 @@ namespace Lad
 					string[] parts = tokenValue.Split('{', ',', '}');
 					var min = int.Parse(parts[1]);
 					var max = int.Parse(parts[2]);
-					if(max < min || max == 0)
+					if (max < min || max == 0)
 						ReportError("invalid range {0} - {1}", min, max);
 					var value = new KeyValuePair<int, int>(min, max);
 					return new Token { Symbol = Double, Value = value };
@@ -90,7 +84,7 @@ namespace Lad
 				{
 					string[] parts = tokenValue.Split('{', '}');
 					var value = int.Parse(parts[1]);
-					if(value == 0)
+					if (value == 0)
 						ReportError("invalid zero count");
 					return new Token { Symbol = Single, Value = value };
 				}
@@ -112,7 +106,7 @@ namespace Lad
 				return ReadQuotedExpression();
 
 				//** \n
-				if(mode.Skip(1).First() == ReadSectionOne)
+				if (mode.Skip(1).First() == ReadSectionOne)
 					mode.Pop();
 				return new Token { Symbol = '\n' };
 
@@ -120,8 +114,7 @@ namespace Lad
 				return MakeSymbol();
 			}
 
-			private Token ReadClass()
-			{
+			private Token ReadClass() {
 				//** \]
 				mode.Pop();
 				return new Token { Symbol = ']' };
@@ -140,8 +133,7 @@ namespace Lad
 				return MakeSymbol();
 			}
 
-			private Token ReadQuotedExpression()
-			{
+			private Token ReadQuotedExpression() {
 				//** \"
 				mode.Pop();
 				return mode.Peek()();
@@ -158,11 +150,9 @@ namespace Lad
 			}
 
 			private StringBuilder currentAction = new StringBuilder();
-			private Token ReadSectionTwoAction()
-			{
+			private Token ReadSectionTwoAction() {
 				currentAction.Length = 0;
-				for(int scopeLevel = 0;;)
-				{
+				for (int scopeLevel = 0; ;) {
 					//** \"([^"]|(\\.))*\"
 					// TODO: handle octal, hex, and Unicode escapes.
 					currentAction.Append(tokenValue);
@@ -173,16 +163,14 @@ namespace Lad
 
 					//** \}
 					currentAction.Append('}');
-					if(scopeLevel == 0)
-					{
+					if (scopeLevel == 0) {
 						ReportError("unmatched action braces");
 						return Token.End;
 					}
 					--scopeLevel;
 
 					//** \|[\a\b\f\n\t\v ]*
-					if(currentAction.Length == 0)
-					{
+					if (currentAction.Length == 0) {
 						mode.Push(ReadExpression);
 						return new Token { Symbol = NextExpression };
 					}
@@ -190,17 +178,14 @@ namespace Lad
 
 					//** \n
 					currentAction.Append(System.Environment.NewLine);
-					if(scopeLevel == 0)
-					{
+					if (scopeLevel == 0) {
 						mode.Push(ReadExpression);
 						return new Token { Symbol = Action, Value = currentAction.ToString() };
 					}
 
 					//**
-					if(ScanValue < 0)
-					{
-						if(scopeLevel == 0)
-						{
+					if (ScanValue < 0) {
+						if (scopeLevel == 0) {
 							mode.Push(ReadExpression);
 							return new Token { Symbol = Action, Value = currentAction.ToString() };
 						}
@@ -211,8 +196,7 @@ namespace Lad
 				}
 			}
 
-			private char ReadEscapedValue()
-			{
+			private char ReadEscapedValue() {
 				//** let hex = [0-9A-Fa-f]
 
 				//** u{hex}{4}
@@ -228,8 +212,7 @@ namespace Lad
 				//** 0[01]?[0-7]{0,5}
 				{
 					int value = 0;
-					foreach(char ch in tokenValue)
-					{
+					foreach (char ch in tokenValue) {
 						value *= 8;
 						value += ch - '0';
 					}

@@ -6,52 +6,43 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lad
-{
-    class Program
-    {
-        public static readonly string Name = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]);
+namespace Lad {
+	class Program {
+		public static readonly string Name = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]);
 
-        static void Main(string[] args)
-        {
+		static void Main(string[] args) {
 #if !DEBUG
             AppDomain.CurrentDomain.AssemblyResolve += Resolve;
 #endif
-            try
-            {
-                // Parse the options and input and output file paths.
-                var options = new Options(args);
+			try {
+				// Parse the options and input and output file paths.
+				var options = new Options(args);
 
-                // Read the input file text.
-                string inputFileText = options.InputFilePath == null
-                    ? Console.In.ReadToEnd()
-                    : File.ReadAllText(options.InputFilePath);
+				// Read the input file text.
+				string inputFileText = options.InputFilePath == null
+						? Console.In.ReadToEnd()
+						: File.ReadAllText(options.InputFilePath);
 
-                using(var reader = new StringReader(inputFileText))
-                {
-                    using(TextWriter writer = options.OutputFilePath != null ? new StreamWriter(options.OutputFilePath, false, Encoding.UTF8) : Console.Out)
-                        options.Generator.Generate(options, reader, writer);
-                }
-            }
-            catch(GeneratorException gex)
-            {
+				using (var reader = new StringReader(inputFileText)) {
+					using (TextWriter writer = options.OutputFilePath != null ? new StreamWriter(options.OutputFilePath, false, Encoding.UTF8) : Console.Out)
+						options.Generator.Generate(options, reader, writer);
+				}
+			} catch (GeneratorException gex) {
 #if DEBUG
-                Console.Error.WriteLine("{0}({1}): error: {2}", Program.Name, gex.LineNumber, gex);
+				Console.Error.WriteLine("{0}({1}): error: {2}", Program.Name, gex.LineNumber, gex);
 #else
                 Console.Error.WriteLine("{0}({1}): error: {2}", Program.Name, gex.LineNumber, gex.Message);
 #endif
-                Environment.ExitCode = 1;
-            }
-            catch(Exception ex)
-            {
+				Environment.ExitCode = 1;
+			} catch (Exception ex) {
 #if DEBUG
-                Console.Error.WriteLine("{0}: error: {1}", Program.Name, ex);
+				Console.Error.WriteLine("{0}: error: {1}", Program.Name, ex);
 #else
                 Console.Error.WriteLine("{0}: error: {1}", Program.Name, ex.Message);
 #endif
-                Environment.ExitCode = 1;
-            }
-        }
+				Environment.ExitCode = 1;
+			}
+		}
 
 #if !DEBUG
         static Assembly Resolve(object sender, ResolveEventArgs args)
@@ -65,5 +56,5 @@ namespace Lad
             }
         }
 #endif
-    }
+	}
 }
