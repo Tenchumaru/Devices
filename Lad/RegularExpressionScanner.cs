@@ -36,8 +36,17 @@ namespace Lad {
 				}
 				return new Token { Symbol = RegularExpressionParser.Symbol, Value = value[index] };
 			}
-			if (ch == ']') {
+			if (specialCharacters.Contains(ch) && index + 1 < value.Length && value[index + 1] == ch) {
+				++index;
+				return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
+			} else if (ch == ']') {
 				isInRange = false;
+			} else if (isInRange) {
+				if (ch == '-') {
+					return new Token { Symbol = ch };
+				} else {
+					return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
+				}
 			} else if (ch == '}') {
 				isInCount = false;
 			} else if (isInCount) {
@@ -58,12 +67,8 @@ namespace Lad {
 					--index;
 					return new Token { Symbol = RegularExpressionParser.Identifier, Value = sb.ToString() };
 				}
-			} else if (isInRange) {
-				if (ch == '-') {
-					return new Token { Symbol = ch };
-				} else {
-					return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
-				}
+			} else if (!specialCharacters.Contains(ch)) {
+				return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
 			} else if (ch == '{') {
 				isInCount = true;
 				if (index + 1 < value.Length && char.IsLetter(value[index + 1])) {
@@ -75,8 +80,6 @@ namespace Lad {
 					++index;
 					return new Token { Symbol = RegularExpressionParser.OSBC };
 				}
-			} else if (!specialCharacters.Contains(ch)) {
-				return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
 			}
 			return new Token { Symbol = ch };
 		}
