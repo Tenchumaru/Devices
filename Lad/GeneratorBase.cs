@@ -86,10 +86,12 @@ namespace Lad {
 			(DfaState startState, Dictionary<string, int> caseValues) = nfa.MakeDfa();
 			string defaultState = isDebug ? "null" : "0";
 			string makeState(string s) => isDebug ? $"\"{s}\"" : $"{caseValues[s]}";
-			Console.Error.WriteLine("DFA:");
-			StringBuilder sb = new();
-			startState.Dump(sb);
-			Console.Error.WriteLine(sb.ToString());
+			if (isDebug) {
+				Console.Error.WriteLine("DFA:");
+				StringBuilder sb = new();
+				startState.Dump(sb);
+				Console.Error.WriteLine(sb.ToString());
+			}
 			writer.WriteLine($"{methodDeclarationText}{{");
 			writer.WriteLine("Dictionary<int,int>saves_=new Dictionary<int,int>();");
 			writer.WriteLine("if(reader_==null)reader_=new Reader_(reader);");
@@ -128,13 +130,15 @@ namespace Lad {
 			streamWriter.Write(s);
 		}
 
-		private static Nfa CombineNfas(IGrouping<int, KeyValuePair<Nfa, int>> groups) {
+		private Nfa CombineNfas(IGrouping<int, KeyValuePair<Nfa, int>> groups) {
 			var rv = Nfa.Or(groups.Select(p => p.Key).ToArray());
 			int acceptanceValue = groups.Key + 1;
-			Console.Error.WriteLine($"for acceptance value {acceptanceValue}:");
-			StringBuilder sb = new();
-			rv.Dump(sb);
-			Console.Error.WriteLine(sb.ToString());
+#if DEBUG
+			if (isDebug) {
+				Console.Error.WriteLine($"for acceptance value {acceptanceValue}:");
+				Console.Error.WriteLine(rv.Dump());
+			}
+#endif
 			rv += new Nfa(new AcceptingSymbol(acceptanceValue));
 			rv.SetSavePointValue(acceptanceValue);
 			return rv;

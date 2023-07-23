@@ -12,6 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="RegularExpressionParser.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <CodeAnalysisDictionary Include="RegularExpressionParser.xml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Properties\Skeleton.cs" />
   </ItemGroup>
 
