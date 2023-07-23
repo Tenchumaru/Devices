@@ -46,9 +46,9 @@ namespace Lad {
 							select (v.Identifier.ToString(), i.Value.ToString());
 			bool foundError = false;
 			foreach ((string name, string rx) in q) {
-				RegularExpressionParser parser = new(new RegularExpressionScanner(rx[1..^1]), namedExpressions);
-				if (parser.Parse()) {
-					namedExpressions.Add(name, parser.Result);
+				Nfa? nfa = ParseSyntaxValue(rx);
+				if (nfa is not null) {
+					namedExpressions.Add(name, nfa);
 				} else {
 					Console.Error.WriteLine($"failed to parse named regular expression '{name}'");
 					foundError = true;
@@ -59,6 +59,42 @@ namespace Lad {
 				return default;
 			}
 			return stateMachines!;
+		}
+
+		private Nfa? ParseSyntaxValue(string value) {
+			if (!value.Any()) {
+				Console.Error.WriteLine("cannot parse empty regular expression");
+				return null;
+			} else if (value[0] == '@') {
+				Nfa nfa = new(new EpsilonSymbol());
+				bool isEscaping = false;
+				int index = 1;
+				foreach (char ch in value[2..^1]) {
+					++index;
+					if (isEscaping) {
+						isEscaping = false;
+						if (!RegularExpressionScanner.knownEscapes.TryGetValue(ch, out char escape)) {
+							escape = ch;
+						}
+						nfa += new Nfa(new SimpleSymbol(escape));
+					} else if (ch == '\\') {
+						isEscaping = true;
+					} else {
+						nfa += new Nfa(new SimpleSymbol(ch));
+					}
+				}
+				if (isEscaping) {
+					Console.Error.WriteLine("unterminated escape in literal");
+					return null;
+				}
+				return nfa;
+			}
+			RegularExpressionParser parser = new(new RegularExpressionScanner(value[1..^1]), namedExpressions);
+			if (!parser.Parse()) {
+				Console.Error.WriteLine("cannot parse regular expression");
+				return null;
+			}
+			return parser.Result;
 		}
 
 		private StateMachine? ProcessMethod(MethodDeclarationSyntax methodDeclaration) {
@@ -78,12 +114,11 @@ namespace Lad {
 					if (switchLabel is CaseSwitchLabelSyntax caseSwitchLabel) {
 						var labelText = caseSwitchLabel.Value.ToString();
 						labelTexts.Add(labelText, codes.Count);
-						string value = labelText[1..^1];
-						RegularExpressionParser parser = new(new RegularExpressionScanner(value), namedExpressions);
-						if (parser.Parse()) {
-							rules.Add(parser.Result, codes.Count);
+						Nfa? nfa = ParseSyntaxValue(labelText);
+						if (nfa is not null) {
+							rules.Add(nfa, codes.Count);
 						} else {
-							Console.Error.WriteLine($"failed to parse regular expression '{value}'");
+							Console.Error.WriteLine($"failed to parse regular expression {labelText}");
 							foundError = true;
 						}
 					} else if (switchLabel is DefaultSwitchLabelSyntax) {
