@@ -66,6 +66,9 @@ namespace Lad {
 				}
 			} else if (ch == '{') {
 				isInCount = true;
+				if (index + 1 < value.Length && char.IsLetter(value[index + 1])) {
+					return new Token { Symbol = RegularExpressionParser.NE };
+				}
 			} else if (ch == '[') {
 				isInRange = true;
 				if (index + 1 < value.Length && value[index + 1] == '^') {

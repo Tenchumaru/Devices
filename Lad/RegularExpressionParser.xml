@@ -16,6 +16,7 @@
 		<terminal name="Number" type="int" />
 		<terminal name="Symbol" type="char" />
 		<terminal name="Identifier" type="string" />
+		<terminal name="NE" />
 		<terminal name="OSBC" />
 	</symbols>
 	<rules>
@@ -111,7 +112,7 @@
 			<action><![CDATA[$$ = new Nfa(AnySymbol.Value);]]></action>
 		</rule>
 		<rule name="simple">
-			<literal value="{" />
+			<terminal name="NE" />
 			<terminal name="Identifier" />
 			<literal value="}" />
 			<action><![CDATA[$$ = FindNamedExpression($2); if($$ == null) return false;]]></action>
