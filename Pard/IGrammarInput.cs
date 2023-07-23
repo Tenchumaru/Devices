@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
-
-namespace Pard {
-	interface IGrammarInput {
-		IReadOnlyList<Production> Read(TextReader reader, Options options);
+﻿namespace Pard {
+	public interface IGrammarInput {
+		IReadOnlyList<Production> Read(TextReader reader);
 	}
 }

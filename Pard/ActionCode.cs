@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Pard {
+﻿namespace Pard {
 	class ActionCode {
 		internal readonly string Code;
 		internal readonly int LineNumber;

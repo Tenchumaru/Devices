@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Pard {
+﻿namespace Pard {
 	class Terminal : Symbol {
 		public readonly Grammar.Associativity Associativity;
 		public readonly int Precedence;
@@ -12,24 +6,25 @@ namespace Pard {
 
 		private static int lastValue = 1;
 
-		public static readonly Terminal Epsilon = new Terminal("(epsilon)", null, Grammar.Associativity.None, 0);
-		public static readonly Terminal AugmentedEnd = new Terminal("(end)", null, Grammar.Associativity.None, 0);
-		public static readonly Terminal Error = new Terminal("error", null, Grammar.Associativity.None, 0);
+		public static readonly Terminal Epsilon = new("(epsilon)", null, Grammar.Associativity.None, 0);
+		public static readonly Terminal AugmentedEnd = new("(end)", null, Grammar.Associativity.None, 0);
+		public static readonly Terminal Error = new("error", null, Grammar.Associativity.None, 0);
 
-		public Terminal(string name, string typeName, Grammar.Associativity associativity, int precedence)
-				: this(name, typeName, associativity, precedence, --lastValue) {
+		public Terminal(string name, string? typeName, Grammar.Associativity associativity, int precedence) : this(name, typeName, associativity, precedence, --lastValue) {
 		}
 
-		public Terminal(string name, string typeName, Grammar.Associativity associativity, int precedence, int value)
-				: base(name, typeName) {
+		public Terminal(string name, string? typeName, Grammar.Associativity associativity, int precedence, int value) : base(name, typeName) {
 			Associativity = associativity;
 			Precedence = precedence;
 			Value = value;
 		}
 
-		public static string FormatLiteralName(string s) {
+		public static string FormatLiteralName(string? value) {
 			// TODO: perform unescaping on the value.
-			return s.Length == 1 ? "'" + s + "'" : null;
+			if (value is null) {
+				throw new InvalidOperationException("no value for literal");
+			}
+			return value.Length == 1 ? "'" + value + "'" : throw new InvalidOperationException($"invalid literal value '{value}'");
 		}
 	}
 }

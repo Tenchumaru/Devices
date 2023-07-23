@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Pair_ = System.Collections.Generic.KeyValuePair<int, object>;
+using Pair_ = System.Collections.Generic.KeyValuePair<int, object?>;
 	class Skeleton // using directives, namespace, and class $
 	{
 		public event EventHandler<ParseErrorEventArgs> Error;
@@ -23,8 +23,9 @@ using Pair_ = System.Collections.Generic.KeyValuePair<int, object>;
 			// reductions $
 			};
 			var token_ = scanner.Read();
+			if (token_ == null) token_ = new Token { Symbol = -1 };
 			var reduction_ = new R_();
-			object reductionValue_ = null;
+			object? reductionValue_ = null;
 			for(; ; )
 			{
 				switch(state_)
@@ -34,12 +35,11 @@ using Pair_ = System.Collections.Generic.KeyValuePair<int, object>;
 					if(reduction_.Count > 0)
 						reductionValue_ = stack_[stack_.Count - reduction_.Count].Value;
 					goto reduce2;
-#pragma warning disable 162 // unreachable code
 				case 1: break; // actions $
-#pragma warning restore 162
 shift:
 					stack_.Add(new Pair_(state_, token_.Value));
 token_ = scanner.Read();
+if (token_ == null) token_ = new Token { Symbol = -1 };
 continue;
 reduce1:
 reduction_ = reductions_[state_];
@@ -75,7 +75,7 @@ continue;
 					return false;
 			}
 		}
-		private bool? HandleError(int symbol, object value)
+		private bool? HandleError(int symbol, object? value)
 		{
 			var eventArgs = new ParseErrorEventArgs(symbol, value);
 			Error?.Invoke(this, eventArgs);
@@ -101,12 +101,13 @@ continue;
 		public class ParseErrorEventArgs : EventArgs
 		{
 			public readonly int Symbol;
-			public readonly object Value;
+			public readonly object? Value;
 			public bool? Result;
-			public ParseErrorEventArgs(int symbol, object value)
+			public ParseErrorEventArgs(int symbol, object? value)
 			{
 				Symbol = symbol;
 				Value = value;
 			}
 		}
+		// ignore last closing brace $
 	}

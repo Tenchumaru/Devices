@@ -19,7 +19,7 @@ namespace Pard.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -64,11 +64,11 @@ namespace Pard.Properties {
         ///   Looks up a localized string similar to using System;
         ///using System.Collections.Generic;
         ///using System.Linq;
-        ///using Pair_ = System.Collections.Generic.KeyValuePair&lt;int, object&gt;;
+        ///using Pair_ = System.Collections.Generic.KeyValuePair&lt;int, object?&gt;;
         ///	class Skeleton // using directives, namespace, and class $
         ///	{
         ///		public event EventHandler&lt;ParseErrorEventArgs&gt; Error;
-        ///		private IScanner scanner; // scanner field $
+        ///		private readonly IScanner scanner; // scanner field $
         ///
         ///		public Skeleton(IScanner scanner) // constructor $
         ///		{
@@ -78,7 +78,7 @@ namespace Pard.Properties {
         ///		public bool Parse()
         ///		{
         ///			int state_ = 0;
-        ///			var stack_ = new List&lt;Pair_&gt; { new P [rest of string was truncated]&quot;;.
+        ///			var stack_ = new List&lt;Pair_&gt; { new Pair_(state [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Skeleton {
             get {

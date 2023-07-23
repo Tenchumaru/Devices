@@ -9,36 +9,46 @@ IF "%VCVARS%" == "" (
 )
 CALL "%VCVARS%"
 CD /D "%~dp0"
-SET T=%TEMP%\Pard.Test.%RANDOM%.make
-find ".xml" "%~dp0Pard.Test.csproj" | find "Content" | cscript //nologo //E:JScript "%~nx0" %1 > %T%
-nmake -nologo "ConfigurationName=%~1" -f %T% all
-SET EXIT_CODE=%ERRORLEVEL%
-DEL /F /Q %T%
-EXIT /B %EXIT_CODE%
+IF NOT EXIST obj MD obj
+SET MAKEFILE=obj\Pard.Test.make
+find ".xml" "%~dp0Pard.Test.csproj" | find "Content" > obj\xy
+find ".y" "%~dp0Pard.Test.csproj" | find "Content" >> obj\xy
+TYPE obj\xy | cscript //nologo //E:JScript "%~nx0" %1 > %MAKEFILE%
+nmake -nologo "ConfigurationName=%~1" -f %MAKEFILE% all
+EXIT /B
 */
 function REM() {
 	var fin = WScript.StdIn, fout = WScript.StdOut;
-	var xmlFileNames = [];
+	var fileNames = [];
 	while(!fin.AtEndOfStream) {
 		var s = fin.ReadLine();
-		xmlFileNames.push(s.split('"')[1]);
+		fileNames.push(s.split('"')[1]);
 	}
-	fout.WriteLine('ConfigurationName=' + WScript.Arguments(0));
-	fout.Write('all:');
-	for(var i = 0, n = xmlFileNames.length; i < n; ++i) {
-		var xmlFileName = xmlFileNames[i];
-		var csFileName = xmlFileName + '.g.cs';
-		fout.Write(' ' + csFileName);
+	fout.WriteLine("ConfigurationName=" + WScript.Arguments(0));
+	fout.Write("all:");
+	for(var i = 0, n = fileNames.length; i < n; ++i) {
+		var fileName = fileNames[i];
+		var csFileName = fileName + ".g.cs";
+		fout.Write(" " + csFileName);
 	}
 	fout.WriteLine();
-	for(var i = 0, n = xmlFileNames.length; i < n; ++i) {
-		var xmlFileName = xmlFileNames[i];
-		var parserName = xmlFileName.split('.')[0];
-		var csFileName = xmlFileName + '.g.cs';
+	var exePath = '"..\\Pard\\bin\\$(ConfigurationName)\\net6.0\\Pard.exe"';
+	for(var i = 0, n = fileNames.length; i < n; ++i) {
+		var fileName = fileNames[i];
+		var parts = fileName.split(".");
+		var parserName = parts[0] + parts[1].substr(0, 1);
+		var csFileName = fileName + ".g.cs";
 		fout.WriteLine();
-		fout.WriteLine(csFileName + ': ' + xmlFileName);
-		fout.WriteLine('\tIF EXIST ' + csFileName + ' DEL /F /Q ' + csFileName);
-		fout.WriteLine('\t"..\\Pard\\bin\\$(ConfigurationName)\\Pard.exe" --namespace=Pard.Test --parser-class-name=' +
-			parserName + ' --scanner-class-name=Scanner ' + xmlFileName + ' ' + csFileName);
+		fout.WriteLine(csFileName + ": " + fileName);
+		fout.WriteLine("\tIF EXIST " + csFileName + " DEL /F /Q " + csFileName);
+		var classDeclaration = '"namespace Pard.Test{public partial class ' + parserName + '"';
+		var commandLine = [
+			exePath,
+			"--parser-class-declaration=" + classDeclaration,
+			"--scanner-class-name=Scanner",
+			fileName,
+			csFileName,
+		];
+		fout.WriteLine("\t" + commandLine.join(" "));
 	}
 }

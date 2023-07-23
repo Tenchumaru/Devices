@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Pard {
 	class CodeOutput : IGrammarOutput {
@@ -11,6 +8,7 @@ namespace Pard {
 			"System.Collections.Generic",
 			"System.Linq",
 		};
+		private static readonly Regex rx = new(@"\s+");
 
 		public void Write(IReadOnlyList<Grammar.ActionEntry> actions, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
 			// Emit the define directives.
@@ -18,29 +16,36 @@ namespace Pard {
 				writer.WriteLine("#define " + defineDirective);
 			}
 
+			writer.WriteLine("#nullable enable");
+
 			// Get the output skeleton.
-			var skeleton = new StringReader(Properties.Resources.Skeleton);
+			StringReader skeleton = new(Properties.Resources.Skeleton);
 			EmitSection(skeleton, writer);
 
 			// Add unique additional using directives.
-			var uniqueUsingDirectives = options.AdditionalUsingDirectives.Except(requiredUsingDirectives).ToArray();
+			string[] uniqueUsingDirectives = options.AdditionalUsingDirectives.Except(requiredUsingDirectives).ToArray();
 			if (uniqueUsingDirectives.Length > 0) {
 				writer.WriteLine("using {0};", string.Join(";using ", uniqueUsingDirectives));
 			}
 
 			// Emit the namespace, class name, and constructor values.
-			string classDeclaration = options.NamespaceName != null
-					? string.Format("namespace {0} {{ public partial class {1}", options.NamespaceName, options.ParserClassName)
-					: "public class " + options.ParserClassName;
+			string classDeclaration = options.ClassDeclaration.Trim();
+			classDeclaration = rx.Replace(classDeclaration, " ");
+			if (classDeclaration.EndsWith("{")) {
+				classDeclaration = classDeclaration[..^1];
+			}
+			string parserClassName = classDeclaration.Split(' ').Last();
 			writer.WriteLine(classDeclaration);
 			EmitSection(skeleton, writer);
 			writer.WriteLine("private {0} scanner;", options.ScannerClassName);
 			EmitSection(skeleton, writer);
-			writer.WriteLine("public {0}({1} scanner)", options.ParserClassName, options.ScannerClassName);
+			writer.WriteLine("#pragma warning disable CS8618");
+			writer.WriteLine("public {0}({1} scanner)", parserClassName, options.ScannerClassName);
+			writer.WriteLine("#pragma warning restore CS8618");
 			EmitSection(skeleton, writer);
 
 			// Map the non-terminal symbols to go-to and reduction table indices.
-			var nonTerminalIndices = gotos.Select(e => e.Nonterminal).Distinct().Select((n, i) => new { N = n, I = i }).ToDictionary(a => a.N, a => a.I);
+			Dictionary<Nonterminal, int> nonTerminalIndices = gotos.Select(e => e.Nonterminal).Distinct().Select((n, i) => new { N = n, I = i }).ToDictionary(a => a.N, a => a.I);
 
 			// Construct the go-to table and replace it in the skeleton.
 			string goTos = ConstructGoTos(gotos, nonTerminalIndices);
@@ -51,7 +56,7 @@ namespace Pard {
 			var reducedProductions = from e in actions
 															 where e.Action == Grammar.Action.Reduce
 															 select productions[e.Value];
-			var productionIndices = reducedProductions.Distinct().Select((p, i) => new { P = p, I = i }).ToDictionary(a => a.P, a => a.I);
+			Dictionary<Production, int> productionIndices = reducedProductions.Distinct().Select((p, i) => new { P = p, I = i }).ToDictionary(a => a.P, a => a.I);
 
 			// Construct the reduction table and replace it in the skeleton.
 			string reductions = ConstructReductions(nonTerminalIndices, productionIndices);
@@ -64,8 +69,8 @@ namespace Pard {
 				stateRowLists[i] = new List<string>();
 			}
 
-			foreach (var entry in actions) {
-				var terminal = entry.Terminal;
+			foreach (Grammar.ActionEntry entry in actions) {
+				Terminal terminal = entry.Terminal;
 				switch (entry.Action) {
 					case Grammar.Action.Accept:
 						stateRowLists[entry.StateIndex].Add("case -1:return true;");
@@ -80,25 +85,42 @@ namespace Pard {
 			}
 
 			// Collapse inner cases.
-			var stateRows = new List<string>();
-			foreach (var stateRowList in stateRowLists) {
+			List<string> stateRows = new();
+			foreach (List<string> stateRowList in stateRowLists) {
 				var inners = from s in stateRowList
 										 let a = s.Split(':')
 										 group a[0] by a[1] into g
 										 select string.Format("{0}:{1}", string.Join(":", g.Distinct().ToArray()), g.Key);
-				var joined = string.Join("", inners.ToArray());
+				string joined = string.Join("", inners.ToArray());
 				stateRows.Add(joined);
 			}
 
 			// Collapse outer cases and emit the transitions.
-			var outers = stateRows.Select((s, i) => new { S = s, I = i }).GroupBy(a => a.S).Select(g => string.Format("case {0}:switch(token_.Symbol){{ {1} }}break;", string.Join(":case ", g.Select(a => a.I.ToString()).Distinct().ToArray()), g.Key));
+			var outers = stateRows.Select((s, i) => new { S = s, I = i }).GroupBy(a => a.S).
+				Select(g => string.Format("case {0}:switch(token_.Symbol){{ {1} }}break;", string.Join(":case ", g.Select(a => a.I.ToString()).Distinct().ToArray()), g.Key));
 			writer.WriteLine(string.Join(writer.NewLine, outers.ToArray()));
 			EmitSection(skeleton, writer);
 
+			if (!options.WantsWarnings) {
+				writer.WriteLine("#pragma warning disable CS0162 // Unreachable code detected");
+				writer.WriteLine("#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.");
+				writer.WriteLine("#pragma warning disable CS8602 // Dereference of a possibly null reference.");
+				writer.WriteLine("#pragma warning disable CS8604 // Possible null reference argument.");
+				writer.WriteLine("#pragma warning disable CS8605 // Unboxing a possibly null value.");
+			}
+
 			// Emit the actions.
 			int actionIndex = -1;
-			foreach (Production production in productionIndices.Keys.Where(p => p.ActionCode != null)) {
-				writer.WriteLine("case {1}:{0}{2}{0}goto reduce2;", writer.NewLine, --actionIndex, ConstructAction(production, options.LineDirectivesFilePath));
+			foreach (var pair in productionIndices.Keys.Where(p => p.ActionCode != null).Select(p => new { Production = p, ActionCode = p.ActionCode! })) {
+				writer.WriteLine("case {1}:{0}{2}{0}goto reduce2;", writer.NewLine, --actionIndex, ConstructAction(pair.Production, pair.ActionCode, options.LineDirectivesFilePath));
+			}
+
+			if (!options.WantsWarnings) {
+				writer.WriteLine("#pragma warning restore CS8605 // Unboxing a possibly null value.");
+				writer.WriteLine("#pragma warning restore CS8604 // Possible null reference argument.");
+				writer.WriteLine("#pragma warning restore CS8602 // Dereference of a possibly null reference.");
+				writer.WriteLine("#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.");
+				writer.WriteLine("#pragma warning restore CS0162 // Unreachable code detected");
 			}
 
 			EmitSection(skeleton, writer);
@@ -108,7 +130,7 @@ namespace Pard {
 											let t = e.Terminal
 											where t.Name[0] != '\'' && t.Name != "(end)"
 											select t;
-			foreach (var terminal in terminals.Distinct()) {
+			foreach (Terminal terminal in terminals.Distinct()) {
 				writer.WriteLine("public const int {0}= {1};", terminal.Name, terminal.Value);
 			}
 			EmitSection(skeleton, writer);
@@ -117,13 +139,13 @@ namespace Pard {
 			if (options.WantsTokenClass) {
 				writer.WriteLine("public partial class Token { public int Symbol; public object Value; }");
 			}
-			if (options.NamespaceName != null) {
+			foreach (string _ in classDeclaration.Split('{')) {
 				writer.WriteLine('}');
 			}
 		}
 
-		private static string ConstructAction(Production production, string lineDirectivesFilePath) {
-			var code = production.ActionCode.Code.Replace("$$.", string.Format("(({0})reductionValue_).", production.Lhs.TypeName));
+		private static string ConstructAction(Production production, ActionCode actionCode, string? lineDirectivesFilePath) {
+			string code = actionCode.Code.Replace("$$.", string.Format("(({0})reductionValue_).", production.Lhs.TypeName));
 			code = code.Replace("$$", "reductionValue_");
 			string[] parts = code.Split('$');
 
@@ -134,14 +156,14 @@ namespace Pard {
 				}
 
 				// Parse any explicit type name.
-				string typeName = null;
+				string? typeName = null;
 				int j = 0;
 				if (part[0] == '<') {
 					j = part.IndexOf('>');
 					if (j < 2) {
 						throw new MalformedSubstitutionException(production);
 					}
-					typeName = part.Substring(1, j - 1);
+					typeName = part[1..j];
 					++j;
 				}
 
@@ -150,12 +172,12 @@ namespace Pard {
 					throw new MalformedSubstitutionException(production);
 				}
 				if (part[j] == '$') {
-					parts[i] = typeName != null
-						? string.Format("(({0})reductionValue_{1})", typeName, part.Substring(j + 1))
-						: "reductionValue_" + part.Substring(j + 1);
+					parts[i] = typeName != null ?
+						string.Format("(({0})reductionValue_{1})", typeName, part[(j + 1)..]) :
+						"reductionValue_" + part[(j + 1)..];
 					continue;
 				}
-				var sb = new StringBuilder();
+				StringBuilder sb = new();
 				if (part[j] == '-') {
 					sb.Append('-');
 					++j;
@@ -178,31 +200,31 @@ namespace Pard {
 					typeName = "object";
 				}
 				int stackIndex = production.Rhs.Count - symbolIndex;
-				var s = string.Format("(({0})(stack_[stack_.Count - {1}].Value))", typeName, stackIndex);
-				parts[i] = s + part.Substring(j);
+				string s = string.Format("(({0})(stack_[stack_.Count - {1}].Value))", typeName, stackIndex);
+				parts[i] = s + part[j..];
 			}
 
 			code = string.Join("", parts);
 			if (lineDirectivesFilePath != null) {
-				code = string.Format("#line {1} \"{2}\"{0}{3}{0}#line default{0}", Environment.NewLine, production.ActionCode.LineNumber, lineDirectivesFilePath, code);
+				code = string.Format("#line {1} \"{2}\"{0}{3}{0}#line default{0}", Environment.NewLine, actionCode.LineNumber, lineDirectivesFilePath, code);
 			}
 			return code;
 		}
 
 		private static void EmitSection(StringReader skeleton, TextWriter output) {
-			for (string line = skeleton.ReadLine(); line != null && !line.EndsWith("$"); line = skeleton.ReadLine()) {
+			for (string? line = skeleton.ReadLine(); line != null && !line.EndsWith("$"); line = skeleton.ReadLine()) {
 				output.WriteLine(line);
 			}
 		}
 
 		private static string ConstructReductions(Dictionary<Nonterminal, int> nonTerminalIndices, Dictionary<Production, int> productionIndices) {
-			var sb = new StringBuilder();
+			StringBuilder sb = new();
 			int actionIndex = -1;
-			foreach (var production in productionIndices.Keys) {
-				if (production.ActionCode != null)
+			foreach (Production production in productionIndices.Keys) {
+				if (production.ActionCode != null) {
 					sb.AppendFormat("new R_({0},{1},{2}),", nonTerminalIndices[production.Lhs], production.Rhs.Count, --actionIndex);
-				else {
-					string rhsTypeName = production.Rhs.Count == 0 ? null : production.Rhs[0].TypeName;
+				} else {
+					string? rhsTypeName = production.Rhs.Count == 0 ? null : production.Rhs[0].TypeName;
 					if (production.Lhs.TypeName != rhsTypeName) {
 						Console.WriteLine("warning: default action type mismatch; assigning '{0}' from '{1}'", production.Lhs.TypeName, rhsTypeName);
 					}
@@ -226,7 +248,7 @@ namespace Pard {
 			foreach (var g in goTos) {
 				goToArray[g.Row, g.Column] = g.Target;
 			}
-			var sb = new StringBuilder();
+			StringBuilder sb = new();
 			for (int i = 0; i < goToRowCount; ++i) {
 				sb.Append('{');
 				for (int j = 0; j < nonTerminalIndices.Count; ++j) {
@@ -241,12 +263,10 @@ namespace Pard {
 	}
 
 	public class MalformedSubstitutionException : Exception {
-		internal MalformedSubstitutionException(Production production)
-				: base("malformed substitution in " + production) {
+		internal MalformedSubstitutionException(Production production) : base("malformed substitution in " + production) {
 		}
 
-		public MalformedSubstitutionException(string message)
-				: base(message) {
+		public MalformedSubstitutionException(string message) : base(message) {
 		}
 	}
 }

@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#pragma warning disable CA1826 // Do not use Enumerable methods on indexable collections
 
 namespace Pard {
 	class Grammar {
-		public IReadOnlyList<ActionEntry> Actions { get { return actions; } }
-		public IReadOnlyList<GotoEntry> Gotos { get { return gotos; } }
-		public IReadOnlyList<Item.Set> States { get { return states; } }
+		public IReadOnlyList<ActionEntry> Actions => actions;
+		public IReadOnlyList<GotoEntry> Gotos => gotos;
+		public IReadOnlyList<Item.Set> States => states;
 		private readonly IReadOnlyList<ActionEntry> actions;
 		private readonly IReadOnlyList<GotoEntry> gotos;
 		private readonly IReadOnlyList<Item.Set> states;
@@ -18,7 +14,7 @@ namespace Pard {
 			// left-hand side is the same as the left-hand side of the first
 			// production is a starting production.  This isn't part of the
 			// algorithm but I think it's appropriate.
-			var referencedProductions = new HashSet<Production>(productions.Where(p => p.Lhs == productions[0].Lhs));
+			HashSet<Production> referencedProductions = new(productions.Where(p => p.Lhs == productions[0].Lhs));
 			int count;
 			do {
 				count = referencedProductions.Count;
@@ -27,20 +23,20 @@ namespace Pard {
 								select p;
 				referencedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
 			} while (count < referencedProductions.Count && referencedProductions.Count < productions.Count);
-			var unreferencedProductions = productions.Except(referencedProductions).ToList();
+			List<Production> unreferencedProductions = productions.Except(referencedProductions).ToList();
 			if (unreferencedProductions.Any()) {
 				// Issue a warning, if any.
 				Console.Error.WriteLine("warning: {0} unreferenced productions:", unreferencedProductions.Count);
-				foreach (var unreferencedProduction in unreferencedProductions) {
+				foreach (Production unreferencedProduction in unreferencedProductions) {
 					Console.Error.WriteLine(unreferencedProduction);
 				}
 			}
 
 			// Create the augmented grammar (p. 222) using only referenced productions.
-			var augmented = new Augmented(productions[0], referencedProductions.OrderBy(p => p.Index));
+			Augmented augmented = new(productions[0], referencedProductions.OrderBy(p => p.Index));
 
 			// Algorithm 4.9, p. 231
-			var items = augmented.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
+			Dictionary<Item.Set, int> items = augmented.Items().Select((s, i) => new { Set = s, Index = i }).ToDictionary(p => p.Set, p => p.Index);
 			states = items.OrderBy(p => p.Value).Select(p => p.Key).ToList();
 
 			// Algorithm 4.10, p. 234
@@ -49,13 +45,13 @@ namespace Pard {
 							let x = from g in p.Key.Gotos
 											let t = g.Key as Terminal
 											where t != null
-											select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = Action.Shift, Value = items[g.Value] }
+											select new ActionEntry(stateIndex: p.Value, terminal: t, action: Action.Shift, value: items[g.Value])
 							let y = from i in p.Key.AsEnumerable()
 											where i.DotPosition == augmented.Productions[i.ProductionIndex].Rhs.Count
 											let t = i.Lookahead
 											let s = i.ProductionIndex < 0
 											where !s || t == Terminal.AugmentedEnd
-											select new ActionEntry { StateIndex = p.Value, Terminal = t, Action = s ? Action.Accept : Action.Reduce, Value = i.ProductionIndex }
+											select new ActionEntry(stateIndex: p.Value, terminal: t, action: s ? Action.Accept : Action.Reduce, value: i.ProductionIndex)
 							from z in x.Concat(y)
 							select z;
 
@@ -68,11 +64,13 @@ namespace Pard {
 				Console.Error.Write("warning:");
 				if (shiftReduceConflictCount > 0) {
 					Console.Error.Write(" {0} shift-reduce conflict{1}", shiftReduceConflictCount, shiftReduceConflictCount == 1 ? "" : "s");
-					if (reduceReduceConflictCount > 0)
+					if (reduceReduceConflictCount > 0) {
 						Console.Error.Write(" and");
+					}
 				}
-				if (reduceReduceConflictCount > 0)
+				if (reduceReduceConflictCount > 0) {
 					Console.Error.Write(" {0} reduce-reduce conflict{1}", reduceReduceConflictCount, reduceReduceConflictCount == 1 ? "" : "s");
+				}
 				Console.Error.WriteLine();
 			}
 
@@ -81,7 +79,7 @@ namespace Pard {
 							from g in p.Key.Gotos
 							let n = g.Key as Nonterminal
 							where n != null
-							select new GotoEntry { StateIndex = p.Value, Nonterminal = n, TargetStateIndex = items[g.Value] };
+							select new GotoEntry(stateIndex: p.Value, nonterminal: n, targetStateIndex: items[g.Value]);
 			gotos = b.ToList();
 		}
 
@@ -90,18 +88,21 @@ namespace Pard {
 				case 1:
 					return list[0];
 				case 2:
-					ActionEntry left = list[0], right = list[1], result;
+					ActionEntry left = list[0], right = list[1];
+					ActionEntry? result;
 					switch (left.Action.ToString() + right.Action.ToString()) {
 						case "ShiftReduce":
 							result = ResolveShiftReduceConflict(left, right, productions);
-							if (result != null)
+							if (result != null) {
 								return result;
+							}
 							++shiftReduceConflictCount;
 							return left;
 						case "ReduceShift":
 							result = ResolveShiftReduceConflict(right, left, productions);
-							if (result != null)
+							if (result != null) {
 								return result;
+							}
 							++shiftReduceConflictCount;
 							return right;
 						case "ReduceReduce":
@@ -113,11 +114,12 @@ namespace Pard {
 				default:
 					// Take the reduction with the lowest production index and
 					// resolve the shift-reduce conflict.
-					var shift = list.Single(e => e.Action == Action.Shift);
-					var reduce = list.Where(e => e.Action == Action.Reduce).OrderBy(e => e.Value).First();
+					ActionEntry shift = list.Single(e => e.Action == Action.Shift);
+					ActionEntry reduce = list.Where(e => e.Action == Action.Reduce).OrderBy(e => e.Value).First();
 					result = ResolveShiftReduceConflict(shift, reduce, productions);
-					if (result != null)
+					if (result != null) {
 						return result;
+					}
 					reduceReduceConflictCount += list.Count - 2;
 					++shiftReduceConflictCount;
 					return shift;
@@ -125,12 +127,12 @@ namespace Pard {
 			throw new Exception();
 		}
 
-		private ActionEntry ResolveShiftReduceConflict(ActionEntry shift, ActionEntry reduce, IDictionary<int, Production> productions) {
-			if (shift.Terminal.Precedence > productions[reduce.Value].Precedence)
+		private static ActionEntry? ResolveShiftReduceConflict(ActionEntry shift, ActionEntry reduce, IDictionary<int, Production> productions) {
+			if (shift.Terminal.Precedence > productions[reduce.Value].Precedence) {
 				return shift;
-			else if (shift.Terminal.Precedence < productions[reduce.Value].Precedence)
+			} else if (shift.Terminal.Precedence < productions[reduce.Value].Precedence) {
 				return reduce;
-			else if (shift.Terminal.Associativity == productions[reduce.Value].Associativity) {
+			} else if (shift.Terminal.Associativity == productions[reduce.Value].Associativity) {
 				switch (shift.Terminal.Associativity) {
 					case Associativity.None:
 						Console.Error.WriteLine("warning: associativity for {0} unspecified; assuming right", shift.Terminal);
@@ -148,20 +150,21 @@ namespace Pard {
 		}
 
 		class Augmented {
-			internal IDictionary<int, Production> Productions { get { return productions; } }
+			internal IDictionary<int, Production> Productions => productions;
 			private readonly IDictionary<int, Production> productions;
 			private readonly IDictionary<Nonterminal, List<Production>> productionsByNonterminal;
 			private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets;
 
 			internal Augmented(Production startProduction, IEnumerable<Production> referencedProductions) {
-				var productions = new List<Production> { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
+				List<Production> productions = new() { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
 				productions.AddRange(referencedProductions);
 				this.productions = productions.ToDictionary(p => p.Index);
 				productionsByNonterminal = productions.GroupBy(p => p.Lhs).ToDictionary(g => g.Key, g => g.ToList());
 				firstSets = CollectFirstSets(productions);
 				firstSets.Add(Terminal.AugmentedEnd, new HashSet<Terminal> { Terminal.AugmentedEnd });
-				foreach (var terminal in productions.SelectMany(p => p.Rhs).OfType<Terminal>().Distinct())
+				foreach (Terminal terminal in productions.SelectMany(p => p.Rhs).OfType<Terminal>().Distinct()) {
 					firstSets.Add(terminal, new HashSet<Terminal> { terminal });
+				}
 			}
 
 			// closure(I), p. 232
@@ -211,14 +214,14 @@ namespace Pard {
 			// items(G'), p. 232
 			internal IReadOnlyList<Item.Set> Items() {
 				// Create a collection of symbols used in the grammar.
-				var symbols = new HashSet<Symbol>(productions.SelectMany(p => p.Value.Rhs));
+				HashSet<Symbol> symbols = new(productions.SelectMany(p => p.Value.Rhs));
 
 				// Create a list to hold the items added to the closure.  Their
 				// indicies will be the state indicies.
-				var items = new List<Item.Set>();
+				List<Item.Set> items = new();
 
 				// C := {closure({[S' → ∙S, $]})};
-				var c = new HashSet<Item.Set>(new[] { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) })) });
+				HashSet<Item.Set> c = new(new[] { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) })) });
 				items.Add(c.First());
 
 				// repeat
@@ -227,11 +230,11 @@ namespace Pard {
 					count = c.Count;
 
 					// for each set of items I in C and each grammar symbol X
-					foreach (var itemSet in c.ToList()) // Use ToList to prevent an iteration exception.
+					foreach (Item.Set itemSet in c.ToList()) // Use ToList to prevent an iteration exception.
 					{
-						foreach (var symbol in symbols) {
+						foreach (Symbol symbol in symbols) {
 							// such that goto(I, X) is not empty and not in C do
-							var g = Goto(itemSet, symbol);
+							Item.Set g = Goto(itemSet, symbol);
 							if (g.Any() && !c.Contains(g)) {
 								// add goto(I, X) to C
 								c.Add(g);
@@ -240,9 +243,9 @@ namespace Pard {
 
 							if (g.Any()) {
 								// Add it as a target state of the source state.
-								if (!itemSet.Gotos.ContainsKey(symbol))
+								if (!itemSet.Gotos.ContainsKey(symbol)) {
 									itemSet.Gotos.Add(symbol, g);
-								else if (itemSet.Gotos[symbol] != g) {
+								} else if (itemSet.Gotos[symbol] != g) {
 									Console.Error.WriteLine("warning: goto conflict between {0} -> {1} and {0} -> {2} on {3}",
 											itemSet, itemSet.Gotos[symbol], g, symbol);
 								}
@@ -257,10 +260,10 @@ namespace Pard {
 
 			// FIRST(X), p. 189
 			private HashSet<Terminal> First(IEnumerable<Symbol> symbols) {
-				var first = new HashSet<Terminal>();
+				HashSet<Terminal> first = new();
 
-				foreach (var symbol in symbols) {
-					var symbolFirst = firstSets[symbol];
+				foreach (Symbol symbol in symbols) {
+					HashSet<Terminal> symbolFirst = firstSets[symbol];
 					first.UnionWith(symbolFirst);
 					if (!symbolFirst.Contains(Terminal.Epsilon)) {
 						first.Remove(Terminal.Epsilon);
@@ -272,7 +275,7 @@ namespace Pard {
 			}
 
 			private static Dictionary<Symbol, HashSet<Terminal>> CollectFirstSets(IEnumerable<Production> productions) {
-				var expandedProductions = new HashSet<Production>(productions);
+				HashSet<Production> expandedProductions = new(productions);
 
 				// Collect all productions with additional productions not in
 				// the grammar synthesized by removing initial non-terminals
@@ -283,7 +286,7 @@ namespace Pard {
 					count = expandedProductions.Count;
 
 					// Find all ε productions.  Retrieve their left-hand sides.
-					var epsilonLhss = new HashSet<Nonterminal>(expandedProductions.Where(p => !p.Rhs.Any()).Select(p => p.Lhs));
+					HashSet<Nonterminal> epsilonLhss = new(expandedProductions.Where(p => !p.Rhs.Any()).Select(p => p.Lhs));
 
 					// For each of those, add to the expanded productions a
 					// production synthesized from each production with that
@@ -313,7 +316,7 @@ namespace Pard {
 				// appears as the initial right-hand side symbol.  I needn't
 				// use other terminals appearing to the right of those since I
 				// already accounted for ε productions above.
-				foreach (var terminal in expandedProductions.Select(p => p.Rhs.First()).OfType<Terminal>().Distinct().ToList()) {
+				foreach (Terminal terminal in expandedProductions.Select(p => p.Rhs.First()).OfType<Terminal>().Distinct().ToList()) {
 					do {
 						count = expandedProductions.Count;
 
@@ -350,8 +353,15 @@ namespace Pard {
 			public Action Action { get; set; }
 			public int Value { get; set; }
 
+			public ActionEntry(int stateIndex, Terminal terminal, Action action, int value) {
+				StateIndex = stateIndex;
+				Terminal = terminal;
+				Action = action;
+				Value = value;
+			}
+
 			public override string ToString() {
-				return String.Format(Action == Action.Accept ? "{0}" : "{0}{1}", Action.ToString(), Value);
+				return string.Format(Action == Action.Accept ? "{0}" : "{0}{1}", Action.ToString(), Value);
 			}
 		}
 
@@ -360,8 +370,14 @@ namespace Pard {
 			public Nonterminal Nonterminal { get; set; }
 			public int TargetStateIndex { get; set; }
 
+			public GotoEntry(int stateIndex, Nonterminal nonterminal, int targetStateIndex) {
+				StateIndex = stateIndex;
+				Nonterminal = nonterminal;
+				TargetStateIndex = targetStateIndex;
+			}
+
 			public override string ToString() {
-				return String.Format("Goto{0}", TargetStateIndex);
+				return string.Format("Goto{0}", TargetStateIndex);
 			}
 		}
 

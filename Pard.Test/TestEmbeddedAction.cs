@@ -1,25 +1,33 @@
-﻿using System;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Pard.Test
-{
-    [TestClass]
-    public class TestEmbeddedAction
-    {
-        [TestMethod]
-        public void ParseValidTokenStream()
-        {
-            var parser = new ParserEmbeddedAction("ie");
-            Assert.IsTrue(parser.Parse());
-            Assert.AreEqual("<E1><E2><iE1E2e>", parser.Result.ToString());
-        }
-    }
+namespace Pard.Test {
+	[TestClass]
+	public class TestEmbeddedActionx {
+		[TestMethod]
+		public void ParseValidTokenStreamx() {
+			var parser = new ParserEmbeddedActionx("ie");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<E1><E2><iE1E2e>", parser.Result.ToString());
+		}
 
-    public partial class ParserEmbeddedAction
-    {
-        public readonly StringBuilder Result = new StringBuilder();
+		[TestMethod]
+		public void ParseValidTokenStreamy() {
+			var parser = new ParserEmbeddedActiony("ie");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<E1><E2><iE1E2e>", parser.Result.ToString());
+		}
+	}
 
-        public ParserEmbeddedAction(string tokenStream) : this(new Scanner(tokenStream)) { }
-    }
+	public partial class ParserEmbeddedActionx {
+		public readonly StringBuilder Result = new StringBuilder();
+
+		public ParserEmbeddedActionx(string tokenStream) : this(new Scanner(tokenStream)) { }
+	}
+
+	public partial class ParserEmbeddedActiony {
+		public readonly StringBuilder Result = new StringBuilder();
+
+		public ParserEmbeddedActiony(string tokenStream) : this(new Scanner(tokenStream)) { }
+	}
 }

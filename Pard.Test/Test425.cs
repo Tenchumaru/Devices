@@ -1,77 +1,105 @@
-﻿using System;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Pard.Test
-{
-    [TestClass]
-    public class Test425
-    {
-        [TestMethod]
-        public void ParseValidTokenStream1()
-        {
-            var parser = new Parser425("ibipi");
-            Assert.IsTrue(parser.Parse());
-            Assert.AreEqual("<id><id><id><EsubEsupE>", parser.Result.ToString());
-        }
+namespace Pard.Test {
+	[TestClass]
+	public class Test425 {
+		[TestMethod]
+		public void ParseValidTokenStream1x() {
+			var parser = new Parser425x("ibipi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><EsubEsupE>", parser.Result.ToString());
+		}
 
-        [TestMethod]
-        public void ParseValidTokenStream2()
-        {
-            var parser = new Parser425("ibibi");
-            Assert.IsTrue(parser.Parse());
-            Assert.AreEqual("<id><id><id><EsubE><EsubE>", parser.Result.ToString());
-        }
+		[TestMethod]
+		public void ParseValidTokenStream2x() {
+			var parser = new Parser425x("ibibi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><EsubE><EsubE>", parser.Result.ToString());
+		}
 
-        [TestMethod]
-        public void ParseValidTokenStream3()
-        {
-            var parser = new Parser425("ibibipipi");
-            Assert.IsTrue(parser.Parse());
-            Assert.AreEqual("<id><id><id><id><id><EsupE><EsubEsupE><EsubE>", parser.Result.ToString());
-        }
+		[TestMethod]
+		public void ParseValidTokenStream3x() {
+			var parser = new Parser425x("ibibipipi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><id><id><EsupE><EsubEsupE><EsubE>", parser.Result.ToString());
+		}
 
-        [TestMethod]
-        public void ParseValidTokenStream4()
-        {
-            var parser = new Parser425("ib{ibipi}pi");
-            Assert.IsTrue(parser.Parse());
-            Assert.AreEqual("<id><id><id><id><EsubEsupE><{E}><id><EsubEsupE>", parser.Result.ToString());
-        }
-    }
+		[TestMethod]
+		public void ParseValidTokenStream4x() {
+			var parser = new Parser425x("ib{ibipi}pi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><id><EsubEsupE><{E}><id><EsubEsupE>", parser.Result.ToString());
+		}
 
-    public partial class Parser425
-    {
-        public readonly StringBuilder Result = new StringBuilder();
+		[TestMethod]
+		public void ParseValidTokenStream1y() {
+			var parser = new Parser425y("ibipi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><EsubEsupE>", parser.Result.ToString());
+		}
 
-        public Parser425(string tokenStream) : this(new Scanner425(tokenStream)) { }
-    }
+		[TestMethod]
+		public void ParseValidTokenStream2y() {
+			var parser = new Parser425y("ibibi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><EsubE><EsubE>", parser.Result.ToString());
+		}
 
-    public class Scanner425 : Scanner
-    {
-        public Scanner425(string tokenStream)
-            : base(tokenStream)
-        {
-            this.tokenStream = tokenStream;
-        }
+		[TestMethod]
+		public void ParseValidTokenStream3y() {
+			var parser = new Parser425y("ibibipipi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><id><id><EsupE><EsubEsupE><EsubE>", parser.Result.ToString());
+		}
 
-        public override Token Read()
-        {
-            while(index < tokenStream.Length)
-            {
-                var symbol = tokenStream[index++];
-                switch(symbol)
-                {
-                case 'b':
-                    return new Token { Symbol = Parser425.sub };
-                case 'p':
-                    return new Token { Symbol = Parser425.sup };
-                case 'i':
-                    return new Token { Symbol = Parser425.id };
-                }
-                return new Token { Symbol = symbol };
-            }
-            return new Token { Symbol = -1 };
-        }
-    }
+		[TestMethod]
+		public void ParseValidTokenStream4y() {
+			var parser = new Parser425y("ib{ibipi}pi");
+			Assert.IsTrue(parser.Parse());
+			Assert.AreEqual("<id><id><id><id><EsubEsupE><{E}><id><EsubEsupE>", parser.Result.ToString());
+		}
+	}
+
+	public partial class Parser425x {
+		public readonly StringBuilder Result = new StringBuilder();
+
+		public Parser425x(string tokenStream) : this(new Scanner425(tokenStream, sub, sup, id)) { }
+	}
+
+	public partial class Parser425y {
+		public readonly StringBuilder Result = new StringBuilder();
+
+		public Parser425y(string tokenStream) : this(new Scanner425(tokenStream, sub, sup, id)) { }
+	}
+
+	public class Scanner425 : Scanner {
+		private readonly int b;
+		private readonly int p;
+		private readonly int i;
+
+		public Scanner425(string tokenStream, int b, int p, int i)
+				: base(tokenStream) {
+			this.tokenStream = tokenStream;
+			this.b = b;
+			this.p = p;
+			this.i = i;
+		}
+
+		public override Token Read() {
+			while (index < tokenStream.Length) {
+				var symbol = tokenStream[index++];
+				switch (symbol) {
+					case 'b':
+						return new Token { Symbol = b };
+					case 'p':
+						return new Token { Symbol = p };
+					case 'i':
+						return new Token { Symbol = i };
+				}
+				return new Token { Symbol = symbol };
+			}
+			return new Token { Symbol = -1 };
+		}
+	}
 }

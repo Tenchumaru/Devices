@@ -1,0 +1,181 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<grammar>
+	<using value="System.Collections.Generic"/>
+	<using value="StringList = System.Collections.Generic.List&lt;string&gt;"/>
+	<using value="SymbolList = System.Collections.Generic.List&lt;Pard.Symbol&gt;"/>
+	<using value="Rule = System.Collections.Generic.KeyValuePair&lt;string, System.Collections.Generic.List&lt;System.Collections.Generic.KeyValuePair&lt;System.Collections.Generic.List&lt;Pard.Symbol&gt;, Pard.Terminal?&gt;&gt;&gt;"/>
+	<using value="Rhs = System.Collections.Generic.KeyValuePair&lt;System.Collections.Generic.List&lt;Pard.Symbol&gt;, Pard.Terminal?&gt;"/>
+	<using value="RhsList = System.Collections.Generic.List&lt;System.Collections.Generic.KeyValuePair&lt;System.Collections.Generic.List&lt;Pard.Symbol&gt;, Pard.Terminal?&gt;&gt;"/>
+	<using value="TokenPair = System.Collections.Generic.KeyValuePair&lt;Pard.Grammar.Associativity, string?&gt;"/>
+	<using value="TokenList = System.Collections.Generic.List&lt;System.IConvertible&gt;"/>
+	<symbols>
+		<terminal name="PToken" type="Grammar.Associativity"/>
+		<terminal name="Identifier" type="string"/>
+		<terminal name="CodeBlock" type="ActionCode"/>
+		<terminal name="Literal" type="char"/>
+		<terminal name="POCB"/>
+		<terminal name="PCCB"/>
+		<terminal name="PPrec"/>
+		<terminal name="PType"/>
+		<terminal name="ErrorToken"/>
+		<nonterminal name="token" type="TokenPair"/>
+		<nonterminal name="tokens" type="TokenList"/>
+		<nonterminal name="identifiers" type="StringList"/>
+		<nonterminal name="rule" type="Rule"/>
+		<nonterminal name="rhs" type="SymbolList"/>
+		<nonterminal name="rhss" type="RhsList"/>
+		<nonterminal name="rhe" type="Symbol"/>
+		<nonterminal name="prec" type="Terminal?"/>
+	</symbols>
+	<rules>
+		<rule name="pard">
+			<nonterminal name="sec1"/>
+			<terminal name="PP"/>
+			<nonterminal name="sec2"/>
+		</rule>
+		<rule name="pard">
+			<nonterminal name="sec1"/>
+			<terminal name="PP"/>
+			<nonterminal name="sec2"/>
+			<terminal name="PP"/>
+			<nonterminal name="sec3"/>
+		</rule>
+		<rule name="sec1"/>
+		<rule name="sec1">
+			<nonterminal name="sec1"/>
+			<nonterminal name="decl"/>
+		</rule>
+		<rule name="sec2">
+			<nonterminal name="rule"/>
+			<action><![CDATA[AddRules($1.Key, $1.Value);]]></action>
+		</rule>
+		<rule name="sec2">
+			<nonterminal name="sec2"/>
+			<nonterminal name="rule"/>
+			<action><![CDATA[AddRules($2.Key, $2.Value);]]></action>
+		</rule>
+		<rule name="sec3"/>
+		<rule name="sec3">
+			<terminal name="CodeBlock"/>
+			<action><![CDATA[sectionThreeCodeBlock = $1;]]></action>
+		</rule>
+		<rule name="decl">
+			<terminal name="POCB"/>
+			<terminal name="CodeBlock"/>
+			<terminal name="PCCB"/>
+			<action><![CDATA[sectionOneCodeBlocks.Add($2);]]></action>
+		</rule>
+		<rule name="decl">
+			<terminal name="PDefine"/>
+			<terminal name="Identifier"/>
+			<action><![CDATA[yaccInput.options.DefineDirectives.Add($2);]]></action>
+		</rule>
+		<rule name="decl">
+			<terminal name="PStart"/>
+			<terminal name="Identifier"/>
+			<action><![CDATA[startRuleName = $2;]]></action>
+		</rule>
+		<rule name="decl">
+			<terminal name="PType"/>
+			<literal value="&lt;"/>
+			<terminal name="Identifier"/>
+			<literal value="&gt;"/>
+			<nonterminal name="identifiers"/>
+			<action><![CDATA[AddTypedNonterminals($3, $5);]]></action>
+		</rule>
+		<rule name="decl">
+			<nonterminal name="token"/>
+			<nonterminal name="tokens"/>
+			<action><![CDATA[AddTokens($1.Key, $1.Value, $2);]]></action>
+		</rule>
+		<rule name="identifiers">
+			<nonterminal name="identifiers"/>
+			<terminal name="Identifier"/>
+			<action><![CDATA[$$ = $1; $1.Add($2);]]></action>
+		</rule>
+		<rule name="token">
+			<terminal name="PToken"/>
+			<action><![CDATA[$$ = new TokenPair($1, null);]]></action>
+		</rule>
+		<rule name="token">
+			<terminal name="PToken"/>
+			<literal value="&lt;"/>
+			<terminal name="Identifier"/>
+			<literal value="&gt;"/>
+			<action><![CDATA[$$ = new TokenPair($1, $3);]]></action>
+		</rule>
+		<rule name="tokens">
+			<terminal name="Identifier"/>
+			<action><![CDATA[$$ = new TokenList { $1 };]]></action>
+		</rule>
+		<rule name="tokens">
+			<terminal name="Literal"/>
+			<action><![CDATA[$$ = new TokenList { $1 };]]></action>
+		</rule>
+		<rule name="tokens">
+			<nonterminal name="tokens"/>
+			<terminal name="Identifier"/>
+			<action><![CDATA[$1.Add($2); $$ = $1;]]></action>
+		</rule>
+		<rule name="tokens">
+			<nonterminal name="tokens"/>
+			<terminal name="Literal"/>
+			<action><![CDATA[$1.Add($2); $$ = $1;]]></action>
+		</rule>
+		<rule name="identifiers">
+			<terminal name="Identifier"/>
+			<action><![CDATA[$$ = new StringList { $1 };]]></action>
+		</rule>
+		<rule name="rule">
+			<terminal name="Identifier"/>
+			<literal value=":"/>
+			<nonterminal name="rhss"/>
+			<literal value=";"/>
+			<action><![CDATA[$$ = new Rule($1, $3);]]></action>
+		</rule>
+		<rule name="rhss">
+			<nonterminal name="rhs"/>
+			<nonterminal name="prec"/>
+			<action><![CDATA[$$ = new List<Rhs> { new Rhs($1, $2) };]]></action>
+		</rule>
+		<rule name="rhss">
+			<nonterminal name="rhss"/>
+			<literal value="|"/>
+			<nonterminal name="rhs"/>
+			<nonterminal name="prec"/>
+			<action><![CDATA[$1.Add(new Rhs($3, $4)); $$ = $1;]]></action>
+		</rule>
+		<rule name="rhs">
+			<action><![CDATA[$$ = new SymbolList();]]></action>
+		</rule>
+		<rule name="rhs">
+			<nonterminal name="rhs"/>
+			<nonterminal name="rhe"/>
+			<action><![CDATA[$$ = $1; $1.Add($2);]]></action>
+		</rule>
+		<rule name="prec">
+			<action><![CDATA[$$ = null;]]></action>
+		</rule>
+		<rule name="prec">
+			<terminal name="PPrec"/>
+			<terminal name="Identifier"/>
+			<action><![CDATA[$$ = GetTerminal($2);]]></action>
+		</rule>
+		<rule name="rhe">
+			<terminal name="Identifier"/>
+			<action><![CDATA[$$ = GetSymbol($1);]]></action>
+		</rule>
+		<rule name="rhe">
+			<terminal name="Literal"/>
+			<action><![CDATA[$$ = GetLiteral($1);]]></action>
+		</rule>
+		<rule name="rhe">
+			<terminal name="CodeBlock"/>
+			<action><![CDATA[$$ = new CodeBlockSymbol($1);]]></action>
+		</rule>
+		<rule name="rhe">
+			<terminal name="ErrorToken"/>
+			<action><![CDATA[$$ = Terminal.Error;]]></action>
+		</rule>
+	</rules>
+</grammar>
