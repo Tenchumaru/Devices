@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Lad;
-
-namespace Lad {
+﻿namespace Lad {
 	public partial class RegularExpressionParser {
 		private Nfa result = new(new EpsilonSymbol());
 		private readonly Dictionary<string, Nfa> namedExpressions;
@@ -14,15 +7,13 @@ namespace Lad {
 
 		public RegularExpressionParser(RegularExpressionScanner scanner, Dictionary<string, Nfa> namedExpressions) : this(scanner) => this.namedExpressions = namedExpressions;
 
-		private static bool ValidateKleeneCount(int first, int? second = null) {
-			if (first < 1) {
-				Console.Error.WriteLine("Kleene count value must be at least 1");
+		private static bool ValidateKleeneCount(int first, int second) {
+			if (second < first) {
+				Console.Error.WriteLine("Second Kleene count must be at least first");
 				return false;
-			} else if (second.HasValue) {
-				if (second.Value < first) {
-					Console.Error.WriteLine("Second Kleene count must be at least first");
-					return false;
-				}
+			} else if (second < 1) {
+				Console.Error.WriteLine("Second Kleene count must be at least one");
+				return false;
 			}
 			return true;
 		}

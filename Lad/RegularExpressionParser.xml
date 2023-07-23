@@ -92,7 +92,15 @@
 			<literal value="{" />
 			<terminal name="Number" />
 			<literal value="}" />
-			<action><![CDATA[if(!ValidateKleeneCount($3)) return false; $$ = $1.Count($3);]]></action>
+			<action><![CDATA[$$ = $1.Count($3);]]></action>
+		</rule>
+		<rule name="kleene">
+			<nonterminal name="simple" />
+			<literal value="{" />
+			<literal value="," />
+			<terminal name="Number" />
+			<literal value="}" />
+			<action><![CDATA[if(!ValidateKleeneCount(0, $4)) return false; $$ = $1.Count(0, $4);]]></action>
 		</rule>
 		<rule name="kleene">
 			<nonterminal name="simple" />

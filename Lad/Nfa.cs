@@ -52,7 +52,7 @@ namespace Lad {
 
 		public Nfa Count(int n) {
 			if (n < 1) {
-				throw new ArgumentOutOfRangeException(nameof(n), $"{nameof(n)} must be at least one");
+				return new Nfa(new EpsilonSymbol());
 			} else if (n == 1) {
 				return new Nfa(initialState, finalState);
 			}
