@@ -3,16 +3,34 @@
 	<xs:element name="grammar">
 		<xs:complexType>
 			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" name="define">
+					<xs:complexType>
+						<xs:attribute name="value" type="xs:string" use="required" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element minOccurs="0" maxOccurs="unbounded" name="using">
+					<xs:complexType>
+						<xs:attribute name="value" type="xs:string" use="required" />
+					</xs:complexType>
+				</xs:element>
 				<xs:element name="symbols">
 					<xs:complexType>
 						<xs:sequence>
-							<xs:element maxOccurs="unbounded" name="nonterminal">
+							<xs:element minOccurs="0" maxOccurs="unbounded" name="literal">
 								<xs:complexType>
-									<xs:attribute name="name" type="xs:string" use="required" />
-									<xs:attribute name="type" type="xs:string" use="required" />
+									<xs:attribute name="value" type="xs:string" use="required" />
+									<xs:attribute name="type" type="xs:string" use="optional" />
+									<xs:attribute name="associativity" type="xs:string" use="optional" />
 								</xs:complexType>
 							</xs:element>
-							<xs:element maxOccurs="unbounded" name="terminal">
+							<xs:element minOccurs="0" maxOccurs="unbounded" name="terminal">
+								<xs:complexType>
+									<xs:attribute name="name" type="xs:string" use="required" />
+									<xs:attribute name="type" type="xs:string" use="optional" />
+									<xs:attribute name="associativity" type="xs:string" use="optional" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element minOccurs="0" maxOccurs="unbounded" name="nonterminal">
 								<xs:complexType>
 									<xs:attribute name="name" type="xs:string" use="required" />
 									<xs:attribute name="type" type="xs:string" use="optional" />
@@ -26,28 +44,28 @@
 						<xs:sequence>
 							<xs:element maxOccurs="unbounded" name="rule">
 								<xs:complexType>
-									<!--xs:sequence minOccurs="0"-->
-									<xs:sequence>
+									<xs:sequence minOccurs="0">
 										<xs:choice maxOccurs="unbounded">
 											<xs:element name="nonterminal">
 												<xs:complexType>
 													<xs:attribute name="name" type="xs:string" use="required" />
 												</xs:complexType>
 											</xs:element>
-											<xs:element maxOccurs="unbounded" name="literal">
-												<xs:complexType>
-													<xs:attribute name="value" type="xs:string" use="required" />
-												</xs:complexType>
-											</xs:element>
-											<xs:element name="action" type="xs:string" />
 											<xs:element name="terminal">
 												<xs:complexType>
 													<xs:attribute name="name" type="xs:string" use="required" />
 												</xs:complexType>
 											</xs:element>
+											<xs:element name="literal">
+												<xs:complexType>
+													<xs:attribute name="value" type="xs:string" use="required" />
+												</xs:complexType>
+											</xs:element>
+											<xs:element minOccurs="0" name="action" type="xs:string" />
 										</xs:choice>
 									</xs:sequence>
 									<xs:attribute name="name" type="xs:string" use="required" />
+									<xs:attribute name="precedence" type="xs:string" use="optional" />
 								</xs:complexType>
 							</xs:element>
 						</xs:sequence>

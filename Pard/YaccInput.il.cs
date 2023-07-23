@@ -2,14 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace Pard
-{
-	public partial class YaccInput
-	{
-		partial class Scanner
-		{
-			private Token ReadSectionOne()
-			{
+namespace Pard {
+	public partial class YaccInput {
+		partial class Scanner {
+			private Token ReadSectionOne() {
 				//** let ws = [\a\b\f\n\r\t\v ]
 
 				//** %define
@@ -66,15 +62,14 @@ namespace Pard
 				// Ignore white space.
 
 				//**
-				if(yy.ScanValue >= 0)
+				if (yy.ScanValue >= 0)
 					ReportError("unexpected input: " + (char)yy.ScanValue);
 				else
 					ReportError("unexpected end of input");
 				return Token.End;
 			}
 
-			private Token ReadSectionTwo()
-			{
+			private Token ReadSectionTwo() {
 				//** let ws = [\a\b\f\n\r\t\v ]
 
 				//** %prec
@@ -120,10 +115,8 @@ namespace Pard
 				return Token.End;
 			}
 
-			private Token ReadSectionTwoAction(int lineNumber)
-			{
-				for(int scopeLevel = 1;;)
-				{
+			private Token ReadSectionTwoAction(int lineNumber) {
+				for (int scopeLevel = 1; ;) {
 					//** \"([^\\"]|(\\.))*\"
 					// TODO: handle octal, hex, and Unicode escapes.
 					currentAction.Append(yy.TokenValue);
@@ -145,27 +138,26 @@ namespace Pard
 
 					//** \}
 					currentAction.Append('}');
-					if(--scopeLevel == 0)
+					if (--scopeLevel == 0)
 						return new Token { Symbol = CodeBlock, Value = new ActionCode(currentAction.ToString(), lineNumber) };
 
 					//** \n
 					currentAction.Append(Environment.NewLine);
-					if(scopeLevel == 0)
+					if (scopeLevel == 0)
 						return new Token { Symbol = CodeBlock, Value = new ActionCode(currentAction.ToString(), lineNumber) };
 
 					//** .
 					currentAction.Append(yy.TokenValue[0]);
 
 					//**
-					if(scopeLevel == 0)
+					if (scopeLevel == 0)
 						return new Token { Symbol = CodeBlock, Value = new ActionCode(currentAction.ToString(), lineNumber) };
 					ReportError("unmatched action braces at EOF");
 					return Token.End;
 				}
 			}
 
-			private char ReadEscapedValue()
-			{
+			private char ReadEscapedValue() {
 				//** let hex = [0-9A-Fa-f]
 				//** u{hex}{4}
 				{
@@ -180,8 +172,7 @@ namespace Pard
 				//** 0[01]?[0-7]{0,5}
 				{
 					int value = 0;
-					foreach(char ch in yy.TokenValue)
-					{
+					foreach (char ch in yy.TokenValue) {
 						value *= 8;
 						value += ch - '0';
 					}
@@ -217,17 +208,16 @@ namespace Pard
 				return char.MaxValue;
 			}
 
-			private void CollectComments(bool isCollecting)
-			{
-				for(;;)
+			private void CollectComments(bool isCollecting) {
+				for (; ; )
 				{
 					//** \*/
-					if(isCollecting)
+					if (isCollecting)
 						currentAction.Append(yy.TokenValue);
 					return;
 
 					//** .|\n
-					if(isCollecting)
+					if (isCollecting)
 						currentAction.Append(yy.TokenValue[0]);
 
 					//**

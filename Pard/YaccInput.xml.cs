@@ -1,22 +1,16 @@
-namespace Pard
-{
-	public partial class YaccInput
-	{
+namespace Pard {
+	public partial class YaccInput {
 		private Scanner scanner;
 		const int Literal = 0;
 		public YaccInput(object _) { }
-		public bool Parse()
-		{
+		public bool Parse() {
 			throw new System.NotImplementedException();
 		}
-		public partial class Scanner
-		{
-			public Token ReadSectionOne()
-			{
+		public partial class Scanner {
+			public Token ReadSectionOne() {
 				throw new System.NotImplementedException();
 			}
-			public Token ReadSectionTwo()
-			{
+			public Token ReadSectionTwo() {
 				throw new System.NotImplementedException();
 			}
 		}

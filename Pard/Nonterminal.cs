@@ -4,15 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pard
-{
-    class Nonterminal : Symbol
-    {
-        public static readonly Nonterminal AugmentedStart = new Nonterminal("(start)", null);
+namespace Pard {
+	class Nonterminal : Symbol {
+		public static readonly Nonterminal AugmentedStart = new Nonterminal("(start)", null);
 
-        public Nonterminal(string name, string typeName)
-            : base(name, typeName)
-        {
-        }
-    }
+		public Nonterminal(string name, string typeName)
+				: base(name, typeName) {
+		}
+	}
 }
