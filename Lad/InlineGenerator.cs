@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace Lad {
 	internal class InlineGenerator : GeneratorBase, IGenerator {
 		private string? classDeclarationText;
+		private string[] usingDirectives = Array.Empty<string>();
 		private string[] namespaceNames = Array.Empty<string>();
 
 		public InlineGenerator(Options options) : base(options) { }
@@ -15,6 +16,9 @@ namespace Lad {
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
+			foreach (string usingDirective in usingDirectives) {
+				writer.WriteLine(usingDirective);
+			}
 			writer.Write(bones[0]);
 			foreach (string namespaceName in namespaceNames) {
 				writer.WriteLine($"namespace {namespaceName}{{");
@@ -27,6 +31,8 @@ namespace Lad {
 			Dictionary<Nfa, int> rules = new();
 			List<string> codes = new();
 			CompilationUnitSyntax root = CSharpSyntaxTree.ParseText(text).GetCompilationUnitRoot();
+			var usingDirectives = root.DescendantNodes().OfType<UsingDirectiveSyntax>().ToList();
+			this.usingDirectives = usingDirectives.Select(s => s.ToString()).Where(s => !s.Contains(" System.Linq;") && !s.Contains(" System.Collections.Generic;")).ToArray();
 			var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
 			if (classDeclaration == null) {
 				Console.Error.WriteLine("No class in file");
