@@ -106,6 +106,10 @@ namespace Lad {
 				Console.Error.WriteLine($"cannot parse regular expression '{value}'{context}");
 				return null;
 			}
+			if (parser.Result.CheckForEmpty()) {
+				Console.Error.WriteLine($"regular expression '{value}'{context} accepts empty");
+				return null;
+			}
 			return parser.Result;
 		}
 

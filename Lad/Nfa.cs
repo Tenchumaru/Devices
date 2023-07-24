@@ -31,9 +31,7 @@ namespace Lad {
 			return rv;
 		}
 
-		public static Nfa operator |(Nfa left, Nfa right) {
-			return Or(left, right);
-		}
+		public static Nfa operator |(Nfa left, Nfa right) => Or(left, right);
 
 		public static Nfa Or(params Nfa[] nfas) {
 			Nfa rv = new();
@@ -112,9 +110,8 @@ namespace Lad {
 			return (startState, acceptanceValues);
 		}
 
-		public void SetSavePointValue(int acceptanceValue) {
-			// Set the value of all save points.
-			initialState.SetSavePointValue(acceptanceValue, new HashSet<NfaState>());
-		}
+		public void SetSavePointValue(int acceptanceValue) => initialState.SetSavePointValue(acceptanceValue, new HashSet<NfaState>());
+
+		public bool CheckForEmpty() => initialState.CanReachOnEpsilon(finalState);
 	}
 }

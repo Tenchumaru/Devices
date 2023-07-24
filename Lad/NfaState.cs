@@ -160,13 +160,15 @@ namespace Lad {
 						epsilon.SaveForAcceptance = acceptanceValue;
 						return true;
 					}
-					if(pair.Value.SetSavePointValue(acceptanceValue, nfaStates)) {
+					if (pair.Value.SetSavePointValue(acceptanceValue, nfaStates)) {
 						return true;
 					}
 				}
 			}
 			return false;
 		}
+
+		public bool CanReachOnEpsilon(NfaState finalState) => this == finalState || transitions.Any(p => p.Key is EpsilonSymbol && p.Value.CanReachOnEpsilon(finalState));
 
 		private class EpsilonClosure {
 			public readonly string Name;

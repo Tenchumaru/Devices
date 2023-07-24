@@ -117,6 +117,10 @@ namespace Lad {
 					var rx = match.Groups[2].Value;
 					RegularExpressionParser parser = new(new RegularExpressionScanner(rx), namedExpressions);
 					if (parser.Parse()) {
+						if (parser.Result.CheckForEmpty()) {
+							Console.Error.WriteLine($"named regular expression '{name}' accepts empty");
+							return false;
+						}
 						namedExpressions.Add(name, parser.Result);
 						return true;
 					}
@@ -150,8 +154,7 @@ namespace Lad {
 			if (!parser.Parse()) {
 				return "cannot parse regular expression";
 			}
-			AddToRulesAndCodes(line, index, parser.Result, rules, codes);
-			return null;
+			return AddToRulesAndCodes(line, index, parser.Result, rules, codes);
 		}
 
 		private string? StartWithLiteral(string line, Dictionary<Nfa, int> rules, List<StringBuilder> codes) {
@@ -177,11 +180,13 @@ namespace Lad {
 			if (isEscaping) {
 				return "unterminated escape in literal";
 			}
-			AddToRulesAndCodes(line, index, nfa, rules, codes);
-			return null;
+			return AddToRulesAndCodes(line, index, nfa, rules, codes);
 		}
 
-		private void AddToRulesAndCodes(string line, int index, Nfa nfa, Dictionary<Nfa, int> rules, List<StringBuilder> codes) {
+		private string? AddToRulesAndCodes(string line, int index, Nfa nfa, Dictionary<Nfa, int> rules, List<StringBuilder> codes) {
+			if (nfa.CheckForEmpty()) {
+				return "regular expression accepts empty";
+			}
 			if (continuationRx.IsMatch(line, index)) {
 				rules.Add(nfa, -1);
 			} else {
@@ -200,6 +205,7 @@ namespace Lad {
 					codes.Add(sb);
 				}
 			}
+			return null;
 		}
 
 		private enum State { InSectionOne, InSectionOneCode, InSectionTwo, InSectionThree }
