@@ -9,10 +9,10 @@
 
 		private static bool ValidateKleeneCount(int first, int second) {
 			if (second < first) {
-				Console.Error.WriteLine("Second Kleene count must be at least first");
+				Console.Error.WriteLine("second Kleene count must be at least first");
 				return false;
 			} else if (second < 1) {
-				Console.Error.WriteLine("Second Kleene count must be at least one");
+				Console.Error.WriteLine("second Kleene count must be at least one");
 				return false;
 			}
 			return true;
@@ -22,7 +22,7 @@
 			if (namedExpressions.TryGetValue(name, out Nfa? result)) {
 				return result.Clone();
 			} else {
-				Console.Error.WriteLine($"Cannot find named expression '{name}'");
+				Console.Error.WriteLine($"cannot find named expression '{name}'");
 				return null;
 			}
 		}

@@ -35,14 +35,14 @@ namespace Lad {
 			this.usingDirectives = usingDirectives.Select(s => s.ToString()).Where(s => !s.Contains(" System.Linq;") && !s.Contains(" System.Collections.Generic;")).ToArray();
 			var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
 			if (classDeclaration == null) {
-				Console.Error.WriteLine("No class in file");
+				Console.Error.WriteLine("no class in file");
 				return default;
 			}
 			classDeclarationText = $"{classDeclaration.Modifiers} class {classDeclaration.Identifier.Value}";
 			namespaceNames = classDeclaration.Ancestors().OfType<NamespaceDeclarationSyntax>().Select(n => n.Name.ToString()).Reverse().ToArray();
 			var methodDeclarations = classDeclaration.DescendantNodes().OfType<MethodDeclarationSyntax>().ToArray();
 			if (!methodDeclarations.Any()) {
-				Console.Error.WriteLine("No methods in class");
+				Console.Error.WriteLine("no methods in class");
 				return default;
 			}
 			var q = from f in classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>()
@@ -52,11 +52,10 @@ namespace Lad {
 							select (v.Identifier.ToString(), i.Value.ToString());
 			bool foundError = false;
 			foreach ((string name, string rx) in q) {
-				Nfa? nfa = ParseSyntaxValue(rx);
+				Nfa? nfa = ParseSyntaxValue(rx, $" named '{name}'");
 				if (nfa is not null) {
 					namedExpressions.Add(name, nfa);
 				} else {
-					Console.Error.WriteLine($"failed to parse named regular expression '{name}'");
 					foundError = true;
 				}
 			}
@@ -67,15 +66,17 @@ namespace Lad {
 			return stateMachines!;
 		}
 
-		private Nfa? ParseSyntaxValue(string value) {
-			if (!value.Any()) {
-				Console.Error.WriteLine("cannot parse empty regular expression");
-				return null;
-			} else if (value[0] == '@') {
+		private Nfa? ParseSyntaxValue(string value, string? context = "") {
+			if (value[0] == '@') {
 				Nfa nfa = new(new EpsilonSymbol());
 				bool isEscaping = false;
 				int index = 1;
-				foreach (char ch in value[2..^1]) {
+				value = value[2..^1];
+				if (!value.Any()) {
+					Console.Error.WriteLine($"cannot parse empty regular expression{context}");
+					return null;
+				}
+				foreach (char ch in value) {
 					++index;
 					if (isEscaping) {
 						isEscaping = false;
@@ -90,14 +91,19 @@ namespace Lad {
 					}
 				}
 				if (isEscaping) {
-					Console.Error.WriteLine("unterminated escape in literal");
+					Console.Error.WriteLine($"unterminated escape in literal in '{value}'{context}");
 					return null;
 				}
 				return nfa;
 			}
-			RegularExpressionParser parser = new(new RegularExpressionScanner(value[1..^1]), namedExpressions);
+			value = value[1..^1];
+			if (!value.Any()) {
+				Console.Error.WriteLine($"cannot parse empty regular expression{context}");
+				return null;
+			}
+			RegularExpressionParser parser = new(new RegularExpressionScanner(value), namedExpressions);
 			if (!parser.Parse()) {
-				Console.Error.WriteLine("cannot parse regular expression");
+				Console.Error.WriteLine($"cannot parse regular expression '{value}'{context}");
 				return null;
 			}
 			return parser.Result;
@@ -109,7 +115,7 @@ namespace Lad {
 			List<string> codes = new();
 			var firstSwitch = methodDeclaration.DescendantNodes().OfType<SwitchStatementSyntax>().FirstOrDefault();
 			if (firstSwitch == null) {
-				Console.Error.WriteLine("Cannot find switch statement");
+				Console.Error.WriteLine("cannot find switch statement");
 				return default;
 			}
 			string methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodDeclaration.Identifier}()";
@@ -124,7 +130,6 @@ namespace Lad {
 						if (nfa is not null) {
 							rules.Add(nfa, codes.Count);
 						} else {
-							Console.Error.WriteLine($"failed to parse regular expression {labelText}");
 							foundError = true;
 						}
 					} else if (switchLabel is DefaultSwitchLabelSyntax) {

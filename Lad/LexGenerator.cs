@@ -120,9 +120,11 @@ namespace Lad {
 						namedExpressions.Add(name, parser.Result);
 						return true;
 					}
+					Console.Error.WriteLine($"cannot parse named regular expression '{name}'");
+					return false;
 				}
 			}
-			Console.Error.WriteLine($"cannot parse named expression");
+			Console.Error.WriteLine($"cannot recognize named regular expression");
 			return false;
 		}
 
