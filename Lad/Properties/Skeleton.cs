@@ -16,6 +16,7 @@ if(index>0)IsAtBol=buffer[index-1]=='\n';
 if(index<buffer.Length)return buffer[index++];
 if(enumerator.MoveNext()){buffer.Append(enumerator.Current);return buffer[index++];}
 return-1;}
+internal void Write(string s){buffer.Append(s);}
 internal Reader_(IEnumerable<char>reader){enumerator=reader.GetEnumerator();}
 internal Reader_(System.IO.TextReader reader){enumerator=Enumerable.Repeat<System.Func<int>>(reader.Read,int.MaxValue).
 Select(f=>f()).TakeWhile(v=>v>=0).Select(v=>(char)v).GetEnumerator();}
