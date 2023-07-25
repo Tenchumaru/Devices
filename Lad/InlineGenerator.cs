@@ -101,7 +101,7 @@ namespace Lad {
 				Console.Error.WriteLine($"cannot parse empty regular expression{context}");
 				return null;
 			}
-			RegularExpressionParser parser = new(new RegularExpressionScanner(value), namedExpressions);
+			RegularExpressionParser parser = new(new RegularExpressionScanner(value), parameters);
 			if (!parser.Parse()) {
 				Console.Error.WriteLine($"cannot parse regular expression '{value}'{context}");
 				return null;

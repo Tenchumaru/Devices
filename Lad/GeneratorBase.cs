@@ -19,11 +19,13 @@ namespace Lad {
 		protected readonly Dictionary<string, Nfa> namedExpressions = new();
 		protected readonly string[] bones;
 		protected readonly bool isDebug;
+		protected readonly RegularExpressionParser.Parameters parameters;
 		private readonly string? inputFilePath;
 		private readonly string? outputFilePath;
 
 		protected GeneratorBase(Options options) {
 			// Derivations parse options in their constructors.
+			parameters = new RegularExpressionParser.Parameters(namedExpressions, options.DotIncludesNewline);
 			inputFilePath = options.InputFilePath;
 			outputFilePath = options.OutputFilePath;
 			isDebug = options.IsDebug;
@@ -65,17 +67,17 @@ namespace Lad {
 			}
 			if (pair.Value.Acceptance == 0 || pair.Value.Transitions.Any()) {
 				if (name != pair.Value.Name) {
-					statement.Append("state_=").Append(targetState);
+					statement.Append("state_=").Append(targetState).Append(';');
 				}
 				if (pair.Key is BolSymbol) {
-					statement.Append(";goto case ").Append(targetState);
+					statement.Append("goto case ").Append(targetState).Append(';');
 				} else {
 					needsExit = true;
 				}
 			} else {
-				statement.Append("goto case ").Append(defaultState);
+				statement.Append("goto case ").Append(defaultState).Append(';');
 			}
-			statement.Append(";}");
+			statement.Append('}');
 			return statement.ToString();
 		}
 
@@ -135,14 +137,14 @@ namespace Lad {
 		private Nfa CombineNfas(IGrouping<int, KeyValuePair<Nfa, int>> groups) {
 			var rv = Nfa.Or(groups.Select(p => p.Key).ToArray());
 			int acceptanceValue = groups.Key + 1;
+			rv += new Nfa(new AcceptingSymbol(acceptanceValue));
+			rv.SetSavePointValue(acceptanceValue);
 #if DEBUG
 			if (isDebug) {
 				Console.Error.WriteLine($"for acceptance value {acceptanceValue}:");
 				Console.Error.WriteLine(rv.Dump());
 			}
 #endif
-			rv += new Nfa(new AcceptingSymbol(acceptanceValue));
-			rv.SetSavePointValue(acceptanceValue);
 			return rv;
 		}
 
@@ -154,7 +156,7 @@ namespace Lad {
 					bool needsExit = false;
 					IEnumerable<string> ifs = dfa.Transitions.OrderBy(p => p.Key.Order).Select(p => MakeIfStatement(dfa.Name, p, defaultState, makeState, ref needsExit));
 					string s = string.Join("else ", ifs);
-					if (dfa.Transitions.All(p => p.Key is not AnySymbol)) {
+					if (!dfa.Transitions.Any(p => p.Key == AnySymbol.Value)) {
 						s += $"else goto case {defaultState};";
 					}
 					writer.WriteLine(s);

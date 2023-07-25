@@ -13,7 +13,6 @@
 		public readonly bool WantsLineNumberTracking;
 		public readonly int? TabStop;
 		internal readonly IGenerator Generator;
-		private const string defaultSignalComment = "//**";
 		private const string defaultScannerClassAccess = "internal";
 
 		// From the input file

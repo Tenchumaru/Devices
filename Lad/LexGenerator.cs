@@ -115,7 +115,7 @@ namespace Lad {
 				if (match.Groups.Count == 3) {
 					var name = match.Groups[1].Value;
 					var rx = match.Groups[2].Value;
-					RegularExpressionParser parser = new(new RegularExpressionScanner(rx), namedExpressions);
+					RegularExpressionParser parser = new(new RegularExpressionScanner(rx), parameters);
 					if (parser.Parse()) {
 						if (parser.Result.CheckForEmpty()) {
 							Console.Error.WriteLine($"named regular expression '{name}' accepts empty");
@@ -150,7 +150,7 @@ namespace Lad {
 			} else if (index == line.Length) {
 				return "no code after regular expression";
 			}
-			RegularExpressionParser parser = new(new RegularExpressionScanner(line[..index]), namedExpressions);
+			RegularExpressionParser parser = new(new RegularExpressionScanner(line[..index]), parameters);
 			if (!parser.Parse()) {
 				return "cannot parse regular expression";
 			}

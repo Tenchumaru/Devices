@@ -30,6 +30,15 @@ namespace Lad {
 
 	public abstract class ConcreteSymbol : Symbol {
 		public virtual int Order => throw new NotImplementedException();
+		private static readonly Dictionary<char, char> knownEscapes = new() {
+			{'\a', 'a' },
+			{'\b', 'b' },
+			{'\f', 'f' },
+			{'\n', 'n' },
+			{'\r', 'r' },
+			{'\t', 't' },
+			{'\v', 'v' },
+		};
 
 		public static ConcreteSymbol? operator -(ConcreteSymbol left, ConcreteSymbol right) => left.Difference(right);
 
@@ -41,6 +50,9 @@ namespace Lad {
 
 		public static string Escape(char ch) {
 			if (ch < ' ') {
+				if (knownEscapes.TryGetValue(ch, out char escapedCh)) {
+					return $@"\{escapedCh}";
+				}
 				return $@"\x{(int)ch:x2}";
 			} else if (ch == '\'') {
 				return @"\'";
