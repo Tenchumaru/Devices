@@ -88,25 +88,21 @@ namespace Lad {
 
 	public class AnySymbol : ConcreteSymbol {
 		public override int Order => 3;
-		public static readonly AnySymbol Value = new(true);
-		public static readonly AnySymbol WithoutNewLine = new(false);
-		private readonly bool includesNewLine;
+		public static readonly AnySymbol Value = new();
 
-		private AnySymbol(bool includesNewLine) => this.includesNewLine = includesNewLine;
+		private AnySymbol() { }
 
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
-		public override string ToString() => includesNewLine ? "(any)" : "(any-nl)";
+		public override string ToString() => "(any)";
 
-		public override string MakeExpression(string name) => includesNewLine ? "true" : $"{name}!='\\n'";
+		public override string MakeExpression(string name) => "true";
 
 		internal override bool IsIn(Symbol that) {
 			if (that == Value) {
 				return true;
-			} else if (that == WithoutNewLine) {
-				return this == WithoutNewLine;
 			} else if (that is RangeSymbol range) {
-				RangeSymbol anyRange = includesNewLine ? new(char.MinValue, char.MaxValue) : ~new RangeSymbol('\n');
+				RangeSymbol anyRange = new(char.MinValue, char.MaxValue);
 				return anyRange.IsIn(range);
 			}
 			return false;
@@ -114,20 +110,18 @@ namespace Lad {
 
 		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (that is AnySymbol any) {
-				Debug.Assert(includesNewLine != any.includesNewLine);
-				return includesNewLine ? new SimpleSymbol('\n') : null;
+				throw new NotImplementedException();
+				//return includesNewLine ? new SimpleSymbol('\n') : null;
 			}
-			RangeSymbol range = includesNewLine ? new(char.MinValue, char.MaxValue) : ~new RangeSymbol('\n');
+			RangeSymbol range = new(char.MinValue, char.MaxValue);
 			return range.Difference(that);
 		}
 
 		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (that == Value) {
-				return includesNewLine ? this : WithoutNewLine;
-			} else if (that == WithoutNewLine) {
-				return WithoutNewLine;
+				return this;
 			}
-			RangeSymbol range = includesNewLine ? new(char.MinValue, char.MaxValue) : ~new RangeSymbol('\n');
+			RangeSymbol range = new(char.MinValue, char.MaxValue);
 			return range.Intersect(that);
 		}
 	}
@@ -204,8 +198,6 @@ namespace Lad {
 		public override Symbol MakeDegenerate() {
 			if (includedCharacters.Cast<bool>().All(b => b)) {
 				return AnySymbol.Value;
-			} else if (includedCharacters.Cast<bool>().Select((b, i) => new { b, i }).All(a => a.b ^ a.i == '\n')) {
-				return AnySymbol.WithoutNewLine;
 			} else if (includedCharacters.Cast<bool>().All(b => !b)) {
 				return new EpsilonSymbol();
 			} else {
@@ -225,7 +217,7 @@ namespace Lad {
 						sb.AppendFormat("{0}=='{1}')||(", name, Escape(i));
 						++i;
 					} else if (includedCharacters[i]) {
-						sb.AppendFormat("{0}>='{1}'&&", name, Escape(i));
+						sb.AppendFormat("{0}>'{1}'&&", name, Escape(i - 1));
 					} else {
 						sb.AppendFormat("{0}<'{1}')||(", name, Escape(i));
 					}
@@ -247,8 +239,6 @@ namespace Lad {
 		internal override bool IsIn(Symbol that) {
 			if (that == AnySymbol.Value) {
 				return true;
-			} else if (that == AnySymbol.WithoutNewLine) {
-				return includedCharacters['\n'];
 			} else if (that is RangeSymbol range) {
 				BitArray combined = new(includedCharacters);
 				combined = combined.And(range.includedCharacters);
@@ -265,8 +255,6 @@ namespace Lad {
 		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return null;
-			} else if (that == AnySymbol.WithoutNewLine) {
-				return includedCharacters['\n'] ? new SimpleSymbol('\n') : null;
 			} else if (that is RangeSymbol range) {
 				BitArray ba = new(includedCharacters.Cast<bool>().Zip(range.includedCharacters.Cast<bool>()).Select(a => a.First && !a.Second).ToArray());
 				if (ba.Cast<bool>().All(b => !b)) {
@@ -289,8 +277,6 @@ namespace Lad {
 		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return this;
-			} else if (that == AnySymbol.WithoutNewLine) {
-				return includedCharacters['\n'] ? AnySymbol.WithoutNewLine.Intersect(this) : this;
 			} else if (that is RangeSymbol range) {
 				BitArray ba = new(includedCharacters.Cast<bool>().Zip(range.includedCharacters.Cast<bool>()).Select(a => a.First && a.Second).ToArray());
 				if (ba.Cast<bool>().All(b => !b)) {
@@ -318,8 +304,6 @@ namespace Lad {
 		internal override bool IsIn(Symbol that) {
 			if (that == AnySymbol.Value) {
 				return true;
-			} else if (that == AnySymbol.WithoutNewLine) {
-				return Value != '\n';
 			} else if (that is RangeSymbol range) {
 				return range.Includes(Value);
 			} else if (that is SimpleSymbol simple) {
@@ -331,8 +315,6 @@ namespace Lad {
 		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return null;
-			} else if (that == AnySymbol.WithoutNewLine) {
-				return Value == '\n' ? this : null;
 			} else if (that is RangeSymbol range) {
 				return range.Includes(Value) ? null : this;
 			} else if (that is SimpleSymbol simple) {

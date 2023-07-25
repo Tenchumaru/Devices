@@ -19,6 +19,19 @@
 			this.parameters = parameters;
 		}
 
+		private static Nfa MakeAnyNfaWithoutNewLine() {
+			var withoutCarriageReturnAndLineFeedRange = new RangeSymbol('\r') + new RangeSymbol('\n');
+			withoutCarriageReturnAndLineFeedRange = ~withoutCarriageReturnAndLineFeedRange;
+			var carriageReturnNotFollowedByLineFeedNfa = new Nfa(new SimpleSymbol('\r')) / new Nfa(~new RangeSymbol('\n'));
+			var anyWithoutNewLine = new Nfa(withoutCarriageReturnAndLineFeedRange) | carriageReturnNotFollowedByLineFeedNfa;
+			return anyWithoutNewLine;
+		}
+
+		private static Nfa MakeNewLineNfa() {
+			var newLineNfa = new Nfa(new SimpleSymbol('\r')).Question() + new Nfa(new SimpleSymbol('\n'));
+			return newLineNfa;
+		}
+
 		private static bool ValidateKleeneCount(int first, int second) {
 			if (second < first) {
 				Console.Error.WriteLine("second Kleene count must be at least first");

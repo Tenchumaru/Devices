@@ -35,13 +35,13 @@
 		<rule name="rx">
 			<nonterminal name="slash" />
 			<literal value="$" />
-			<action><![CDATA[result = $1 / new Nfa(new SimpleSymbol('\n'));]]></action>
+			<action><![CDATA[result = $1 / MakeNewLineNfa();]]></action>
 		</rule>
 		<rule name="rx">
 			<literal value="^" />
 			<nonterminal name="slash" />
 			<literal value="$" />
-			<action><![CDATA[result = (new Nfa(BolSymbol.Value) + $2) / new Nfa(new SimpleSymbol('\n'));]]></action>
+			<action><![CDATA[result = (new Nfa(BolSymbol.Value) + $2) / MakeNewLineNfa();]]></action>
 		</rule>
 		<rule name="slash">
 			<nonterminal name="choice" />
@@ -117,7 +117,7 @@
 		</rule>
 		<rule name="simple">
 			<literal value="." />
-			<action><![CDATA[$$ = new Nfa(parameters.DotIncludesNewLine ? AnySymbol.Value : AnySymbol.WithoutNewLine);]]></action>
+			<action><![CDATA[$$ = parameters.DotIncludesNewLine ? new Nfa(AnySymbol.Value) : MakeAnyNfaWithoutNewLine();]]></action>
 		</rule>
 		<rule name="simple">
 			<terminal name="NE" />
