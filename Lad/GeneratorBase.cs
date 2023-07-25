@@ -96,8 +96,7 @@ namespace Lad {
 			writer.WriteLine("Dictionary<int,int>saves_=new Dictionary<int,int>();");
 			writer.WriteLine("if(reader_==null)reader_=new Reader_(reader);");
 			string startStateName = makeState(startState.Name);
-			writer.WriteLine($"var state_={startStateName};");
-			writer.WriteLine("for(;;){");
+			writer.WriteLine($"for(var state_={startStateName};;){{");
 			writer.WriteLine("int ch_=reader_.Read();");
 			writer.WriteLine("switch(state_){");
 			WriteTransitions(startState, new HashSet<string>(), defaultState, makeState, writer);
@@ -105,7 +104,11 @@ namespace Lad {
 			writer.WriteLine("var longest_=saves_.Where(p=>p.Key>0).Aggregate(new KeyValuePair<int,int>(int.MaxValue,1),(a,b)=>a.Value<b.Value?b:b.Value<a.Value?a:a.Key<b.Key?a:b);");
 			writer.WriteLine("if(!saves_.TryGetValue(-longest_.Key,out int consumptionValue))consumptionValue=longest_.Value;");
 			writer.WriteLine($"string tokenValue=reader_.Consume(consumptionValue);saves_.Clear();state_={startStateName};");
-			writer.WriteLine("if(!tokenValue.Any())return default;");
+			writer.Write("if(!tokenValue.Any())return");
+			if (!methodDeclarationText.Contains(" void ")) {
+				writer.Write(" default");
+			}
+			writer.WriteLine(";");
 			writer.WriteLine("switch(longest_.Key){");
 		}
 
