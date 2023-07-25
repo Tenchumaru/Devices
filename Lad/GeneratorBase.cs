@@ -6,13 +6,13 @@ namespace Lad {
 			public string MethodDeclarationText;
 			public KeyValuePair<Nfa, int>[] Rules { get; }
 			public string[] Codes { get; }
-			public string? DefaultActionCode { get; }
+			public int? DefaultActionIndex { get; }
 
-			public StateMachine(string methodDeclarationText, IEnumerable<KeyValuePair<Nfa, int>> rules, IEnumerable<string> codes, string? defaultActionCode) {
+			public StateMachine(string methodDeclarationText, IEnumerable<KeyValuePair<Nfa, int>> rules, IEnumerable<string> codes, int? defaultActionIndex) {
 				MethodDeclarationText = methodDeclarationText;
 				Rules = rules.ToArray();
 				Codes = codes.ToArray();
-				DefaultActionCode = defaultActionCode;
+				DefaultActionIndex = defaultActionIndex;
 			}
 		}
 
@@ -116,12 +116,11 @@ namespace Lad {
 			writer.WriteLine("#pragma warning disable CS0162 // Unreachable code detected");
 			foreach ((string code, int ruleNumber) in stateMachine.Codes.Select((s, i) => (s, i + 1))) {
 				writer.WriteLine($"case {ruleNumber}:");
+				if (ruleNumber == stateMachine.DefaultActionIndex + 1) {
+					writer.WriteLine("default:");
+				}
 				writer.WriteLine(code);
 				writer.WriteLine("break;");
-			}
-			if (stateMachine.DefaultActionCode is not null) {
-				writer.WriteLine("default:");
-				writer.WriteLine(stateMachine.DefaultActionCode);
 			}
 			writer.Write(bones[2]);
 			writer.WriteLine("#pragma warning restore CS0162 // Unreachable code detected");

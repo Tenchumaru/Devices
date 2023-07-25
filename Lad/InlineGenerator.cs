@@ -150,8 +150,7 @@ namespace Lad {
 					}
 				}
 			}
-			string? defaultCode = defaultIndex.HasValue ? codes[defaultIndex.Value] : null;
-			return foundError ? default : new StateMachine(methodDeclarationText, rules, codes, defaultCode);
+			return foundError ? default : new StateMachine(methodDeclarationText, rules, codes, defaultIndex);
 		}
 	}
 }
