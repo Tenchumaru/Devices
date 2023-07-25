@@ -23,5 +23,10 @@ namespace Lad {
 		public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => list.GetEnumerator();
 
 		IEnumerator IEnumerable.GetEnumerator() => list.GetEnumerator();
+
+		public void Clear() {
+			dictionary.Clear();
+			list.Clear();
+		}
 	}
 }

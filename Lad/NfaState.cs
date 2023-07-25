@@ -39,6 +39,11 @@ namespace Lad {
 		/// </summary>
 		/// <returns>The DFA from applying the algorithm to this initial NFA state.</returns>
 		public DfaState MakeDfa() {
+			// If any NFA state transitions on BOL, prepend a Kleened BOL to every other concrete transition.
+			if (CheckForBol()) {
+				AddKleenedBols();
+			}
+
 			// p. 118, Fig. 3.25
 			Queue<EpsilonClosure> queue = new();
 			EpsilonClosure startClosure = MakeEpsilonClosure(new[] { this });
@@ -48,7 +53,7 @@ namespace Lad {
 				{ startClosure.Name, startState },
 			};
 			queue.Enqueue(startClosure);
-			while (queue.Count > 0) {
+			while (queue.Any()) {
 				EpsilonClosure closure = queue.Dequeue();
 				var q = closure.Nfas.SelectMany(s => s.transitions).Select(p => p.Key).OfType<ConcreteSymbol>();
 
@@ -71,6 +76,52 @@ namespace Lad {
 				}
 			}
 			return startState;
+		}
+
+		private bool CheckForBol() {
+			HashSet<NfaState> nfaStates = new();
+			Queue<NfaState> queue = new(new[] { this });
+			while (queue.Any()) {
+				NfaState nfaState = queue.Dequeue();
+				if (!nfaStates.Contains(nfaState)) {
+					nfaStates.Add(nfaState);
+					if (nfaState.transitions.Any(p => p.Key is BolSymbol)) {
+						return true;
+					}
+					foreach (NfaState targetState in nfaState.transitions.Where(p => p.Key is EpsilonSymbol).Select(p => p.Value)) {
+						queue.Enqueue(targetState);
+					}
+				}
+			}
+			return false;
+		}
+
+		private void AddKleenedBols() {
+			Queue<NfaState> queue = new(new[] { this });
+			while (queue.Any()) {
+				NfaState nfaState = queue.Dequeue();
+				List<KeyValuePair<Symbol, NfaState>> preBolTransitions = new();
+				List<KeyValuePair<Symbol, NfaState>> postBolTransitions = new();
+				foreach (KeyValuePair<Symbol, NfaState> transition in nfaState.transitions) {
+					if (transition.Key is EpsilonSymbol) {
+						queue.Enqueue(transition.Value);
+						preBolTransitions.Add(transition);
+					} else if (transition.Key is BolSymbol) {
+						preBolTransitions.Add(transition);
+					} else {
+						Debug.Assert(transition.Key is ConcreteSymbol);
+						postBolTransitions.Add(transition);
+					}
+				}
+				if (postBolTransitions.Any()) {
+					nfaState.transitions.Clear();
+					nfaState.transitions.AddRange(preBolTransitions);
+					NfaState bolState = new();
+					bolState.transitions.AddRange(postBolTransitions);
+					nfaState.transitions.Add(new EpsilonSymbol(), bolState);
+					nfaState.transitions.Add(BolSymbol.Value, bolState);
+				}
+			}
 		}
 
 		private static HashSet<ConcreteSymbol> SplitOverlappingSymbols(IEnumerable<ConcreteSymbol> inputSymbols) {
@@ -136,7 +187,7 @@ namespace Lad {
 			Queue<NfaState> queue = new(nfaStates);
 			List<int> numbers = new();
 			int saveForAcceptance = 0;
-			while (queue.Count > 0) {
+			while (queue.Any()) {
 				NfaState next = queue.Dequeue();
 				if (closure.Add(next)) {
 					numbers.Add(next.Number);
@@ -168,7 +219,17 @@ namespace Lad {
 			return false;
 		}
 
-		public bool CanReachOnEpsilon(NfaState finalState) => this == finalState || transitions.Any(p => p.Key is EpsilonSymbol && p.Value.CanReachOnEpsilon(finalState));
+		public bool CanReachOnEpsilon(NfaState finalState) {
+			return CanReachOnEpsilon(finalState, new HashSet<NfaState>());
+		}
+
+		private bool CanReachOnEpsilon(NfaState finalState, HashSet<NfaState> nfaStates) {
+			if (!nfaStates.Contains(this)) {
+				nfaStates.Add(this);
+				return this == finalState || transitions.Any(p => p.Key is EpsilonSymbol && p.Value.CanReachOnEpsilon(finalState, nfaStates));
+			}
+			return false;
+		}
 
 		private class EpsilonClosure {
 			public readonly string Name;
