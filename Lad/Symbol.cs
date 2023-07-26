@@ -99,7 +99,7 @@ namespace Lad {
 		public override string MakeExpression(string name) => "true";
 
 		internal override bool IsIn(Symbol that) {
-			if (that == Value) {
+			if (this == that) {
 				return true;
 			} else if (that is RangeSymbol range) {
 				RangeSymbol anyRange = new(char.MinValue, char.MaxValue);
@@ -109,16 +109,15 @@ namespace Lad {
 		}
 
 		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
-			if (that is AnySymbol any) {
-				throw new NotImplementedException();
-				//return includesNewLine ? new SimpleSymbol('\n') : null;
+			if (this == that) {
+				return this;
 			}
 			RangeSymbol range = new(char.MinValue, char.MaxValue);
 			return range.Difference(that);
 		}
 
 		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
-			if (that == Value) {
+			if (this == that) {
 				return this;
 			}
 			RangeSymbol range = new(char.MinValue, char.MaxValue);
@@ -196,15 +195,13 @@ namespace Lad {
 		}
 
 		public override Symbol MakeDegenerate() {
-			if (includedCharacters.Cast<bool>().All(b => b)) {
+			Degenerator degenerator = new(includedCharacters);
+			if (degenerator.AreAllTrue) {
 				return AnySymbol.Value;
-			} else if (includedCharacters.Cast<bool>().All(b => !b)) {
+			} else if (degenerator.AreAllFalse) {
 				return new EpsilonSymbol();
-			} else {
-				int[] a = includedCharacters.Cast<bool>().Select((b, i) => new { b, i }).Where(a => a.b).Select(a => a.i).ToArray();
-				if (a.Length == 1) {
-					return new SimpleSymbol((char)a[0]);
-				}
+			} else if (degenerator.Index > -1) {
+				return new SimpleSymbol((char)degenerator.Index);
 			}
 			return this;
 		}
@@ -288,6 +285,28 @@ namespace Lad {
 				return includedCharacters[simple.Value] ? simple : null;
 			}
 			return that.Intersect(this);
+		}
+
+		class Degenerator {
+			public bool AreAllFalse { get; private set; } = true;
+			public bool AreAllTrue { get; private set; } = true;
+			public int Index { get; private set; } = -1;
+
+			public Degenerator(BitArray bitArray) {
+				foreach ((bool bit, int index) in bitArray.Cast<bool>().Select((b, i) => (b, i))) {
+					if (bit) {
+						if (AreAllFalse) {
+							Index = index;
+						} else if (!AreAllTrue) {
+							Index = -1;
+							return;
+						}
+						AreAllFalse = false;
+					} else {
+						AreAllTrue = false;
+					}
+				}
+			}
 		}
 	}
 
