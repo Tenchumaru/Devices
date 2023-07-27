@@ -11,17 +11,24 @@ namespace Lad {
 			{'t', '\t' },
 			{'v', '\v' },
 		};
+		public readonly Func<Token> Read;
 		private readonly HashSet<char> specialCharacters = new() { '$', '(', ')', '*', '+', '.', '/', '?', '[', ']', '^', '{', '|', '}' };
 		private readonly string value;
-		private int index = -1;
+		private int index;
 		private bool isInCount;
 		private bool isInRange;
 
 		public RegularExpressionScanner(string value) {
+			if (value[0] == '$') {
+				Read = ReadLiteral;
+			} else {
+				Read = ReadInterpreted;
+				index = -1;
+			}
 			this.value = value;
 		}
 
-		public Token Read() {
+		public Token ReadInterpreted() {
 			++index;
 			if (index >= value.Length) {
 				return new Token { Symbol = -1 };
@@ -80,6 +87,11 @@ namespace Lad {
 				}
 			}
 			return new Token { Symbol = ch };
+		}
+
+		public Token ReadLiteral() {
+			++index;
+			return index < value.Length ? new Token { Symbol = RegularExpressionParser.Symbol, Value = value[index] } : new Token { Symbol = -1 };
 		}
 	}
 

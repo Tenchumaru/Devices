@@ -152,9 +152,9 @@ namespace Lad {
 		private static HashSet<NfaState> Move(HashSet<NfaState> value, ConcreteSymbol inputSymbol) {
 #if DEBUG
 			var q = from s in value
-							from t in s.transitions
-							where inputSymbol.IsIn(t.Key)
-							select t.Value;
+				from t in s.transitions
+				where inputSymbol.IsIn(t.Key)
+				select t.Value;
 #else
 			var q = value.SelectMany(s => s.transitions).Where(t => inputSymbol.IsIn(t.Key)).Select(t => t.Value);
 #endif

@@ -47,10 +47,10 @@ namespace Lad {
 				return default;
 			}
 			var q = from f in classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>()
-							from v in f.Declaration.Variables
-							let i = v.Initializer
-							where i is not null
-							select (v.Identifier.ToString(), i.Value.ToString());
+				from v in f.Declaration.Variables
+				let i = v.Initializer
+				where i is not null
+				select (v.Identifier.ToString(), i.Value.ToString());
 			bool foundError = false;
 			foreach ((string name, string rx) in q) {
 				Nfa? nfa = ParseSyntaxValue(rx, $" named '{name}'");
@@ -69,12 +69,16 @@ namespace Lad {
 
 		private Nfa? ParseSyntaxValue(string value, string? context = "") {
 			if (value[0] == '@') {
-				// Convert a literal string into a standard string.
-				var sb = new StringBuilder(value[1..]);
-				for(int i = value.IndexOf("\"\"", 2); i >= 0; i = value.IndexOf("\"\"", i + 2)) {
-					sb[i - 1] = '\\';
+				// Convert a literal string into a standard string unless the literal parsing specifier is present.
+				if (value[2] == '$') {
+					value = value[1..];
+				} else {
+					var sb = new StringBuilder(value[1..]);
+					for (int i = value.IndexOf("\"\"", 2); i >= 0; i = value.IndexOf("\"\"", i + 2)) {
+						sb[i - 1] = '\\';
+					}
+					return ParseSyntaxValue(sb.ToString(), context);
 				}
-				return ParseSyntaxValue(sb.ToString(), context);
 			}
 			value = value[1..^1];
 			if (!value.Any()) {
