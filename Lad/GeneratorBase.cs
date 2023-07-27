@@ -25,7 +25,7 @@ namespace Lad {
 
 		protected GeneratorBase(Options options) {
 			// Derivations parse options in their constructors.
-			parameters = new RegularExpressionParser.Parameters(namedExpressions, options.DotIncludesNewline);
+			parameters = new RegularExpressionParser.Parameters(namedExpressions, options.DotIncludesNewline, options.NewLine);
 			inputFilePath = options.InputFilePath;
 			outputFilePath = options.OutputFilePath;
 			isDebug = options.IsDebug;
@@ -104,7 +104,7 @@ namespace Lad {
 			WriteTransitions(startState, new HashSet<string>(), defaultState, makeState, writer);
 			writer.WriteLine($"case {defaultState}:");
 			writer.WriteLine("var longest_=saves_.Where(p=>p.Key>0).Aggregate(new KeyValuePair<int,int>(int.MaxValue,1),(a,b)=>a.Value<b.Value?b:b.Value<a.Value?a:a.Key<b.Key?a:b);");
-			writer.WriteLine("if(!saves_.TryGetValue(-longest_.Key,out int consumptionValue))consumptionValue=longest_.Value;");
+			writer.WriteLine("if(!saves_.TryGetValue(-longest_.Key,out int consumptionValue)||longest_.Value<consumptionValue)consumptionValue=longest_.Value;");
 			writer.WriteLine($"string tokenValue=reader_.Consume(consumptionValue);saves_.Clear();state_={startStateName};");
 			writer.Write("if(!tokenValue.Any())return");
 			if (!methodDeclarationText.Contains(" void ")) {

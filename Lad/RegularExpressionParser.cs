@@ -1,4 +1,6 @@
-﻿namespace Lad {
+﻿using static Lad.Options;
+
+namespace Lad {
 	public partial class RegularExpressionParser {
 		public Nfa Result => result;
 		private Nfa result = new(new EpsilonSymbol());
@@ -16,9 +18,20 @@
 			return anyWithoutNewLine;
 		}
 
-		private static Nfa MakeNewLineNfa() {
-			var newLineNfa = new Nfa(new SimpleSymbol('\r')).Question() + new Nfa(new SimpleSymbol('\n'));
-			return newLineNfa;
+		private static Nfa MakeWindowsNotNewLineNfa() {
+			// The complement of a Windows new line is a symbol that is either not a carriage return or a carriage return that is not
+			// followed by a line feed.
+			Nfa notCarriageReturn = new(~new RangeSymbol('\r'));
+			var carriageReturnNotFollowedByLineFeed = new Nfa(new SimpleSymbol('\r')) / new Nfa(~new RangeSymbol('\n'));
+			return notCarriageReturn | carriageReturnNotFollowedByLineFeed;
+		}
+
+		private static Nfa MakeEitherNotNewLineNfa() {
+			// The complement of the disjunction of a POSIX new line and a Windows new line is a symbol that is either neither a carriage
+			// return nor a line feed or a carriage return that is not followed by a line feed.
+			Nfa neitherCarriageReturnNorLineFeed = new(~(new RangeSymbol('\r') + new RangeSymbol('\n')));
+			var carriageReturnNotFollowedByLineFeed = new Nfa(new SimpleSymbol('\r')) / new Nfa(~new RangeSymbol('\n'));
+			return neitherCarriageReturnNorLineFeed | carriageReturnNotFollowedByLineFeed;
 		}
 
 		private static bool ValidateKleeneCount(int first, int second) {
@@ -42,12 +55,28 @@
 		}
 
 		public class Parameters {
+			public Nfa NewLineNfa => newLineNfa.Clone();
+			public Nfa NotNewLineNfa => notNewLineNfa.Clone();
 			public readonly Dictionary<string, Nfa> NamedExpressions;
 			public readonly bool DotIncludesNewLine;
+			private static readonly Nfa posixNewLine = new(new SimpleSymbol('\n'));
+			private static readonly Nfa windowsNewLine = new Nfa(new SimpleSymbol('\r')) + posixNewLine;
+			private static readonly Nfa eitherNewLine = posixNewLine | windowsNewLine;
+			private static readonly Nfa posixNotNewLine = new(~new RangeSymbol('\n'));
+			private static readonly Nfa windowsNotNewLine = MakeWindowsNotNewLineNfa();
+			private static readonly Nfa eitherNotNewLine = MakeEitherNotNewLineNfa();
+			private readonly Nfa newLineNfa;
+			private readonly Nfa notNewLineNfa;
 
-			public Parameters(Dictionary<string, Nfa> namedExpressions, bool dotIncludesNewLine) {
+			public Parameters(Dictionary<string, Nfa> namedExpressions, bool dotIncludesNewLine, NewLineOption newLineOption) {
 				NamedExpressions = namedExpressions;
 				DotIncludesNewLine = dotIncludesNewLine;
+				newLineNfa = newLineOption == NewLineOption.POSIX ?
+					posixNewLine : newLineOption == NewLineOption.Windows ?
+					windowsNewLine : eitherNewLine;
+				notNewLineNfa = newLineOption == NewLineOption.POSIX ?
+					posixNotNewLine : newLineOption == NewLineOption.Windows ?
+					windowsNotNewLine : eitherNotNewLine;
 			}
 		}
 	}

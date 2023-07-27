@@ -35,13 +35,13 @@
 		<rule name="rx">
 			<nonterminal name="slash" />
 			<literal value="$" />
-			<action><![CDATA[result = $1 / MakeNewLineNfa();]]></action>
+			<action><![CDATA[result = $1 / parameters.NewLineNfa;]]></action>
 		</rule>
 		<rule name="rx">
 			<literal value="^" />
 			<nonterminal name="slash" />
 			<literal value="$" />
-			<action><![CDATA[result = (new Nfa(BolSymbol.Value) + $2) / MakeNewLineNfa();]]></action>
+			<action><![CDATA[result = (new Nfa(BolSymbol.Value) + $2) / parameters.NewLineNfa;]]></action>
 		</rule>
 		<rule name="slash">
 			<nonterminal name="choice" />

@@ -12,6 +12,7 @@
 		public readonly bool IsDebug;
 		public readonly bool WantsLineNumberTracking;
 		public readonly int? TabStop;
+		public readonly NewLineOption NewLine;
 		public readonly IGenerator Generator;
 		private const string defaultScannerClassAccess = "internal";
 
@@ -36,6 +37,7 @@
 			if (OutputFilePath == "-") {
 				OutputFilePath = null;
 			}
+			NewLine = commandLine.NewLine;
 			NamespaceName = commandLine.NamespaceName;
 			CheckName(NamespaceName, "namespace");
 			ScannerClassAccess = commandLine.ScannerClassAccess ?? defaultScannerClassAccess;
@@ -113,7 +115,7 @@ option is for inline input only.")]
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "line-file", ShortName = 'f', Usage = "emit line directives for file")]
 			public string? LineDirectivesFilePath { get; set; }
 
-			[Adrezdi.CommandLine.FlagArgument(LongName = "all-chars", ShortName = 'a', Usage = "'.' includes newline")]
+			[Adrezdi.CommandLine.FlagArgument(LongName = "all-chars", ShortName = 'a', Usage = "'.' includes new line")]
 			public bool DotIncludesNewline { get; set; }
 
 			[Adrezdi.CommandLine.FlagArgument(LongName = "ignore-case", ShortName = 'i', Usage = "ignore case")]
@@ -132,6 +134,11 @@ option is for inline input only.")]
 			public string? ScannerClassAccess { get; set; }
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "tab-stop", ShortName = 'p', Usage = $"the tab stop to use in the output (default none; use spaces)")]
 			public int? TabStop { get; set; }
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "new-line", ShortName = 'w', Usage = $"the line separator (default POSIX on POSIX, Either on Windows)")]
+			public NewLineOption NewLine { get; set; } = OperatingSystem.IsWindows() ? NewLineOption.Either : NewLineOption.POSIX;
 		}
+
+		[Flags]
+		public enum NewLineOption { POSIX = 1, Windows, Either }
 	}
 }
