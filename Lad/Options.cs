@@ -12,7 +12,7 @@
 		public readonly bool IsDebug;
 		public readonly bool WantsLineNumberTracking;
 		public readonly int? TabStop;
-		internal readonly IGenerator Generator;
+		public readonly IGenerator Generator;
 		private const string defaultScannerClassAccess = "internal";
 
 		// From the input file
@@ -100,7 +100,7 @@
 		[Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  The
 namespace and class-name options are for lex input only.  The signal-comment
 option is for inline input only.")]
-		class CommandLine {
+		private class CommandLine {
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-input-type", ShortName = 't', Usage = "the type of the scanner; one of inline and lex")]
 			public string? ScannerInputType { get; set; }
 

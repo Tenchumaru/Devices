@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 
 namespace Lad {
-	internal class LexGenerator : GeneratorBase, IGenerator {
+	public class LexGenerator : GeneratorBase, IGenerator {
 		private readonly Regex continuationRx = new(@"\s*\|");
 		private readonly Regex namedExpressionRx = new(@"^([A-Za-z]\w+)\s+(.+)");
 		private readonly StringBuilder sectionOneCode = new();

@@ -2,7 +2,7 @@
 
 namespace Lad {
 	public class RegularExpressionScanner {
-		internal static readonly Dictionary<char, char> knownEscapes = new() {
+		public static readonly Dictionary<char, char> knownEscapes = new() {
 			{'a', '\a' },
 			{'b', '\b' },
 			{'f', '\f' },

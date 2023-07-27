@@ -1,7 +1,7 @@
 ﻿using System.Text;
 
 namespace Lad {
-	internal abstract class GeneratorBase {
+	public abstract class GeneratorBase {
 		protected class StateMachine {
 			public string MethodDeclarationText;
 			public KeyValuePair<Nfa, int>[] Rules { get; }

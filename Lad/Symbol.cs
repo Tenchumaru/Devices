@@ -70,7 +70,7 @@ namespace Lad {
 
 		public virtual string MakeExpression(string name) => throw new NotImplementedException();
 
-		internal virtual bool IsIn(Symbol that) => false;
+		public virtual bool IsIn(Symbol that) => false;
 	}
 
 	public class AcceptingSymbol : ConcreteSymbol {
@@ -98,7 +98,7 @@ namespace Lad {
 
 		public override string MakeExpression(string name) => "true";
 
-		internal override bool IsIn(Symbol that) {
+		public override bool IsIn(Symbol that) {
 			if (this == that) {
 				return true;
 			} else if (that is RangeSymbol range) {
@@ -135,7 +135,7 @@ namespace Lad {
 			return that as BolSymbol;
 		}
 
-		internal override bool IsIn(Symbol that) {
+		public override bool IsIn(Symbol that) {
 			return that is BolSymbol;
 		}
 
@@ -175,6 +175,12 @@ namespace Lad {
 		public static RangeSymbol operator ~(RangeSymbol range) => new(range.includedCharacters.Not());
 
 		public override string ToString() {
+			if (includedCharacters[0]) {
+				BitArray ba = new(includedCharacters);
+				RangeSymbol complement = new(ba.Not());
+				var s = complement.ToString();
+				return $"[^{s[1..]}";
+			}
 			StringBuilder sb = new("[");
 			for (int i = 1; i < includedCharacters.Length; ++i) {
 				if (!includedCharacters[i - 1] && includedCharacters[i] && (i + 1 == includedCharacters.Length || !includedCharacters[i + 1])) {
@@ -231,9 +237,9 @@ namespace Lad {
 			return sb.ToString();
 		}
 
-		internal bool Includes(char value) => includedCharacters[value];
+		public bool Includes(char value) => includedCharacters[value];
 
-		internal override bool IsIn(Symbol that) {
+		public override bool IsIn(Symbol that) {
 			if (that == AnySymbol.Value) {
 				return true;
 			} else if (that is RangeSymbol range) {
@@ -320,7 +326,7 @@ namespace Lad {
 
 		public override string MakeExpression(string name) => $"{name}=={this}";
 
-		internal override bool IsIn(Symbol that) {
+		public override bool IsIn(Symbol that) {
 			if (that == AnySymbol.Value) {
 				return true;
 			} else if (that is RangeSymbol range) {

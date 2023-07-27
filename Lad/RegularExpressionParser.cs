@@ -1,19 +1,8 @@
 ﻿namespace Lad {
 	public partial class RegularExpressionParser {
-		public class Parameters {
-			internal readonly Dictionary<string, Nfa> NamedExpressions;
-			internal readonly bool DotIncludesNewLine;
-
-			public Parameters(Dictionary<string, Nfa> namedExpressions, bool dotIncludesNewLine) {
-				NamedExpressions = namedExpressions;
-				DotIncludesNewLine = dotIncludesNewLine;
-			}
-		}
-
+		public Nfa Result => result;
 		private Nfa result = new(new EpsilonSymbol());
 		private readonly Parameters parameters;
-
-		public Nfa Result => result;
 
 		public RegularExpressionParser(RegularExpressionScanner scanner, Parameters parameters) : this(scanner) {
 			this.parameters = parameters;
@@ -49,6 +38,16 @@
 			} else {
 				Console.Error.WriteLine($"cannot find named expression '{name}'");
 				return null;
+			}
+		}
+
+		public class Parameters {
+			public readonly Dictionary<string, Nfa> NamedExpressions;
+			public readonly bool DotIncludesNewLine;
+
+			public Parameters(Dictionary<string, Nfa> namedExpressions, bool dotIncludesNewLine) {
+				NamedExpressions = namedExpressions;
+				DotIncludesNewLine = dotIncludesNewLine;
 			}
 		}
 	}

@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Lad {
-	internal class InlineGenerator : GeneratorBase, IGenerator {
+	public class InlineGenerator : GeneratorBase, IGenerator {
 		private string? classDeclarationText;
 		private string[] usingDirectives = Array.Empty<string>();
 		private string[] namespaceNames = Array.Empty<string>();

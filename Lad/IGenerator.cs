@@ -1,5 +1,5 @@
 ﻿namespace Lad {
-	internal interface IGenerator {
+	public interface IGenerator {
 		public bool Generate();
 	}
 }
