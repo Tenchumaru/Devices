@@ -35,10 +35,6 @@ namespace Lad {
 					return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
 				}
 				return new Token { Symbol = RegularExpressionParser.Symbol, Value = value[index] };
-			}
-			if (specialCharacters.Contains(ch) && index + 1 < value.Length && value[index + 1] == ch) {
-				++index;
-				return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
 			} else if (ch == ']') {
 				isInRange = false;
 			} else if (isInRange) {
