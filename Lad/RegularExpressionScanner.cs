@@ -31,6 +31,8 @@ namespace Lad {
 				++index;
 				if (index >= value.Length) {
 					throw new InvalidOperationException("incomplete escape");
+				} else if (value[index] == 'N' && !isInRange) {
+					return new Token { Symbol = RegularExpressionParser.Symbol, Value = -1 };
 				} else if (knownEscapes.TryGetValue(value[index], out ch)) {
 					return new Token { Symbol = RegularExpressionParser.Symbol, Value = ch };
 				}

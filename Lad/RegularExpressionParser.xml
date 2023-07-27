@@ -113,17 +113,17 @@
 		</rule>
 		<rule name="simple">
 			<terminal name="Symbol" />
-			<action><![CDATA[$$ = new Nfa(new SimpleSymbol($1));]]></action>
+			<action><![CDATA[$$ = $<object>1 is int ? parameters.NewLineNfa : new Nfa(new SimpleSymbol($1));]]></action>
 		</rule>
 		<rule name="simple">
 			<literal value="." />
-			<action><![CDATA[$$ = parameters.DotIncludesNewLine ? new Nfa(AnySymbol.Value) : MakeAnyNfaWithoutNewLine();]]></action>
+			<action><![CDATA[$$ = parameters.AnyNfa;]]></action>
 		</rule>
 		<rule name="simple">
 			<terminal name="NE" />
 			<terminal name="Identifier" />
 			<literal value="}" />
-			<action><![CDATA[$$ = FindNamedExpression($2); if($$ == null) return false;]]></action>
+			<action><![CDATA[$$ = parameters.FindNamedExpression($2); if($$ == null) return false;]]></action>
 		</rule>
 		<rule name="simple">
 			<literal value="[" />
