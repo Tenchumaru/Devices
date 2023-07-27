@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 class Scanner{ // using directives, namespace, and class declaration $
+#if LAD_WANTS_LINE_NUMBERS
+public int LineNumber{get;private set;}private int nextLineNumber=1;
+#endif
 private class Reader_{
 internal bool IsAtBol=true;
 internal int Position=>index;

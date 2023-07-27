@@ -10,7 +10,7 @@
 		public readonly bool DotIncludesNewline;
 		public readonly bool IgnoringCase;
 		public readonly bool IsDebug;
-		public readonly bool WantsLineNumberTracking;
+		public readonly bool WantsLineNumbers;
 		public readonly int? TabStop;
 		public readonly NewLineOption NewLine;
 		public readonly IGenerator Generator;
@@ -50,7 +50,7 @@
 			DotIncludesNewline = commandLine.DotIncludesNewline;
 			IgnoringCase = commandLine.IgnoringCase;
 			IsDebug = commandLine.IsDebug;
-			WantsLineNumberTracking = commandLine.WantsLineNumberTracking;
+			WantsLineNumbers = commandLine.WantsLineNumbers;
 			TabStop = commandLine.TabStop;
 			if (commandLine.ScannerInputType is null) {
 				switch (Path.GetExtension(InputFilePath ?? "").ToLowerInvariant()) {
@@ -129,7 +129,7 @@ option is for inline input only.")]
 			public bool SkippingLineDirectives { get; set; }
 
 			[Adrezdi.CommandLine.FlagArgument(LongName = "line-numbers", ShortName = '#', Usage = "track line numbers in a property")]
-			public bool WantsLineNumberTracking { get; set; }
+			public bool WantsLineNumbers { get; set; }
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "access", ShortName = 'e', Usage = $"the access of the scanner class (default {defaultScannerClassAccess})")]
 			public string? ScannerClassAccess { get; set; }
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "tab-stop", ShortName = 'p', Usage = $"the tab stop to use in the output (default none; use spaces)")]

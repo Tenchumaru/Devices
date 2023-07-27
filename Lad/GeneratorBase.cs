@@ -22,12 +22,14 @@ namespace Lad {
 		protected readonly RegularExpressionParser.Parameters parameters;
 		private readonly string? inputFilePath;
 		private readonly string? outputFilePath;
+		private readonly bool wantsLineNumbers;
 
 		protected GeneratorBase(Options options) {
 			// Derivations parse options in their constructors.
 			parameters = new RegularExpressionParser.Parameters(namedExpressions, options.DotIncludesNewline, options.NewLine);
 			inputFilePath = options.InputFilePath;
 			outputFilePath = options.OutputFilePath;
+			wantsLineNumbers = options.WantsLineNumbers;
 			isDebug = options.IsDebug;
 			string skeleton = Properties.Resources.Skeleton;
 			var parts = skeleton.Split('$');
@@ -41,6 +43,9 @@ namespace Lad {
 				return false;
 			}
 			StringWriter writer = new();
+			if (wantsLineNumbers) {
+				writer.WriteLine("#define LAD_WANTS_LINE_NUMBERS");
+			}
 			WriteHeader(writer);
 			foreach (var stateMachine in stateMachines) {
 				WriteStateMachine(stateMachine.MethodDeclarationText, stateMachine.Rules.GroupBy(p => p.Value).Select(CombineNfas), writer);
@@ -99,6 +104,9 @@ namespace Lad {
 			writer.WriteLine("if(reader_==null)reader_=new Reader_(reader);");
 			string startStateName = makeState(startState.Name);
 			writer.WriteLine($"for(var state_={startStateName};;){{");
+			writer.WriteLine("#if LAD_WANTS_LINE_NUMBERS");
+			writer.WriteLine("LineNumber=nextLineNumber;");
+			writer.WriteLine("#endif");
 			writer.WriteLine("int ch_=reader_.Read();");
 			writer.WriteLine("switch(state_){");
 			WriteTransitions(startState, new HashSet<string>(), defaultState, makeState, writer);
@@ -111,6 +119,9 @@ namespace Lad {
 				writer.Write(" default");
 			}
 			writer.WriteLine(";");
+			writer.WriteLine("#if LAD_WANTS_LINE_NUMBERS");
+			writer.WriteLine(@"nextLineNumber+=tokenValue.Count(c=>c=='\n');");
+			writer.WriteLine("#endif");
 			writer.WriteLine("switch(longest_.Key){");
 		}
 
