@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Text;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -68,33 +69,12 @@ namespace Lad {
 
 		private Nfa? ParseSyntaxValue(string value, string? context = "") {
 			if (value[0] == '@') {
-				Nfa nfa = new(new EpsilonSymbol());
-				bool isEscaping = false;
-				int index = 1;
-				value = value[2..^1];
-				if (!value.Any()) {
-					Console.Error.WriteLine($"cannot parse empty regular expression{context}");
-					return null;
+				// Convert a literal string into a standard string.
+				var sb = new StringBuilder(value[1..]);
+				for(int i = value.IndexOf("\"\"", 2); i >= 0; i = value.IndexOf("\"\"", i + 2)) {
+					sb[i - 1] = '\\';
 				}
-				foreach (char ch in value) {
-					++index;
-					if (isEscaping) {
-						isEscaping = false;
-						if (!RegularExpressionScanner.knownEscapes.TryGetValue(ch, out char escape)) {
-							escape = ch;
-						}
-						nfa += new Nfa(new SimpleSymbol(escape));
-					} else if (ch == '\\') {
-						isEscaping = true;
-					} else {
-						nfa += new Nfa(new SimpleSymbol(ch));
-					}
-				}
-				if (isEscaping) {
-					Console.Error.WriteLine($"unterminated escape in literal in '{value}'{context}");
-					return null;
-				}
-				return nfa;
+				return ParseSyntaxValue(sb.ToString(), context);
 			}
 			value = value[1..^1];
 			if (!value.Any()) {
