@@ -2,7 +2,8 @@
 <grammar>
 	<symbols>
 		<literal value="{" associativity="left" />
-		<nonterminal name="rx" type="Nfa" />
+		<nonterminal name="bol" type="bool" />
+		<nonterminal name="eol" type="bool" />
 		<nonterminal name="slash" type="Nfa" />
 		<nonterminal name="choice" type="Nfa" />
 		<nonterminal name="concat" type="Nfa" />
@@ -21,27 +22,24 @@
 	</symbols>
 	<rules>
 		<rule name="rx">
-			<action />
-		</rule>
-		<rule name="rx">
+			<nonterminal name="bol" />
 			<nonterminal name="slash" />
-			<action><![CDATA[result = $1;]]></action>
+			<nonterminal name="eol" />
+			<action><![CDATA[ComposeResult($1, $2, $3);]]></action>
 		</rule>
-		<rule name="rx">
+		<rule name="bol">
+			<action><![CDATA[$$ = false;]]></action>
+		</rule>
+		<rule name="bol">
 			<literal value="^" />
-			<nonterminal name="slash" />
-			<action><![CDATA[result = new Nfa(BolSymbol.Value) + $2;]]></action>
+			<action><![CDATA[$$ = true;]]></action>
 		</rule>
-		<rule name="rx">
-			<nonterminal name="slash" />
-			<literal value="$" />
-			<action><![CDATA[result = $1 / parameters.NewLineNfa;]]></action>
+		<rule name="eol">
+			<action><![CDATA[$$ = false;]]></action>
 		</rule>
-		<rule name="rx">
-			<literal value="^" />
-			<nonterminal name="slash" />
+		<rule name="eol">
 			<literal value="$" />
-			<action><![CDATA[result = (new Nfa(BolSymbol.Value) + $2) / parameters.NewLineNfa;]]></action>
+			<action><![CDATA[$$ = true;]]></action>
 		</rule>
 		<rule name="slash">
 			<nonterminal name="choice" />

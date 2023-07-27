@@ -10,6 +10,16 @@ namespace Lad {
 			this.parameters = parameters;
 		}
 
+		private void ComposeResult(bool bol, Nfa nfa, bool eol) {
+			if (bol) {
+				nfa = new Nfa(BolSymbol.Value) + nfa;
+			}
+			if (eol) {
+				nfa /= parameters.NewLineNfa;
+			}
+			result = nfa;
+		}
+
 		private static bool ValidateKleeneCount(int first, int second) {
 			if (second < first) {
 				Console.Error.WriteLine("second Kleene count must be at least first");
