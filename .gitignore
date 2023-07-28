@@ -9,3 +9,4 @@ x64/
 *.sw[op]
 *.user
 Resources.Designer.cs
+launchSettings.json
