@@ -4,33 +4,26 @@ SETLOCAL
 IF "%~1" == "" EXIT /B 2
 SET CONFIGURATION=%~1
 SET LAD=..\Lad\bin\%CONFIGURATION%\net6.0\Lad.exe
+SET PARD=bin\%CONFIGURATION%\net6.0\Pard.exe
 CD /D "%~dp0"
 IF NOT EXIST obj MD obj
-IF NOT EXIST "%LAD%" (
-	ECHO namespace Pard{ > YaccInputScanner.g.cs
-	ECHO public partial class YaccInputScanner{class Reader{public void Write^(string s^){} >> YaccInputScanner.g.cs
-	ECHO public string Consume^(int i^){return "";}}Reader reader_;int LineNumber; >> YaccInputScanner.g.cs
-	FOR %%I IN (ReadSectionOne ReadIdentifier ReadSectionTwo ReadCodeBlock) DO (
-		ECHO private YaccInput.Token %%I^(^)=^>default; >> YaccInputScanner.g.cs
-	)
-	ECHO }} >> YaccInputScanner.g.cs
-	ECHO namespace Pard{public partial class YaccInput {public partial class YaccInputParser{ > YaccInputParser.g.cs
-	FOR %%I IN (CodeBlock PCCB POCB PP PDefine PStart PToken, PType PPrec ErrorToken Literal Identifier) DO (
-		ECHO internal const int %%I=0; >> YaccInputParser.g.cs
-	)
-	ECHO internal YaccInputParser^(YaccInputScanner s^){} >> YaccInputParser.g.cs
-	ECHO internal bool Parse^(^){return true;}}}} >> YaccInputParser.g.cs
+IF EXIST "%LAD%" IF EXIST "%PARD%" (
+	CALL :full
 	EXIT /B
 )
+CALL :stub
+EXIT /B
+
+:full
 SET I=YaccInputScanner.cs
 SET O=YaccInputScanner.g.cs
-SET COMMAND="%LAD%" -n Pard -c YaccInputScanner -p 2 -# %I% obj\%O%
+SET COMMAND="%LAD%" -c "namespace Pard{public partial class YaccInputScanner" -p 2 -# %I% obj\%O%
 CALL :doit
 IF ERRORLEVEL 1 EXIT /B %ERRORLEVEL%
 SET I=YaccInputParser.xml
 SET O=YaccInputParser.g.cs
 SET CLASS_DECL="namespace Pard{public partial class YaccInput{public partial class YaccInputParser"
-SET COMMAND=bin\%CONFIGURATION%\net6.0\Pard.exe --parser-class-declaration=%CLASS_DECL% --scanner-class-name=YaccInputScanner %I% obj\%O%
+SET COMMAND="%PARD%" --class-declaration=%CLASS_DECL% --scanner-class-name=YaccInputScanner %I% obj\%O%
 CALL :doit
 IF NOT ERRORLEVEL 1 IF "%NEEDS_REBUILD%" == "" EXIT /B
 EXIT /B 1
@@ -51,3 +44,20 @@ IF NOT ERRORLEVEL 1 (
 )
 MOVE /Y obj\%O% %O%
 SET NEEDS_REBUILD=YES
+EXIT /B
+
+:stub
+ECHO namespace Pard{ > YaccInputScanner.g.cs
+ECHO public partial class YaccInputScanner{class Reader{public void Write^(string s^){} >> YaccInputScanner.g.cs
+ECHO public string Consume^(int i^){return "";}}Reader reader_;int LineNumber; >> YaccInputScanner.g.cs
+FOR %%I IN (ReadSectionOne ReadIdentifier ReadSectionTwo ReadCodeBlock) DO (
+	ECHO private YaccInput.Token %%I^(^)=^>default; >> YaccInputScanner.g.cs
+)
+ECHO }} >> YaccInputScanner.g.cs
+ECHO namespace Pard{public partial class YaccInput {public partial class YaccInputParser{ > YaccInputParser.g.cs
+FOR %%I IN (CodeBlock PCCB POCB PP PDefine PStart PToken, PType PPrec ErrorToken Literal Identifier) DO (
+	ECHO internal const int %%I=0; >> YaccInputParser.g.cs
+)
+ECHO internal YaccInputParser^(YaccInputScanner s^){} >> YaccInputParser.g.cs
+ECHO internal bool Parse^(^){return true;}}}} >> YaccInputParser.g.cs
+EXIT /B

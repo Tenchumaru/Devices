@@ -10,17 +10,13 @@ namespace Lad {
 		private readonly int? tabStop;
 		private readonly List<string> defineDirectives;
 		private readonly List<string> additionalUsingDirectives;
-		private readonly string? namespaceName;
-		private readonly string scannerClassAccess;
-		private readonly string scannerClassName;
+		private readonly string classDeclaration;
 
 		public LexGenerator(Options options) : base(options) {
 			tabStop = options.TabStop;
 			defineDirectives = options.DefineDirectives;
 			additionalUsingDirectives = options.AdditionalUsingDirectives;
-			namespaceName = options.NamespaceName;
-			scannerClassAccess = options.ScannerClassAccess;
-			scannerClassName = options.ScannerClassName;
+			classDeclaration = options.ClassDeclaration;
 		}
 
 		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
@@ -89,24 +85,19 @@ namespace Lad {
 			foreach (var directive in defineDirectives) {
 				writer.WriteLine(directive);
 			}
+			writer.Write(sectionOneCode.ToString());
 			foreach (var directive in additionalUsingDirectives) {
 				writer.WriteLine(directive);
 			}
 			writer.Write(bones[0]);
-			if (namespaceName != null) {
-				writer.WriteLine($"namespace {namespaceName}{{");
-			}
-			writer.WriteLine($"{scannerClassAccess} partial class {scannerClassName}{{");
-			writer.Write(sectionOneCode.ToString());
+			writer.WriteLine($"{classDeclaration}{{");
 			writer.Write(bones[1]);
 		}
 
 		protected override void WriteFooter(StringWriter writer) {
 			writer.Write(moreCode.ToString());
 			writer.WriteLine(bones[3]);
-			if (namespaceName != null) {
-				writer.WriteLine('}');
-			}
+			writer.WriteLine(new string('}', classDeclaration.Split('{').Length - 1));
 		}
 
 		private bool MakeNamedExpression(string line, Regex namedExpressionRx) {

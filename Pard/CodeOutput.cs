@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Pard {
 	class CodeOutput : IGrammarOutput {
@@ -8,7 +7,6 @@ namespace Pard {
 			"System.Collections.Generic",
 			"System.Linq",
 		};
-		private static readonly Regex rx = new(@"\s+");
 
 		public void Write(IReadOnlyList<Grammar.ActionEntry> actions, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
 			// Emit the define directives.
@@ -30,10 +28,6 @@ namespace Pard {
 
 			// Emit the namespace, class name, and constructor values.
 			string classDeclaration = options.ClassDeclaration.Trim();
-			classDeclaration = rx.Replace(classDeclaration, " ");
-			if (classDeclaration.EndsWith("{")) {
-				classDeclaration = classDeclaration[..^1];
-			}
 			string parserClassName = classDeclaration.Split(' ').Last();
 			writer.WriteLine(classDeclaration);
 			EmitSection(skeleton, writer);

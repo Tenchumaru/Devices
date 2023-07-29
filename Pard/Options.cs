@@ -1,4 +1,6 @@
-﻿namespace Pard {
+﻿using System.Text.RegularExpressions;
+
+namespace Pard {
 	public class Options {
 		// Command line parameters
 		public readonly string ClassDeclaration;
@@ -10,8 +12,7 @@
 		public readonly bool WantsWarnings;
 		public readonly IGrammarInput GrammarInput;
 		private readonly string? inputFilePath;
-		private const string defaultParserClassDeclaration = "public class Parser";
-		private const string defaultScannerClassName = "Scanner";
+		private static readonly Regex rx = new(@"\s+");
 
 		// From the input file
 		public readonly List<string> DefineDirectives = new();
@@ -41,8 +42,11 @@
 					Usage($"cannot find {directoryPath}");
 				}
 			}
-			ClassDeclaration = commandLine.ClassDeclaration ?? defaultParserClassDeclaration;
-			ScannerClassName = commandLine.ScannerClassName ?? defaultScannerClassName;
+			ClassDeclaration = rx.Replace(commandLine.ClassDeclaration.Trim(), " ");
+			if (ClassDeclaration.EndsWith("{")) {
+				ClassDeclaration = ClassDeclaration[..^1].TrimEnd();
+			}
+			ScannerClassName = commandLine.ScannerClassName;
 			CheckName(ScannerClassName, "scanner class name");
 			if (commandLine.WantsStates) {
 				if (commandLine.StateOutputFilePath != null) {
@@ -103,9 +107,7 @@
 		}
 
 		private static void Usage(string message) {
-			if (message != null) {
-				Console.WriteLine("{0}: error: {1}", Program.Name, message);
-			}
+			Console.WriteLine("{0}: error: {1}", Program.Name, message);
 			Console.WriteLine();
 			Console.WriteLine(Adrezdi.CommandLine.Usage<CommandLine>());
 			Environment.Exit(2);
@@ -114,15 +116,18 @@
 		[Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  Line
 directives are not available for XML grammars.")]
 		class CommandLine {
+			private const string defaultClassDeclaration = "public class Parser";
+			private const string defaultScannerClassName = "Scanner";
+
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "grammar-input-type", ShortName = 't', Usage = "the type of the grammar; one of xml and yacc")]
 			public string? GrammarInputType { get; set; }
 
 
-			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "parser-class-declaration", ShortName = 'p', Usage = "the declaration of the parser class (default " + defaultParserClassDeclaration + ")")]
-			public string? ClassDeclaration { get; set; }
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "class-declaration", ShortName = 'c', Usage = "the declaration of the parser class (default " + defaultClassDeclaration + ")")]
+			public string ClassDeclaration { get; set; } = defaultClassDeclaration;
 
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-class-name", ShortName = 's', Usage = "the name of the scanner class (default " + defaultScannerClassName + ")")]
-			public string? ScannerClassName { get; set; }
+			public string ScannerClassName { get; set; } = defaultScannerClassName;
 
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "state-output-file", ShortName = 'o', Usage = "the path of the state output file; assumes -v")]
 			public string? StateOutputFilePath { get; set; }
