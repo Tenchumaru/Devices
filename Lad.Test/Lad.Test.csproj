@@ -4,7 +4,6 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -19,5 +18,23 @@
   <ItemGroup>
     <ProjectReference Include="..\Lad\Lad.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Test1.l.g.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Test1.l</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Test2.l.g.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Test2.l</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="$(ProjectDir)Pre-build.cmd &quot;$(ConfigurationName)&quot;" />
+  </Target>
 
 </Project>
