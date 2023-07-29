@@ -1,4 +1,5 @@
-﻿using static Pard.YaccInput;
+﻿using static Pard.Grammar;
+using static Pard.YaccInput;
 
 #pragma warning disable CS0414 // The field 'YaccInputScanner.*' is assigned but its value is never used
 #pragma warning disable IDE0051 // Remove unused private members
@@ -18,13 +19,15 @@ namespace Pard {
 				case "%start":
 					return new Token { Symbol = YaccInputParser.PStart };
 				case "%left":
-					return new Token { Symbol = YaccInputParser.PToken, Value = Grammar.Associativity.Left };
+					return new Token { Symbol = YaccInputParser.PToken, Value = new KeyValuePair<Associativity, int?>(Associativity.Left, ++precedence) };
 				case "%right":
-					return new Token { Symbol = YaccInputParser.PToken, Value = Grammar.Associativity.Right };
+					return new Token { Symbol = YaccInputParser.PToken, Value = new KeyValuePair<Associativity, int?>(Associativity.Right, ++precedence) };
 				case "%nonassoc":
-					return new Token { Symbol = YaccInputParser.PToken, Value = Grammar.Associativity.Nonassociative };
+					return new Token { Symbol = YaccInputParser.PToken, Value = new KeyValuePair<Associativity, int?>(Associativity.Nonassociative, ++precedence) };
 				case "%token":
-					return new Token { Symbol = YaccInputParser.PToken, Value = Grammar.Associativity.None };
+					return new Token { Symbol = YaccInputParser.PToken, Value = new KeyValuePair<Associativity, int?>(Associativity.None, null) };
+				case "%precedence":
+					return new Token { Symbol = YaccInputParser.PToken, Value = new KeyValuePair<Associativity, int?>(Associativity.None, ++precedence) };
 				case "%type":
 					return new Token { Symbol = YaccInputParser.PType };
 				case "{id}":
@@ -74,6 +77,9 @@ namespace Pard {
 				case "%%":
 					fn = ReadSectionThree;
 					return new Token { Symbol = YaccInputParser.PP };
+				case "%empty":
+					// Ignore empty directives.
+					break;
 				case "%prec":
 					return new Token { Symbol = YaccInputParser.PPrec };
 				case "error":

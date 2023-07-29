@@ -12,8 +12,8 @@
 				yaccInput.CreateNonterminals(typeName, names);
 			}
 
-			private void AddTokens(Grammar.Associativity terminalAssociativity, string? terminalTypeName, List<IConvertible> names) {
-				yaccInput.SetTerminalParameters(terminalAssociativity, terminalTypeName);
+			private void AddTokens(TokenDefinition tokenDefinition, List<IConvertible> names) {
+				yaccInput.SetTerminalParameters(tokenDefinition.Associativity, tokenDefinition.Precedence, tokenDefinition.TerminalTypeName);
 				foreach (var name in names) {
 					if (name is char ch) {
 						yaccInput.AddLiteral(ch);
@@ -23,9 +23,9 @@
 				}
 			}
 
-			private void AddRules(string ruleName, List<KeyValuePair<List<Symbol>, Terminal?>> rhss) {
+			private void AddProductions(string ruleName, List<Rhs> rhss) {
 				foreach (var rhs in rhss) {
-					yaccInput.AddProduction(ruleName, rhs.Key, rhs.Value);
+					yaccInput.AddProduction(ruleName, rhs.Symbols, rhs.PrecedenceTerminal);
 				}
 			}
 
@@ -39,6 +39,23 @@
 
 			private Terminal GetTerminal(string name) {
 				return yaccInput.GetTerminal(name);
+			}
+		}
+
+		internal class Rhs {
+			public List<Symbol> Symbols { get; } = new List<Symbol>();
+			public Terminal? PrecedenceTerminal { get; set; }
+		}
+
+		internal class TokenDefinition {
+			public Grammar.Associativity Associativity { get; }
+			public int? Precedence { get; }
+			public string? TerminalTypeName { get; }
+
+			public TokenDefinition(KeyValuePair<Grammar.Associativity, int?> panda, string? terminalTypeName) {
+				Associativity = panda.Key;
+				Precedence = panda.Value;
+				TerminalTypeName = terminalTypeName;
 			}
 		}
 	}

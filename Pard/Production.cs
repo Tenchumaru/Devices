@@ -5,9 +5,9 @@
 		public readonly int Index;
 		internal readonly ActionCode? ActionCode;
 		internal readonly Grammar.Associativity Associativity;
-		public readonly int Precedence;
+		public readonly int? Precedence;
 
-		internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode, Grammar.Associativity associativity, int precedence) : this(lhs, rhs, index, actionCode) {
+		internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode, Grammar.Associativity associativity, int? precedence) : this(lhs, rhs, index, actionCode) {
 			Associativity = associativity;
 			Precedence = precedence;
 		}

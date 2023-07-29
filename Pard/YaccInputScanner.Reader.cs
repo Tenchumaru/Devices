@@ -14,6 +14,7 @@ namespace Pard {
 		};
 		private readonly TextReader reader;
 		private int scopeLevel;
+		private int precedence;
 		private readonly StringBuilder codeBlock = new();
 		private bool isCollecting;
 		private Func<Token?> previousFn;

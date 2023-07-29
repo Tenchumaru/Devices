@@ -2,14 +2,11 @@
 <grammar>
 	<using value="System.Collections.Generic"/>
 	<using value="StringList = System.Collections.Generic.List&lt;string&gt;"/>
-	<using value="SymbolList = System.Collections.Generic.List&lt;Pard.Symbol&gt;"/>
-	<using value="Rule = System.Collections.Generic.KeyValuePair&lt;string, System.Collections.Generic.List&lt;System.Collections.Generic.KeyValuePair&lt;System.Collections.Generic.List&lt;Pard.Symbol&gt;, Pard.Terminal?&gt;&gt;&gt;"/>
-	<using value="Rhs = System.Collections.Generic.KeyValuePair&lt;System.Collections.Generic.List&lt;Pard.Symbol&gt;, Pard.Terminal?&gt;"/>
-	<using value="RhsList = System.Collections.Generic.List&lt;System.Collections.Generic.KeyValuePair&lt;System.Collections.Generic.List&lt;Pard.Symbol&gt;, Pard.Terminal?&gt;&gt;"/>
-	<using value="TokenPair = System.Collections.Generic.KeyValuePair&lt;Pard.Grammar.Associativity, string?&gt;"/>
+	<using value="RhsList = System.Collections.Generic.List&lt;Pard.YaccInput.Rhs&gt;"/>
 	<using value="TokenList = System.Collections.Generic.List&lt;System.IConvertible&gt;"/>
+	<using value="TokenPair = System.Collections.Generic.KeyValuePair&lt;Pard.Grammar.Associativity, int?&gt;"/>
 	<symbols>
-		<terminal name="PToken" type="Grammar.Associativity"/>
+		<terminal name="PToken" type="TokenPair"/>
 		<terminal name="Identifier" type="string"/>
 		<terminal name="CodeBlock" type="ActionCode"/>
 		<terminal name="Literal" type="char"/>
@@ -18,11 +15,10 @@
 		<terminal name="PPrec"/>
 		<terminal name="PType"/>
 		<terminal name="ErrorToken"/>
-		<nonterminal name="token" type="TokenPair"/>
+		<nonterminal name="token" type="TokenDefinition"/>
 		<nonterminal name="tokens" type="TokenList"/>
 		<nonterminal name="identifiers" type="StringList"/>
-		<nonterminal name="rule" type="Rule"/>
-		<nonterminal name="rhs" type="SymbolList"/>
+		<nonterminal name="rhs" type="Rhs"/>
 		<nonterminal name="rhss" type="RhsList"/>
 		<nonterminal name="rhe" type="Symbol"/>
 		<nonterminal name="prec" type="Terminal?"/>
@@ -47,12 +43,10 @@
 		</rule>
 		<rule name="sec2">
 			<nonterminal name="rule"/>
-			<action><![CDATA[AddRules($1.Key, $1.Value);]]></action>
 		</rule>
 		<rule name="sec2">
 			<nonterminal name="sec2"/>
 			<nonterminal name="rule"/>
-			<action><![CDATA[AddRules($2.Key, $2.Value);]]></action>
 		</rule>
 		<rule name="sec3"/>
 		<rule name="sec3">
@@ -86,23 +80,23 @@
 		<rule name="decl">
 			<nonterminal name="token"/>
 			<nonterminal name="tokens"/>
-			<action><![CDATA[AddTokens($1.Key, $1.Value, $2);]]></action>
+			<action><![CDATA[AddTokens($1, $2);]]></action>
 		</rule>
 		<rule name="identifiers">
 			<nonterminal name="identifiers"/>
 			<terminal name="Identifier"/>
-			<action><![CDATA[$$ = $1; $1.Add($2);]]></action>
+			<action><![CDATA[$1.Add($2); $$ = $1;]]></action>
 		</rule>
 		<rule name="token">
 			<terminal name="PToken"/>
-			<action><![CDATA[$$ = new TokenPair($1, null);]]></action>
+			<action><![CDATA[$$ = new TokenDefinition($1, null);]]></action>
 		</rule>
 		<rule name="token">
 			<terminal name="PToken"/>
 			<literal value="&lt;"/>
 			<terminal name="Identifier"/>
 			<literal value="&gt;"/>
-			<action><![CDATA[$$ = new TokenPair($1, $3);]]></action>
+			<action><![CDATA[$$ = new TokenDefinition($1, $3);]]></action>
 		</rule>
 		<rule name="tokens">
 			<terminal name="Identifier"/>
@@ -131,30 +125,30 @@
 			<literal value=":"/>
 			<nonterminal name="rhss"/>
 			<literal value=";"/>
-			<action><![CDATA[$$ = new Rule($1, $3);]]></action>
+			<action><![CDATA[AddProductions($1, $3);]]></action>
 		</rule>
 		<rule name="rhss">
 			<nonterminal name="rhs"/>
-			<nonterminal name="prec"/>
-			<action><![CDATA[$$ = new List<Rhs> { new Rhs($1, $2) };]]></action>
+			<action><![CDATA[$$ = new RhsList { $1 };]]></action>
 		</rule>
 		<rule name="rhss">
 			<nonterminal name="rhss"/>
 			<literal value="|"/>
 			<nonterminal name="rhs"/>
-			<nonterminal name="prec"/>
-			<action><![CDATA[$1.Add(new Rhs($3, $4)); $$ = $1;]]></action>
+			<action><![CDATA[$1.Add($3); $$ = $1;]]></action>
 		</rule>
 		<rule name="rhs">
-			<action><![CDATA[$$ = new SymbolList();]]></action>
+			<action><![CDATA[$$ = new Rhs();]]></action>
 		</rule>
 		<rule name="rhs">
 			<nonterminal name="rhs"/>
 			<nonterminal name="rhe"/>
-			<action><![CDATA[$$ = $1; $1.Add($2);]]></action>
+			<action><![CDATA[$1.Symbols.Add($2); $$ = $1;]]></action>
 		</rule>
-		<rule name="prec">
-			<action><![CDATA[$$ = null;]]></action>
+		<rule name="rhs">
+			<nonterminal name="rhs"/>
+			<nonterminal name="prec"/>
+			<action><![CDATA[if($1.PrecedenceTerminal is not null) throw new ApplicationException("precedence already given"); $1.PrecedenceTerminal = $2; $$ = $1;]]></action>
 		</rule>
 		<rule name="prec">
 			<terminal name="PPrec"/>

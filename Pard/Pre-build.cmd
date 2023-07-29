@@ -23,7 +23,7 @@ IF ERRORLEVEL 1 EXIT /B %ERRORLEVEL%
 SET I=YaccInputParser.xml
 SET O=YaccInputParser.g.cs
 SET CLASS_DECL="namespace Pard{public partial class YaccInput{public partial class YaccInputParser"
-SET COMMAND="%PARD%" --class-declaration=%CLASS_DECL% --scanner-class-name=YaccInputScanner %I% obj\%O%
+SET COMMAND="%PARD%" -o obj\%O%.txt --class-declaration=%CLASS_DECL% --scanner-class-name=YaccInputScanner %I% obj\%O%
 CALL :doit
 IF NOT ERRORLEVEL 1 IF "%NEEDS_REBUILD%" == "" EXIT /B
 EXIT /B 1

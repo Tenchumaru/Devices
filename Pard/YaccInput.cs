@@ -3,7 +3,7 @@
 		private readonly List<Production> productions = new();
 		private Grammar.Associativity terminalAssociativity;
 		private string? terminalTypeName;
-		private int precedence;
+		private int? precedence;
 		private readonly Options options;
 		private readonly Dictionary<string, Terminal> knownTerminals = new();
 		private readonly Dictionary<string, Nonterminal> knownNonterminals = new();
@@ -20,8 +20,9 @@
 
 		private void CreateNonterminals(string? typeName, List<string> names) => names.ForEach(s => knownNonterminals[s] = new Nonterminal(s, typeName));
 
-		private void SetTerminalParameters(Grammar.Associativity associativity, string? typeName) {
+		private void SetTerminalParameters(Grammar.Associativity associativity, int? precedence, string? typeName) {
 			terminalAssociativity = associativity;
+			this.precedence = precedence;
 			terminalTypeName = typeName;
 		}
 
