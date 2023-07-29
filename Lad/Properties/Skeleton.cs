@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+#nullable enable
 class Scanner{ // using directives, namespace, and class declaration $
 #if LAD_WANTS_LINE_NUMBERS
 public int LineNumber{get;private set;}private int nextLineNumber=1;
@@ -23,7 +24,7 @@ internal void Write(string s){buffer.Append(s);}
 internal Reader_(IEnumerable<char>reader){enumerator=reader.GetEnumerator();}
 internal Reader_(System.IO.TextReader reader){enumerator=Enumerable.Repeat<System.Func<int>>(reader.Read,int.MaxValue).
 Select(f=>f()).TakeWhile(v=>v>=0).Select(v=>(char)v).GetEnumerator();}
-}private Reader_ reader_;
+}private Reader_? reader_;
 internal Token Read() {{switch(index){case 0:{ // method declaration, state machine, and rule actions $
 }break;}}}
 // additional code (section three) $

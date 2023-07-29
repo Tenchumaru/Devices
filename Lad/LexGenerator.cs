@@ -78,7 +78,7 @@ namespace Lad {
 						break;
 				}
 			}
-			return foundError ? default : new[] { new StateMachine("internal Token Read()", rules, codes.Select(s => s.ToString()), null) };
+			return foundError ? default : new[] { new StateMachine("internal Token? Read()", rules, codes.Select(s => s.ToString()), null) };
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
@@ -188,8 +188,11 @@ namespace Lad {
 				rules.Add(nfa, codesIndex);
 				if (tabStop > 0) {
 					string s = new string(' ', index) + line[index..];
-					s = string.Join("", s.Chunk(tabStop.Value).Select(a => a.All(c => c == ' ') ? "\t" : new string(a)));
-					codes.Add(new StringBuilder(s));
+					string ws = s[..^s.TrimStart().Length];
+					ws = string.Join("", ws.Chunk(tabStop.Value).Select(a => a.All(c => c == ' ') ? "\t" : string.Join("", a.SkipWhile(c => c == ' '))));
+					StringBuilder sb = new(ws);
+					sb.AppendLine(s.TrimStart());
+					codes.Add(sb);
 				} else {
 					StringBuilder sb = new(new string(' ', index));
 					sb.AppendLine(line[index..]);

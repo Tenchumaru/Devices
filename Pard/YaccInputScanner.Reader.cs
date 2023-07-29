@@ -28,7 +28,7 @@ namespace Pard {
 
 		private Token? ReadSectionThree() {
 			fn = EndParse;
-			string code = reader_.Consume(int.MaxValue);
+			string code = reader_!.Consume(int.MaxValue);
 			code += reader.ReadToEnd();
 			return new Token { Symbol = YaccInputParser.CodeBlock, Value = new ActionCode(codeBlock.ToString(), LineNumber) };
 		}

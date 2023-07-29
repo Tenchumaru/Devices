@@ -11,7 +11,7 @@ namespace Pard {
 		private readonly string hex = "[0-9A-Fa-f]";
 		private readonly string id = "[A-Za-z_][0-9A-Za-z_]*";
 
-		private Token ReadSectionOne(string tokenValue = "") {
+		private Token? ReadSectionOne(string tokenValue = "") {
 			switch (tokenValue) {
 				case "%define":
 					return new Token { Symbol = YaccInputParser.PDefine };
@@ -69,7 +69,7 @@ namespace Pard {
 			throw new InvalidOperationException();
 		}
 
-		private Token ReadSectionTwo(string tokenValue = "") {
+		private Token? ReadSectionTwo(string tokenValue = "") {
 			switch (tokenValue) {
 				case "%%":
 					fn = ReadSectionThree;
@@ -108,7 +108,7 @@ namespace Pard {
 		}
 
 
-		private Token ReadCodeBlock(string tokenValue = "") {
+		private Token? ReadCodeBlock(string tokenValue = "") {
 			switch (tokenValue) {
 				case "{str}":
 					codeBlock.Append(tokenValue);
@@ -139,7 +139,7 @@ namespace Pard {
 								return Token.End;
 							}
 							codeBlock.Length -= 2;
-							reader_.Write("%}");
+							reader_!.Write("%}");
 						}
 						fn = previousFn;
 						return new Token { Symbol = YaccInputParser.CodeBlock, Value = new ActionCode(codeBlock.ToString(), LineNumber) };
