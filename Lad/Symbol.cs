@@ -213,7 +213,7 @@ namespace Lad {
 		}
 
 		public override string MakeExpression(string name) {
-			StringBuilder sb = new("(");
+			StringBuilder sb = new(includedCharacters[0] ? "((" : "(");
 			for (int i = 1; i < includedCharacters.Length; ++i) {
 				if (includedCharacters[i - 1] != includedCharacters[i]) {
 					if (!includedCharacters[i - 1] && includedCharacters[i] && (i + 1 == includedCharacters.Length || !includedCharacters[i + 1])) {
@@ -233,6 +233,9 @@ namespace Lad {
 				--sb.Length;
 			} else {
 				sb.Length -= 3;
+			}
+			if (includedCharacters[0]) {
+				sb.Append(")&&").Append(name).Append(">=0");
 			}
 			return sb.ToString();
 		}
