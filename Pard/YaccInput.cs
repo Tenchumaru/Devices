@@ -5,8 +5,8 @@
 		private string? terminalTypeName;
 		private int precedence;
 		private readonly Options options;
-		private readonly HashSet<Terminal> knownTerminals = new();
-		private readonly HashSet<Nonterminal> knownNonterminals = new();
+		private readonly Dictionary<string, Terminal> knownTerminals = new();
+		private readonly Dictionary<string, Nonterminal> knownNonterminals = new();
 
 		public YaccInput(Options options) => this.options = options;
 
@@ -18,16 +18,16 @@
 			return parser.Parse() ? productions : throw new InvalidOperationException("syntax error");
 		}
 
-		private void CreateNonterminals(string? typeName, List<string> names) => knownNonterminals.UnionWith(names.Select(s => new Nonterminal(s, typeName)));
+		private void CreateNonterminals(string? typeName, List<string> names) => names.ForEach(s => knownNonterminals[s] = new Nonterminal(s, typeName));
 
 		private void SetTerminalParameters(Grammar.Associativity associativity, string? typeName) {
 			terminalAssociativity = associativity;
 			terminalTypeName = typeName;
 		}
 
-		private void AddTerminal(string name) => knownTerminals.Add(new Terminal(name, terminalTypeName, terminalAssociativity, precedence));
+		private void AddTerminal(string name) => knownTerminals.Add(name, new Terminal(name, terminalTypeName, terminalAssociativity, precedence));
 
-		private void AddLiteral(char ch) => knownTerminals.Add(new Terminal("'" + ch + "'", terminalTypeName, terminalAssociativity, precedence, ch));
+		private void AddLiteral(char ch) => knownTerminals.Add(Terminal.FormatLiteralName(ch), new Terminal(Terminal.FormatLiteralName(ch), terminalTypeName, terminalAssociativity, precedence, ch));
 
 		private void AddProduction(string ruleName, List<Symbol> rhs, Terminal? terminal) {
 			// Replace code blocks with synthesized non-terminals for rules
@@ -48,34 +48,42 @@
 				rhs.RemoveAt(rhs.Count - 1);
 				actionCode = lastCodeBlock.ActionCode;
 			}
-			var nonterminal = new Nonterminal(ruleName, null);
-			if (!knownNonterminals.Add(nonterminal))
-				nonterminal = knownNonterminals.First(n => n == nonterminal);
-				productions.Add(new Production(nonterminal, rhs, productions.Count, actionCode,
-					terminal != null ? terminal.Associativity : Grammar.Associativity.None,
-					terminal != null ? terminal.Precedence : 0));
+			if (!knownNonterminals.TryGetValue(ruleName, out Nonterminal? nonterminal)) {
+				nonterminal = new Nonterminal(ruleName, null);
+				knownNonterminals.Add(ruleName, nonterminal);
+			}
+			productions.Add(new Production(nonterminal, rhs, productions.Count, actionCode,
+				terminal != null ? terminal.Associativity : Grammar.Associativity.None,
+				terminal != null ? terminal.Precedence : 0));
 		}
 
 		private Terminal GetTerminal(string name) {
-			var terminal = new Terminal(name, null, Grammar.Associativity.None, 0);
-			if (!knownTerminals.Add(terminal))
-				terminal = knownTerminals.First(t => t == terminal);
+			if (!knownTerminals.TryGetValue(name, out Terminal? terminal)) {
+				terminal = new Terminal(name, null, Grammar.Associativity.None, 0);
+				knownTerminals.Add(name, terminal);
+			}
 			return terminal;
 		}
 
 		private Symbol GetSymbol(string name) {
-			var terminal = new Terminal(name, null, Grammar.Associativity.None, 0);
-			Symbol? symbol = knownTerminals.FirstOrDefault(t => t == terminal);
-			if (symbol == null) {
-				var nonterminal = new Nonterminal(name, null);
-				symbol = knownNonterminals.Add(nonterminal) ? nonterminal : knownNonterminals.First(n => n == nonterminal);
+			if (knownTerminals.TryGetValue(name, out Terminal? terminal)) {
+				return terminal;
+			} else if (knownNonterminals.TryGetValue(name, out Nonterminal? nonterminal)) {
+				return nonterminal;
+			} else {
+				nonterminal = new Nonterminal(name, null);
+				knownNonterminals.Add(name, nonterminal);
+				return nonterminal;
 			}
-			return symbol;
 		}
 
-		private static Symbol GetLiteral(char ch) {
-			// TODO:  escape character.
-			return new Terminal("'" + ch + "'", null, Grammar.Associativity.None, 0, ch);
+		private Terminal GetLiteral(char ch) {
+			string name = Terminal.FormatLiteralName(ch);
+			if (!knownTerminals.TryGetValue(name, out Terminal? terminal)) {
+				terminal = new Terminal(name, null, Grammar.Associativity.None, 0, ch);
+				knownTerminals.Add(name, terminal);
+			}
+			return terminal;
 		}
 
 		private class CodeBlockSymbol : Symbol {

@@ -30,7 +30,7 @@
 			}
 
 			private Symbol GetLiteral(char ch) {
-				return YaccInput.GetLiteral(ch);
+				return yaccInput.GetLiteral(ch);
 			}
 
 			private Symbol GetSymbol(string name) {

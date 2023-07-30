@@ -19,6 +19,10 @@
 			Value = value;
 		}
 
+		public static string FormatLiteralName(char ch) {
+			return "'" + ch + "'";
+		}
+
 		public static string FormatLiteralName(string? value) {
 			// TODO: perform unescaping on the value.
 			if (value is null) {
