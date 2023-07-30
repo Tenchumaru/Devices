@@ -80,7 +80,7 @@ namespace Pard {
 					break;
 				default:
 					Usage("unknown input type");
-					throw new InvalidOperationException();
+					throw new NotImplementedException();
 			}
 		}
 

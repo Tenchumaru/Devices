@@ -15,7 +15,7 @@
 			knownTerminals.Clear();
 			knownNonterminals.Clear();
 			YaccInputParser parser = new(this, new YaccInputScanner(reader));
-			return parser.Parse() ? productions : throw new InvalidOperationException("syntax error");
+			return parser.Parse() ? productions : throw new ApplicationException("syntax error");
 		}
 
 		private void CreateNonterminals(string? typeName, List<string> names) => names.ForEach(s => knownNonterminals[s] = new Nonterminal(s, typeName));
@@ -25,7 +25,12 @@
 			terminalTypeName = typeName;
 		}
 
-		private void AddTerminal(string name) => knownTerminals.Add(name, new Terminal(name, terminalTypeName, terminalAssociativity, precedence));
+		private void AddTerminal(string name) {
+			if (knownTerminals.ContainsKey(name)) {
+				throw new ApplicationException($"Terminal '{name}' already declared");
+			}
+			knownTerminals.Add(name, new Terminal(name, terminalTypeName, terminalAssociativity, precedence));
+		}
 
 		private void AddLiteral(char ch) => knownTerminals.Add(Terminal.FormatLiteralName(ch), new Terminal(Terminal.FormatLiteralName(ch), terminalTypeName, terminalAssociativity, precedence, ch));
 

@@ -146,7 +146,7 @@ namespace Pard {
 			for (int i = 1; i < parts.Length; ++i) {
 				string part = parts[i];
 				if (part.Length < 1) {
-					throw new MalformedSubstitutionException(production);
+					throw MakeMalformedSubstitutionException(production);
 				}
 
 				// Parse any explicit type name.
@@ -155,7 +155,7 @@ namespace Pard {
 				if (part[0] == '<') {
 					j = part.IndexOf('>');
 					if (j < 2) {
-						throw new MalformedSubstitutionException(production);
+						throw MakeMalformedSubstitutionException(production);
 					}
 					typeName = part[1..j];
 					++j;
@@ -163,7 +163,7 @@ namespace Pard {
 
 				// Parse the symbol number.
 				if (j >= part.Length) {
-					throw new MalformedSubstitutionException(production);
+					throw MakeMalformedSubstitutionException(production);
 				}
 				if (part[j] == '$') {
 					parts[i] = typeName != null ?
@@ -180,11 +180,11 @@ namespace Pard {
 					sb.Append(part[j]);
 				}
 				if (!int.TryParse(sb.ToString(), out int symbolNumber)) {
-					throw new MalformedSubstitutionException(production);
+					throw MakeMalformedSubstitutionException(production);
 				}
 				int symbolIndex = symbolNumber - 1;
 				if (symbolIndex >= production.Rhs.Count) {
-					throw new MalformedSubstitutionException("invalid substitution in action for " + production);
+					throw new ApplicationException("invalid substitution in action for " + production);
 				}
 
 				// Replace the specifier with the stack accessor.
@@ -254,13 +254,7 @@ namespace Pard {
 			--sb.Length;
 			return sb.ToString();
 		}
-	}
 
-	public class MalformedSubstitutionException : Exception {
-		internal MalformedSubstitutionException(Production production) : base("malformed substitution in " + production) {
-		}
-
-		public MalformedSubstitutionException(string message) : base(message) {
-		}
+		private static ApplicationException MakeMalformedSubstitutionException(Production production) => new ApplicationException("malformed substitution in " + production);
 	}
 }

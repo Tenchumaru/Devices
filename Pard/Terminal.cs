@@ -26,9 +26,9 @@
 		public static string FormatLiteralName(string? value) {
 			// TODO: perform unescaping on the value.
 			if (value is null) {
-				throw new InvalidOperationException("no value for literal");
+				throw new ApplicationException("no value for literal");
 			}
-			return value.Length == 1 ? "'" + value + "'" : throw new InvalidOperationException($"invalid literal value '{value}'");
+			return value.Length == 1 ? "'" + value + "'" : throw new ApplicationException($"invalid literal value '{value}'");
 		}
 	}
 }

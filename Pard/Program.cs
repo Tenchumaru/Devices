@@ -8,11 +8,13 @@ namespace Pard {
 			// Read the productions from the input.
 			Options options = new(args);
 			IReadOnlyList<Production>? productions;
-			using (var reader = options.OpenReader()) {
+			try {
+				using TextReader reader = options.OpenReader();
 				productions = options.GrammarInput.Read(reader);
-			}
-			if (productions == null) {
+			} catch (ApplicationException ex) {
+				Console.Error.WriteLine(ex.Message);
 				Environment.Exit(1);
+				throw;
 			}
 
 			// Check the productions for undefined symbols.

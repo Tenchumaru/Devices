@@ -60,13 +60,13 @@ namespace Pard {
 					break;
 				default:
 					if (tokenValue.Any()) {
-						ReportError($"unexpected input: '{tokenValue}'");
+						ReportError($"unexpected input in line {LineNumber}: '{tokenValue}'");
 					} else {
 						ReportError("unexpected end of input");
 					}
 					return Token.End;
 			}
-			throw new InvalidOperationException();
+			throw new NotImplementedException();
 		}
 
 		private Token? ReadSectionTwo(string tokenValue = "") {
@@ -104,7 +104,7 @@ namespace Pard {
 				default:
 					return new Token { Symbol = tokenValue[0] };
 			}
-			throw new InvalidOperationException();
+			throw new NotImplementedException();
 		}
 
 
@@ -135,7 +135,7 @@ namespace Pard {
 					if (--scopeLevel == 0) {
 						if (previousFn == ReadSectionOne) {
 							if (codeBlock[^2] != '%') {
-								ReportError("unmatched action braces in section one");
+								ReportError($"unmatched action braces in section one at line {LineNumber}");
 								return Token.End;
 							}
 							codeBlock.Length -= 2;
@@ -150,7 +150,7 @@ namespace Pard {
 					codeBlock.Append(tokenValue);
 					break;
 			}
-			throw new InvalidOperationException();
+			throw new NotImplementedException();
 		}
 
 		private bool CollectComments(string tokenValue = "") {
@@ -167,7 +167,7 @@ namespace Pard {
 					}
 					break;
 			}
-			throw new InvalidOperationException();
+			throw new NotImplementedException();
 		}
 	}
 }

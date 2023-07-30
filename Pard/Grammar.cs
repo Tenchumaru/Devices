@@ -110,7 +110,7 @@ namespace Pard {
 							++reduceReduceConflictCount;
 							return list.OrderBy(e => e.Value).First();
 					}
-					break;
+					throw new NotImplementedException();
 				default:
 					// Take the reduction with the lowest production index and
 					// resolve the shift-reduce conflict.
@@ -124,7 +124,6 @@ namespace Pard {
 					++shiftReduceConflictCount;
 					return shift;
 			}
-			throw new Exception();
 		}
 
 		private static ActionEntry? ResolveShiftReduceConflict(ActionEntry shift, ActionEntry reduce, IDictionary<int, Production> productions) {
