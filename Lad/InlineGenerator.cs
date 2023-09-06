@@ -13,7 +13,7 @@ namespace Lad {
 
 		protected override void WriteFooter(StringWriter writer) {
 			writer.Write(bones[3]);
-			writer.WriteLine(new string('}', namespaceNames.Length));
+			writer.WriteLine(new string('}', namespaceNames.Length + classDeclarationText!.Split('{').Length - 1));
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
@@ -39,18 +39,26 @@ namespace Lad {
 				Console.Error.WriteLine("no class in file");
 				return default;
 			}
-			classDeclarationText = $"{classDeclaration.Modifiers} class {classDeclaration.Identifier.Value}";
 			namespaceNames = classDeclaration.Ancestors().OfType<NamespaceDeclarationSyntax>().Select(n => n.Name.ToString()).Reverse().ToArray();
 			var methodDeclarations = classDeclaration.DescendantNodes().OfType<MethodDeclarationSyntax>().ToArray();
 			if (!methodDeclarations.Any()) {
 				Console.Error.WriteLine("no methods in class");
 				return default;
 			}
+			if (!methodDeclarations.Skip(1).All((m) => m.Parent == methodDeclarations.First().Parent)) {
+				Console.Error.WriteLine("not all methods are in the same class");
+				return default;
+			}
+			classDeclaration = (ClassDeclarationSyntax)methodDeclarations.First().Parent!;
+			classDeclarationText = $"{classDeclaration.Modifiers} class {classDeclaration.Identifier.Value}";
+			for (var parentClass = classDeclaration.Parent as ClassDeclarationSyntax; parentClass != null; parentClass = parentClass.Parent as ClassDeclarationSyntax) {
+				classDeclarationText = $"{parentClass.Modifiers} class {parentClass.Identifier.Value}{{{classDeclarationText}";
+			}
 			var q = from f in classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>()
-				from v in f.Declaration.Variables
-				let i = v.Initializer
-				where i is not null
-				select (v.Identifier.ToString(), i.Value.ToString());
+							from v in f.Declaration.Variables
+							let i = v.Initializer
+							where i is not null
+							select (v.Identifier.ToString(), i.Value.ToString());
 			bool foundError = false;
 			foreach ((string name, string rx) in q) {
 				Nfa? nfa = ParseSyntaxValue(rx, $" named '{name}'");
