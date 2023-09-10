@@ -10,10 +10,8 @@ namespace Pard {
 		private readonly IReadOnlyList<Item.Set> states;
 
 		public Grammar(IReadOnlyList<Production> productions) {
-			// Check for unreferenced productions.  Assume any production whose
-			// left-hand side is the same as the left-hand side of the first
-			// production is a starting production.  This isn't part of the
-			// algorithm but I think it's appropriate.
+			// Check for unreferenced productions.  Assume any production whose left-hand side is the same as the left-hand side of the
+			// first production is a starting production.  This isn't part of the algorithm but I think it's appropriate.
 			HashSet<Production> referencedProductions = new(productions.Where(p => p.Lhs == productions[0].Lhs));
 			int count;
 			do {
@@ -58,7 +56,7 @@ namespace Pard {
 			// Account for conflicts.
 			int shiftReduceConflictCount = 0, reduceReduceConflictCount = 0;
 			var c = a.GroupBy(p => new KeyValuePair<int, Terminal>(p.StateIndex, p.Terminal));
-			a = c.Select(x => ResolveConflict(x.Key.Key, x.Key.Value, x.ToList(), augmented.Productions, ref shiftReduceConflictCount, ref reduceReduceConflictCount));
+			a = c.Select(x => ResolveConflict(x.ToList(), augmented.Productions, ref shiftReduceConflictCount, ref reduceReduceConflictCount));
 			actions = a.ToList();
 			if (shiftReduceConflictCount > 0 || reduceReduceConflictCount > 0) {
 				Console.Error.Write("warning:");
@@ -83,7 +81,7 @@ namespace Pard {
 			gotos = b.ToList();
 		}
 
-		private ActionEntry ResolveConflict(int stateIndex, Terminal terminal, List<ActionEntry> list, IDictionary<int, Production> productions, ref int shiftReduceConflictCount, ref int reduceReduceConflictCount) {
+		private static ActionEntry ResolveConflict(List<ActionEntry> list, IDictionary<int, Production> productions, ref int shiftReduceConflictCount, ref int reduceReduceConflictCount) {
 			switch (list.Count) {
 				case 1:
 					return list[0];
