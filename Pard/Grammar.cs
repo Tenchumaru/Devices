@@ -90,30 +90,28 @@ namespace Pard {
 				case 2:
 					ActionEntry left = list[0], right = list[1];
 					ActionEntry? result;
-					switch (left.Action.ToString() + right.Action.ToString()) {
-						case "ShiftReduce":
-							result = ResolveShiftReduceConflict(left, right, productions);
-							if (result != null) {
-								return result;
-							}
-							++shiftReduceConflictCount;
-							return left;
-						case "ReduceShift":
-							result = ResolveShiftReduceConflict(right, left, productions);
-							if (result != null) {
-								return result;
-							}
-							++shiftReduceConflictCount;
-							return right;
-						case "ReduceReduce":
-							// Take the reduction with the lowest production index.
-							++reduceReduceConflictCount;
-							return list.OrderBy(e => e.Value).First();
+					if (left.Action == Action.Shift && right.Action == Action.Reduce) {
+						result = ResolveShiftReduceConflict(left, right, productions);
+						if (result != null) {
+							return result;
+						}
+						++shiftReduceConflictCount;
+						return left;
+					} else if (left.Action == Action.Reduce && right.Action == Action.Shift) {
+						result = ResolveShiftReduceConflict(right, left, productions);
+						if (result != null) {
+							return result;
+						}
+						++shiftReduceConflictCount;
+						return right;
+					} else if (left.Action == Action.Reduce && right.Action == Action.Reduce) {
+						// Take the reduction with the lowest production index.
+						++reduceReduceConflictCount;
+						return list.OrderBy(e => e.Value).First();
 					}
-					throw new NotImplementedException();
+					throw new InvalidOperationException($"unexpected actions {left.Action} and {right.Action}");
 				default:
-					// Take the reduction with the lowest production index and
-					// resolve the shift-reduce conflict.
+					// Take the reduction with the lowest production index and resolve the shift-reduce conflict.
 					ActionEntry shift = list.Single(e => e.Action == Action.Shift);
 					ActionEntry reduce = list.Where(e => e.Action == Action.Reduce).OrderBy(e => e.Value).First();
 					result = ResolveShiftReduceConflict(shift, reduce, productions);
