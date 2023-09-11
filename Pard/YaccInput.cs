@@ -4,6 +4,7 @@
 		private Grammar.Associativity terminalAssociativity;
 		private string? terminalTypeName;
 		private int? precedence;
+		private int subruleNumber;
 		private readonly Options options;
 		private readonly Dictionary<string, Terminal> knownTerminals = new();
 		private readonly Dictionary<string, Nonterminal> knownNonterminals = new();
@@ -41,7 +42,7 @@
 			for (int i = 0, count = rhs.Count - 1; i < count; ++i) {
 				var innerCodeBlock = rhs[i] as CodeBlockSymbol;
 				if (innerCodeBlock != null) {
-					string subruleName = string.Format("{0}.{1}", ruleName, i + 1);
+					string subruleName = string.Format("{0}.{1}", ruleName, ++subruleNumber);
 					var subruleSymbol = new Nonterminal(subruleName, null);
 					var subruleProduction = new Production(subruleSymbol, Array.Empty<Symbol>(), productions.Count, innerCodeBlock.ActionCode);
 					productions.Add(subruleProduction);
