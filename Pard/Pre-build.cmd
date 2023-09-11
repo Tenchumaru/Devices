@@ -3,8 +3,15 @@ SETLOCAL
 
 IF "%~1" == "" EXIT /B 2
 SET CONFIGURATION=%~1
-SET LAD=..\Lad\bin\%CONFIGURATION%\net6.0\Lad.exe
-SET PARD=bin\%CONFIGURATION%\net6.0\Pard.exe
+SET D=bin\%CONFIGURATION%\net6.0
+SET LAD=..\Lad\%D%\Lad.exe
+IF NOT EXIST %D%\Pard.exe (
+	SET PARD=NOT\Pard.exe
+) ELSE IF EXIST %D%\Pard-LKG.exe (
+	SET PARD=%D%\Pard-LKG.exe
+) ELSE (
+	SET PARD=%D%\Pard.exe
+)
 CD /D "%~dp0"
 IF NOT EXIST obj MD obj
 IF EXIST "%LAD%" IF EXIST "%PARD%" (
