@@ -1,5 +1,5 @@
 ﻿namespace Pard {
-	abstract class Symbol : NamedObject {
+	public abstract class Symbol : NamedObject {
 		public readonly string? TypeName;
 
 		public Symbol(string name, string? typeName) : base(name) {

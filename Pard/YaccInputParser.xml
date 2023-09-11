@@ -67,7 +67,7 @@
 		<rule name="decl">
 			<terminal name="PStart"/>
 			<terminal name="Identifier"/>
-			<action><![CDATA[startRuleName = $2;]]></action>
+			<action><![CDATA[StartingRuleName = $2;]]></action>
 		</rule>
 		<rule name="decl">
 			<terminal name="PType"/>

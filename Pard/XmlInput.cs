@@ -6,6 +6,7 @@ namespace Pard {
 		private Options options;
 
 		public XmlInput(Options options) => this.options = options;
+		public Nonterminal? StartingSymbol => null;
 
 		public IReadOnlyList<Production> Read(TextReader reader) {
 			XElement xml = XDocument.Load(reader).Element("grammar") ?? throw new ApplicationException("no grammar in file");

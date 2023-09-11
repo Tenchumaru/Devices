@@ -31,7 +31,7 @@ namespace Pard {
 			}
 
 			// Create the grammar from the productions.
-			Grammar grammar = new(productions);
+			Grammar grammar = new(productions, options.GrammarInput.StartingSymbol);
 
 			// Write the parser.
 			CodeOutput output = new();

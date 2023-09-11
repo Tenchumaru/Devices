@@ -9,10 +9,12 @@ namespace Pard {
 		private readonly IReadOnlyList<GotoEntry> gotos;
 		private readonly IReadOnlyList<Item.Set> states;
 
-		public Grammar(IReadOnlyList<Production> productions) {
-			// Check for unreferenced productions.  Assume any production whose left-hand side is the same as the left-hand side of the
-			// first production is a starting production.  This isn't part of the algorithm but I think it's appropriate.
-			HashSet<Production> referencedProductions = new(productions.Where(p => p.Lhs == productions[0].Lhs));
+		public Grammar(IReadOnlyList<Production> productions, Nonterminal? startingSymbol) {
+			// Create a collection of referenced productions starting with those productions whose left-hand side is the given starting
+			// symbol or the first production's left-hand side if the starting symbol is not given.
+			HashSet<Production> referencedProductions = new(productions.Where(p => p.Lhs == (startingSymbol ?? productions[0].Lhs)));
+
+			// Check for unreferenced productions.
 			int count;
 			do {
 				count = referencedProductions.Count;

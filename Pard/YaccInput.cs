@@ -1,5 +1,6 @@
 ﻿namespace Pard {
 	public partial class YaccInput : IGrammarInput {
+		public Nonterminal? StartingSymbol { get; private set; }
 		private readonly List<Production> productions = new();
 		private Grammar.Associativity terminalAssociativity;
 		private string? terminalTypeName;
@@ -16,7 +17,14 @@
 			knownTerminals.Clear();
 			knownNonterminals.Clear();
 			YaccInputParser parser = new(this, new YaccInputScanner(reader));
-			return parser.Parse() ? productions : throw new ApplicationException("syntax error");
+			if (parser.Parse()) {
+				StartingSymbol = parser.StartingRuleName == null ?
+					productions[0].Lhs :
+					productions.FirstOrDefault(p => p.Lhs.Name == parser.StartingRuleName)?.Lhs ?? throw new ApplicationException("start symbol undefined");
+				return productions;
+			} else {
+				throw new ApplicationException("syntax error");
+			}
 		}
 
 		private void CreateNonterminals(string? typeName, List<string> names) => names.ForEach(s => knownNonterminals[s] = new Nonterminal(s, typeName));
