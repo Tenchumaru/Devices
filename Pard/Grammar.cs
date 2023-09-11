@@ -12,20 +12,13 @@ namespace Pard {
 		public Grammar(IReadOnlyList<Production> productions, Nonterminal? startingSymbol) {
 			// Create a collection of referenced productions starting with those productions whose left-hand side is the given starting
 			// symbol or the first production's left-hand side if the starting symbol is not given.
-			HashSet<Production> referencedProductions = new(productions.Where(p => p.Lhs == (startingSymbol ?? productions[0].Lhs)));
+			HashSet<Production> referencedProductions = new();
+			CollectReferencedProductions(startingSymbol ?? productions[0].Lhs, productions, referencedProductions);
 
 			// Check for unreferenced productions.
-			int count;
-			do {
-				count = referencedProductions.Count;
-				var q = from n in referencedProductions.SelectMany(p => p.Rhs).OfType<Nonterminal>()
-								join p in productions on n equals p.Lhs
-								select p;
-				referencedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
-			} while (count < referencedProductions.Count && referencedProductions.Count < productions.Count);
 			List<Production> unreferencedProductions = productions.Except(referencedProductions).ToList();
 			if (unreferencedProductions.Any()) {
-				// Issue a warning, if any.
+				// Issue a warning if there are unreferenced productions.
 				Console.Error.WriteLine("warning: {0} unreferenced productions:", unreferencedProductions.Count);
 				foreach (Production unreferencedProduction in unreferencedProductions) {
 					Console.Error.WriteLine(unreferencedProduction);
@@ -81,6 +74,16 @@ namespace Pard {
 							where n != null
 							select new GotoEntry(stateIndex: p.Value, nonterminal: n, targetStateIndex: items[g.Value]);
 			gotos = b.ToList();
+		}
+
+		private static void CollectReferencedProductions(Nonterminal lhs, IEnumerable<Production> productions, HashSet<Production> referencedProductions) {
+			foreach (var production in productions.Where(p => p.Lhs == lhs)) {
+				if (referencedProductions.Add(production)) {
+					foreach (var item in production.Rhs.OfType<Nonterminal>()) {
+						CollectReferencedProductions(item, productions, referencedProductions);
+					}
+				}
+			}
 		}
 
 		private static ActionEntry ResolveConflict(List<ActionEntry> list, IDictionary<int, Production> productions, ref int shiftReduceConflictCount, ref int reduceReduceConflictCount) {
