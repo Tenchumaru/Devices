@@ -168,7 +168,7 @@ namespace Pard {
 			}
 
 			// closure(I), p. 232
-			private Item.Set Closure(Item.Set items) {
+			private Item.Set Closure(Item.Set items, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts) {
 				int count;
 				do {
 					count = items.Count;
@@ -182,7 +182,7 @@ namespace Pard {
 									where i.DotPosition < ip.Rhs.Count
 									let n = ip.Rhs[i.DotPosition] as Nonterminal
 									where n != null
-									let f = First(ip.Rhs.Skip(i.DotPosition + 1).Append(i.Lookahead))
+									let f = firsts[(i.ProductionIndex, i.DotPosition + 1, i.Lookahead)]
 									from p in productionsByNonterminal[n]
 									from b in f
 									select new Item(p.Index, 0, b);
@@ -198,7 +198,7 @@ namespace Pard {
 			}
 
 			// goto(I, X), p. 232
-			private Item.Set Goto(Item.Set items, Symbol symbol) {
+			private Item.Set Goto(Item.Set items, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts, Symbol symbol) {
 				// let J be the set of items [A → αX∙β, a] such that
 				// [A → α∙Xβ, a] is in I;
 				var q = from i in items.AsEnumerable()
@@ -208,7 +208,7 @@ namespace Pard {
 								select new Item(i.ProductionIndex, d + 1, i.Lookahead);
 
 				// return closure(J)
-				return Closure(new Item.Set(q));
+				return Closure(new Item.Set(q), firsts);
 			}
 
 			// items(G'), p. 232
@@ -216,8 +216,16 @@ namespace Pard {
 				// Create a collection of symbols used in the grammar.
 				HashSet<Symbol> symbols = new(productions.SelectMany(p => p.Value.Rhs));
 
+				// Precompute FIRST of all dot positions and look-aheads for all productions.
+				var q = from i in productions.Keys
+								let p = productions[i]
+								from d in Enumerable.Range(1, p.Rhs.Count)
+								from t in symbols.OfType<Terminal>().Append(Terminal.AugmentedEnd)
+								select ((i, d, t), First(p.Rhs.Skip(d).Append(t)).ToArray());
+				Dictionary<(int i, int d, Terminal t), Terminal[]> firsts = q.ToDictionary((t) => t.Item1, (t) => t.Item2);
+
 				// Create a list to hold the items added to the closure.  Their indicies will be the state indicies.
-				List<Item.Set> items = new() { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) })) };
+				List<Item.Set> items = new() { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) }), firsts) };
 
 				// C := {closure({[S' → ∙S, $]})};
 				HashSet<Item.Set> c = new(new[] { items[0] });
@@ -228,7 +236,7 @@ namespace Pard {
 					Item.Set itemSet = items[i];
 					foreach (Symbol symbol in symbols) {
 						// such that goto(I, X) is not empty and not in C do
-						Item.Set g = Goto(itemSet, symbol);
+						Item.Set g = Goto(itemSet, firsts, symbol);
 						if (g.Any()) {
 							if (!c.Contains(g)) {
 								// add goto(I, X) to C
