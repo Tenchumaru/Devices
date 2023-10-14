@@ -45,8 +45,7 @@
 		private void AddLiteral(char ch) => knownTerminals.Add(Terminal.FormatLiteralName(ch), new Terminal(Terminal.FormatLiteralName(ch), terminalTypeName, terminalAssociativity, precedence, ch));
 
 		private void AddProduction(string ruleName, List<Symbol> rhs, Terminal? terminal) {
-			// Replace code blocks with synthesized non-terminals for rules
-			// using those code blocks.
+			// Replace code blocks with synthesized non-terminals for rules using those code blocks.
 			for (int i = 0, count = rhs.Count - 1; i < count; ++i) {
 				var innerCodeBlock = rhs[i] as CodeBlockSymbol;
 				if (innerCodeBlock != null) {

@@ -216,8 +216,7 @@ namespace Pard {
 				// Create a collection of symbols used in the grammar.
 				HashSet<Symbol> symbols = new(productions.SelectMany(p => p.Value.Rhs));
 
-				// Create a list to hold the items added to the closure.  Their
-				// indicies will be the state indicies.
+				// Create a list to hold the items added to the closure.  Their indicies will be the state indicies.
 				List<Item.Set> items = new() { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) })) };
 
 				// C := {closure({[S' → ∙S, $]})};
@@ -271,10 +270,8 @@ namespace Pard {
 			private static Dictionary<Symbol, HashSet<Terminal>> CollectFirstSets(IEnumerable<Production> productions) {
 				HashSet<Production> expandedProductions = new(productions);
 
-				// Collect all productions with additional productions not in
-				// the grammar synthesized by removing initial non-terminals
-				// from productions where those initial non-terminals are the
-				// left-hand side of a production that derives ε.
+				// Collect all productions with additional productions not in the grammar synthesized by removing initial non-terminals
+				// from productions where those initial non-terminals are the left-hand side of a production that derives ε.
 				int count;
 				do {
 					count = expandedProductions.Count;
@@ -282,45 +279,36 @@ namespace Pard {
 					// Find all ε productions.  Retrieve their left-hand sides.
 					HashSet<Nonterminal> epsilonLhss = new(expandedProductions.Where(p => !p.Rhs.Any()).Select(p => p.Lhs));
 
-					// For each of those, add to the expanded productions a
-					// production synthesized from each production with that
-					// symbol as its first right-hand side symbol by removing
-					// that first right-hand side symbol.
+					// For each of those, add to the expanded productions a production synthesized from each production with that symbol as
+					// its first right-hand side symbol by removing that first right-hand side symbol.
 					var q = from l in epsilonLhss
 									join p in expandedProductions on l equals p.Rhs.FirstOrDefault()
 									select new Production(p.Lhs, p.Rhs.Skip(1), 0);
 					expandedProductions.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
 				} while (count < expandedProductions.Count);
 
-				// Remove from the expanded productions any production whose
-				// initial right-hand side is the left-hand side.  This must
-				// come after the above since it's possible the symbol removal
-				// above reveals an initial right-hand side that matches its
+				// Remove from the expanded productions any production whose initial right-hand side is the left-hand side.  This must come
+				// after the above since it's possible the symbol removal above reveals an initial right-hand side that matches its
 				// left-hand side.
 				expandedProductions.RemoveWhere(p => p.Lhs == p.Rhs.FirstOrDefault());
 
-				// Create a list of non-terminal-terminal pairs to construct
-				// the FIRST sets.  Start with non-terminals that derive ε.
+				// Create a list of non-terminal-terminal pairs to construct the FIRST sets.  Start with non-terminals that derive ε.
 				var pairs = expandedProductions.Where(p => !p.Rhs.Any()).Select(p => new { Nonterminal = p.Lhs, Terminal = Terminal.Epsilon }).ToList();
 
 				// Remove them from the expanded productions.
 				expandedProductions.RemoveWhere(p => !p.Rhs.Any());
 
-				// Add non-terminal-terminal pairs for each terminal that
-				// appears as the initial right-hand side symbol.  I needn't
-				// use other terminals appearing to the right of those since I
-				// already accounted for ε productions above.
+				// Add non-terminal-terminal pairs for each terminal that appears as the initial right-hand side symbol.  I needn't use
+				// other terminals appearing to the right of those since I already accounted for ε productions above.
 				foreach (Terminal terminal in expandedProductions.Select(p => p.Rhs.First()).OfType<Terminal>().Distinct().ToList()) {
 					do {
 						count = expandedProductions.Count;
 
-						// Find all productions that have that terminal as the
-						// first symbol of their right-hand sides.
+						// Find all productions that have that terminal as the first symbol of their right-hand sides.
 						var x = expandedProductions.Where(p => p.Rhs.First() == terminal).Select(p => new { Nonterminal = p.Lhs, Terminal = terminal });
 
-						// Add new productions by substituting that terminal
-						// for the corresponding non-terminal as the first
-						// symbol of their right-hand sides.
+						// Add new productions by substituting that terminal for the corresponding non-terminal as the first symbol of their
+						// right-hand sides.
 						var q = from p in expandedProductions
 										join a in x on p.Rhs.First() equals a.Nonterminal
 										select new Production(p.Lhs, new[] { terminal }, 0);
@@ -330,13 +318,11 @@ namespace Pard {
 					// Update the list of non-terminal-terminal pairs.
 					pairs.AddRange(expandedProductions.Where(p => p.Rhs.First() == terminal).Select(p => new { Nonterminal = p.Lhs, Terminal = terminal }).Distinct());
 
-					// Remove all productions that have that terminal as the
-					// first symbol of their right-hand sides.
+					// Remove all productions that have that terminal as the first symbol of their right-hand sides.
 					expandedProductions.RemoveWhere(p => p.Rhs.First() == terminal);
 				}
 
-				// Create a dictionary of FIRST sets for non-terminals.  The
-				// caller will add those for terminals.
+				// Create a dictionary of FIRST sets for non-terminals.  The caller will add those for terminals.
 				return pairs.GroupBy(a => (Symbol)a.Nonterminal, a => a.Terminal).ToDictionary(g => g.Key, g => new HashSet<Terminal>(g));
 			}
 		}
