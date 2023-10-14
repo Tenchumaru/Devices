@@ -169,16 +169,14 @@ namespace Pard {
 
 			// closure(I), p. 232
 			private Item.Set Closure(IEnumerable<Item> items, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts) {
-				HashSet<Item> set = new(items);
-				int count;
-				do {
-					count = set.Count;
-
+				List<Item> list = new(items);
+				HashSet<Item> set = new(list);
+				for (int index = 0; index < list.Count;) {
 					// for each item [A → α∙Bβ, a] in I,
 					// each production B → γ in G',
 					// and each terminal b in FIRST(βa)
 					// such that [B → ∙γ, b] is not in I do
-					var q = from i in set
+					var q = from i in list.Skip(index)
 									let ip = productions[i.ProductionIndex]
 									where i.DotPosition < ip.Rhs.Count
 									let n = ip.Rhs[i.DotPosition] as Nonterminal
@@ -187,12 +185,16 @@ namespace Pard {
 									from p in productionsByNonterminal[n]
 									from b in f
 									select new Item(p.Index, 0, b);
-
-					// add [B → ∙γ, b] to I;
-					set.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
-
+					HashSet<Item> newSet = new(q);
+					index = list.Count;
+					newSet.ExceptWith(set);
+					if (newSet.Any()) {
+						// add [B → ∙γ, b] to I;
+						set.UnionWith(newSet);
+						list.AddRange(newSet);
+					}
 					// until no more items can be added to I;
-				} while (count < set.Count);
+				}
 
 				// return I
 				return new Item.Set(set);
