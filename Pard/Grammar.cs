@@ -168,16 +168,17 @@ namespace Pard {
 			}
 
 			// closure(I), p. 232
-			private Item.Set Closure(Item.Set items, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts) {
+			private Item.Set Closure(IEnumerable<Item> items, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts) {
+				HashSet<Item> set = new(items);
 				int count;
 				do {
-					count = items.Count;
+					count = set.Count;
 
 					// for each item [A → α∙Bβ, a] in I,
 					// each production B → γ in G',
 					// and each terminal b in FIRST(βa)
 					// such that [B → ∙γ, b] is not in I do
-					var q = from i in items.AsEnumerable()
+					var q = from i in set
 									let ip = productions[i.ProductionIndex]
 									where i.DotPosition < ip.Rhs.Count
 									let n = ip.Rhs[i.DotPosition] as Nonterminal
@@ -188,13 +189,13 @@ namespace Pard {
 									select new Item(p.Index, 0, b);
 
 					// add [B → ∙γ, b] to I;
-					items.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
+					set.UnionWith(q.ToList()); // Use ToList to prevent an iteration exception.
 
 					// until no more items can be added to I;
-				} while (count < items.Count);
+				} while (count < set.Count);
 
 				// return I
-				return items;
+				return new Item.Set(set);
 			}
 
 			// goto(I, X), p. 232
@@ -208,7 +209,7 @@ namespace Pard {
 								select new Item(i.ProductionIndex, d + 1, i.Lookahead);
 
 				// return closure(J)
-				return Closure(new Item.Set(q), firsts);
+				return Closure(q, firsts);
 			}
 
 			// items(G'), p. 232
@@ -225,7 +226,7 @@ namespace Pard {
 				Dictionary<(int i, int d, Terminal t), Terminal[]> firsts = q.ToDictionary((t) => t.Item1, (t) => t.Item2);
 
 				// Create a list to hold the items added to the closure.  Their indicies will be the state indicies.
-				List<Item.Set> items = new() { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) }), firsts) };
+				List<Item.Set> items = new() { Closure(new[] { new Item(-1, 0, Terminal.AugmentedEnd) }, firsts) };
 
 				// C := {closure({[S' → ∙S, $]})};
 				HashSet<Item.Set> c = new(new[] { items[0] });

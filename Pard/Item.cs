@@ -48,7 +48,7 @@ namespace Pard {
 					// Use kernel items (the first item, which has the augmented start symbol, and any item whose dot position is greater
 					// than zero) for the name of this set.
 					var q = from i in set
-									where i.ProductionIndex == 0 || i.DotPosition > 0
+									where i.ProductionIndex < 0 || i.DotPosition > 0
 									select i.name;
 					name = string.Join("; ", q);
 				}
