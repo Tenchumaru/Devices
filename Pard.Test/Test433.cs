@@ -1,5 +1,3 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace Pard.Test {
 	[TestClass]
 	public class Test433 {

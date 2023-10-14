@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Pard.Test {
 	[TestClass]
@@ -34,13 +33,13 @@ namespace Pard.Test {
 	}
 
 	public partial class ParserExpressionx {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public ParserExpressionx(string tokenStream) : this(new ScannerExpression(tokenStream, Symbol)) { }
 	}
 
 	public partial class ParserExpressiony {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public ParserExpressiony(string tokenStream) : this(new ScannerExpression(tokenStream, Symbol)) { }
 	}
@@ -57,13 +56,10 @@ namespace Pard.Test {
 		public override Token Read() {
 			while (index < tokenStream.Length) {
 				var symbol = tokenStream[index++];
-				switch (symbol) {
-					case '[':
-					case ']':
-						return new Token { Symbol = symbol };
-					default:
-						return new Token { Symbol = expressionSymbol };
-				}
+				return symbol switch {
+					'[' or ']' => new Token { Symbol = symbol },
+					_ => new Token { Symbol = expressionSymbol },
+				};
 			}
 			return new Token { Symbol = -1 };
 		}

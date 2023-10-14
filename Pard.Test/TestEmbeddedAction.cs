@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Pard.Test {
 	[TestClass]
@@ -20,13 +19,13 @@ namespace Pard.Test {
 	}
 
 	public partial class ParserEmbeddedActionx {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public ParserEmbeddedActionx(string tokenStream) : this(new Scanner(tokenStream)) { }
 	}
 
 	public partial class ParserEmbeddedActiony {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public ParserEmbeddedActiony(string tokenStream) : this(new Scanner(tokenStream)) { }
 	}

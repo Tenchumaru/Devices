@@ -11,8 +11,7 @@ namespace Pard.Test {
 
 		public virtual Token Read() {
 			while (index < tokenStream.Length) {
-				int value;
-				int symbol = int.TryParse(tokenStream.Substring(index, 1), out value) && id != 0 ? id : tokenStream[index];
+				int symbol = int.TryParse(tokenStream.AsSpan(index, 1), out int value) && id != 0 ? id : tokenStream[index];
 				++index;
 				return new Token { Symbol = symbol, Value = value };
 			}

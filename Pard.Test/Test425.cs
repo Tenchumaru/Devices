@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Pard.Test {
 	[TestClass]
@@ -62,13 +61,13 @@ namespace Pard.Test {
 	}
 
 	public partial class Parser425x {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public Parser425x(string tokenStream) : this(new Scanner425(tokenStream, sub, sup, id)) { }
 	}
 
 	public partial class Parser425y {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public Parser425y(string tokenStream) : this(new Scanner425(tokenStream, sub, sup, id)) { }
 	}
@@ -89,15 +88,12 @@ namespace Pard.Test {
 		public override Token Read() {
 			while (index < tokenStream.Length) {
 				var symbol = tokenStream[index++];
-				switch (symbol) {
-					case 'b':
-						return new Token { Symbol = b };
-					case 'p':
-						return new Token { Symbol = p };
-					case 'i':
-						return new Token { Symbol = i };
-				}
-				return new Token { Symbol = symbol };
+				return symbol switch {
+					'b' => new Token { Symbol = b },
+					'p' => new Token { Symbol = p },
+					'i' => new Token { Symbol = i },
+					_ => new Token { Symbol = symbol },
+				};
 			}
 			return new Token { Symbol = -1 };
 		}

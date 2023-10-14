@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Pard.Test {
 	[TestClass]
@@ -34,13 +33,13 @@ namespace Pard.Test {
 	}
 
 	public partial class ParserEpsilonx {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public ParserEpsilonx(string tokenStream) : this(new Scanner(tokenStream)) { }
 	}
 
 	public partial class ParserEpsilony {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public ParserEpsilony(string tokenStream) : this(new Scanner(tokenStream)) { }
 	}

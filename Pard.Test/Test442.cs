@@ -1,5 +1,4 @@
 using System.Text;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Pard.Test {
 	[TestClass]
@@ -76,13 +75,13 @@ namespace Pard.Test {
 	}
 
 	public partial class Parser442x {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public Parser442x(string tokenStream) : this(new Scanner(tokenStream)) { }
 	}
 
 	public partial class Parser442y {
-		public readonly StringBuilder Result = new StringBuilder();
+		public readonly StringBuilder Result = new();
 
 		public Parser442y(string tokenStream) : this(new Scanner(tokenStream)) { }
 	}
