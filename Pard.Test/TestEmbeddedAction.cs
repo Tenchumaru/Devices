@@ -3,7 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Pard.Test {
 	[TestClass]
-	public class TestEmbeddedActionx {
+	public class TestEmbeddedAction {
 		[TestMethod]
 		public void ParseValidTokenStreamx() {
 			var parser = new ParserEmbeddedActionx("ie");
