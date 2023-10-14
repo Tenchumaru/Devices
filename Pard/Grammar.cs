@@ -218,42 +218,36 @@ namespace Pard {
 
 				// Create a list to hold the items added to the closure.  Their
 				// indicies will be the state indicies.
-				List<Item.Set> items = new();
+				List<Item.Set> items = new() { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) })) };
 
 				// C := {closure({[S' → ∙S, $]})};
-				HashSet<Item.Set> c = new(new[] { Closure(new Item.Set(new[] { new Item(-1, 0, Terminal.AugmentedEnd) })) });
-				items.Add(c.First());
+				HashSet<Item.Set> c = new(new[] { items[0] });
 
 				// repeat
-				int count;
-				do {
-					count = c.Count;
-
-					// for each set of items I in C and each grammar symbol X
-					foreach (Item.Set itemSet in c.ToList()) // Use ToList to prevent an iteration exception.
-					{
-						foreach (Symbol symbol in symbols) {
-							// such that goto(I, X) is not empty and not in C do
-							Item.Set g = Goto(itemSet, symbol);
-							if (g.Any() && !c.Contains(g)) {
+				// for each set of items I in C and each grammar symbol X
+				for (int i = 0; i < items.Count; ++i) {
+					Item.Set itemSet = items[i];
+					foreach (Symbol symbol in symbols) {
+						// such that goto(I, X) is not empty and not in C do
+						Item.Set g = Goto(itemSet, symbol);
+						if (g.Any()) {
+							if (!c.Contains(g)) {
 								// add goto(I, X) to C
 								c.Add(g);
 								items.Add(g);
 							}
 
-							if (g.Any()) {
-								// Add it as a target state of the source state.
-								if (!itemSet.Gotos.ContainsKey(symbol)) {
-									itemSet.Gotos.Add(symbol, g);
-								} else if (itemSet.Gotos[symbol] != g) {
-									Console.Error.WriteLine("warning: goto conflict between {0} -> {1} and {0} -> {2} on {3}",
-											itemSet, itemSet.Gotos[symbol], g, symbol);
-								}
+							// Add it as a target state of the source state.
+							if (!itemSet.Gotos.ContainsKey(symbol)) {
+								itemSet.Gotos.Add(symbol, g);
+							} else if (itemSet.Gotos[symbol] != g) {
+								Console.Error.WriteLine("warning: goto conflict between {0} -> {1} and {0} -> {2} on {3}",
+										itemSet, itemSet.Gotos[symbol], g, symbol);
 							}
 						}
 					}
 					// until no more sets of items can be added to C
-				} while (count < c.Count);
+				}
 
 				return items;
 			}
