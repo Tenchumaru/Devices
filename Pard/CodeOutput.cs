@@ -8,7 +8,7 @@ namespace Pard {
 			"System.Linq",
 		};
 
-		public void Write(IReadOnlyList<Grammar.ActionEntry> actions, IReadOnlyList<ActionCode> codeBlocks, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
+		public void Write(IReadOnlyList<Grammar.ActionEntry> actionEntries, IReadOnlyList<ActionCode> codeBlocks, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
 			// Emit the define directives.
 			foreach (string defineDirective in options.DefineDirectives) {
 				writer.WriteLine("#define " + defineDirective);
@@ -27,9 +27,19 @@ namespace Pard {
 			}
 
 			// Emit the namespace, class name, code blocks, and constructor values.
-			string classDeclaration = options.ClassDeclaration.Trim();
-			string parserClassName = classDeclaration.Split(' ').Last();
-			writer.WriteLine(classDeclaration);
+			if (options.NamespaceName.Any()) {
+				writer.Write("namespace ");
+				writer.Write(options.NamespaceName);
+				writer.Write('{');
+			}
+			var classPairs = options.ClassAccesses.Zip(options.ClassNames);
+			foreach ((string classAccess, string className) in classPairs) {
+				writer.Write(classAccess);
+				writer.Write(" class ");
+				writer.Write(className);
+				writer.Write('{');
+			}
+			writer.WriteLine();
 			EmitSection(skeleton, writer);
 			writer.WriteLine("private {0} scanner;", options.ScannerClassName);
 			EmitSection(skeleton, writer);
@@ -38,15 +48,16 @@ namespace Pard {
 					writer.WriteLine($"#line {codeBlock.LineNumber} \"{options.LineDirectivesFilePath}\"");
 				}
 				writer.WriteLine(codeBlock.Code);
-				writer.WriteLine("#line default");
 			}
+			writer.WriteLine("#line default");
 			writer.WriteLine("#pragma warning disable CS8618");
+			string parserClassName = options.ClassNames.Last();
 			writer.WriteLine("public {0}({1} scanner)", parserClassName, options.ScannerClassName);
 			writer.WriteLine("#pragma warning restore CS8618");
 			EmitSection(skeleton, writer);
 
 			// Map the non-terminal symbols to go-to and reduction table indices.
-			Dictionary<Nonterminal, int> nonTerminalIndices = gotos.Select(e => e.Nonterminal).Distinct().Select((n, i) => new { N = n, I = i }).ToDictionary(a => a.N, a => a.I);
+			Dictionary<Nonterminal, int> nonTerminalIndices = gotos.Select(e => e.Nonterminal).Distinct().Select((n, i) => (n, i)).ToDictionary(a => a.n, a => a.i);
 
 			// Construct the go-to table and replace it in the skeleton.
 			string goTos = ConstructGoTos(gotos, nonTerminalIndices);
@@ -54,33 +65,33 @@ namespace Pard {
 			EmitSection(skeleton, writer);
 
 			// Map the productions to reduction table entries.
-			var reducedProductions = from e in actions
+			var reducedProductions = from e in actionEntries
 															 where e.Action == Grammar.Action.Reduce
 															 select productions[e.Value];
-			Dictionary<Production, int> productionIndices = reducedProductions.Distinct().Select((p, i) => new { P = p, I = i }).ToDictionary(a => a.P, a => a.I);
+			Dictionary<Production, int> productionIndices = reducedProductions.Distinct().Select((p, i) => (p, i)).ToDictionary(a => a.p, a => a.i);
 
 			// Construct the reduction table and replace it in the skeleton.
 			string reductions = ConstructReductions(nonTerminalIndices, productionIndices);
 			writer.WriteLine(reductions);
 			EmitSection(skeleton, writer);
 
-			int rowCount = actions.Max(e => e.StateIndex) + 1;
+			int rowCount = actionEntries.Max(e => e.StateIndex) + 1;
 			var stateRowLists = new List<string>[rowCount];
 			for (int i = 0; i < rowCount; ++i) {
 				stateRowLists[i] = new List<string>();
 			}
 
-			foreach (Grammar.ActionEntry entry in actions) {
+			foreach (Grammar.ActionEntry entry in actionEntries) {
 				Terminal terminal = entry.Terminal;
 				switch (entry.Action) {
 					case Grammar.Action.Accept:
 						stateRowLists[entry.StateIndex].Add("case -1:return true;");
 						break;
 					case Grammar.Action.Reduce:
-						stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto reduce1;", terminal.Value, productionIndices[productions[entry.Value]]));
+						stateRowLists[entry.StateIndex].Add($"case {terminal.Value}:state_={productionIndices[productions[entry.Value]]};goto reduce1;");
 						break;
 					case Grammar.Action.Shift:
-						stateRowLists[entry.StateIndex].Add(string.Format("case {0}:state_={1};goto shift;", terminal.Value, entry.Value));
+						stateRowLists[entry.StateIndex].Add($"case {terminal.Value}:state_={entry.Value};goto shift;");
 						break;
 				}
 			}
@@ -91,14 +102,17 @@ namespace Pard {
 				var inners = from s in stateRowList
 										 let a = s.Split(':')
 										 group a[0] by a[1] into g
-										 select string.Format("{0}:{1}", string.Join(":", g.Distinct().ToArray()), g.Key);
+										 let l = string.Join(":", g.Distinct().ToArray())
+										 select $"{l}:{g.Key}";
 				string joined = string.Join("", inners.ToArray());
 				stateRows.Add(joined);
 			}
 
 			// Collapse outer cases and emit the transitions.
-			var outers = stateRows.Select((s, i) => new { S = s, I = i }).GroupBy(a => a.S).
-				Select(g => string.Format("case {0}:switch(token_.Symbol){{ {1} }}break;", string.Join(":case ", g.Select(a => a.I.ToString()).Distinct().ToArray()), g.Key));
+			var outers = from t in stateRows.Select((s, i) => (s, i))
+									 group t by t.s into g
+									 let c = string.Join(":case ", g.Select(a => a.i).Distinct())
+									 select $"case {c}:switch(token_.Symbol){{ {g.Key} }}break;";
 			writer.WriteLine(string.Join(writer.NewLine, outers.ToArray()));
 			EmitSection(skeleton, writer);
 
@@ -112,8 +126,11 @@ namespace Pard {
 
 			// Emit the actions.
 			int actionIndex = -1;
-			foreach (var pair in productionIndices.Keys.Where(p => p.ActionCode != null).Select(p => new { Production = p, ActionCode = p.ActionCode! })) {
-				writer.WriteLine("case {1}:{0}{2}{0}goto reduce2;", writer.NewLine, --actionIndex, ConstructAction(pair.Production, pair.ActionCode, options.LineDirectivesFilePath));
+			var actions = from p in productionIndices.Keys
+										where p.ActionCode != null
+										select ConstructAction(p, p.ActionCode!, options.LineDirectivesFilePath);
+			foreach (var action in actions) {
+				writer.WriteLine("case {1}:{0}{2}{0}goto reduce2;", writer.NewLine, --actionIndex, action);
 			}
 
 			if (!options.WantsWarnings) {
@@ -127,7 +144,7 @@ namespace Pard {
 			EmitSection(skeleton, writer);
 
 			// Emit any terminal definitions.
-			var terminals = from e in actions
+			var terminals = from e in actionEntries
 											let t = e.Terminal
 											where t.Name[0] != '\'' && t.Name != "(end)"
 											select t;
@@ -140,13 +157,13 @@ namespace Pard {
 			if (options.WantsTokenClass) {
 				writer.WriteLine("public partial class Token { public int Symbol; public object Value; }");
 			}
-			foreach (string _ in classDeclaration.Split('{')) {
+			for (int i = 0; i < options.ClassNames.Length; ++i) {
 				writer.WriteLine('}');
 			}
 		}
 
 		private static string ConstructAction(Production production, ActionCode actionCode, string? lineDirectivesFilePath) {
-			string code = actionCode.Code.Replace("$$.", string.Format("(({0})reductionValue_).", production.Lhs.TypeName));
+			string code = actionCode.Code.Replace("$$.", $"(({production.Lhs.TypeName})reductionValue_).");
 			code = code.Replace("$$", "reductionValue_");
 			string[] parts = code.Split('$');
 
@@ -174,8 +191,8 @@ namespace Pard {
 				}
 				if (part[j] == '$') {
 					parts[i] = typeName != null ?
-						string.Format("(({0})reductionValue_{1})", typeName, part[(j + 1)..]) :
-						"reductionValue_" + part[(j + 1)..];
+						$"(({typeName})reductionValue_{part[(j + 1)..]})" :
+						$"reductionValue_{part[(j + 1)..]}";
 					continue;
 				}
 				StringBuilder sb = new();
@@ -201,13 +218,14 @@ namespace Pard {
 					typeName = "object";
 				}
 				int stackIndex = production.Rhs.Count - symbolIndex;
-				string s = string.Format("(({0})(stack_[stack_.Count - {1}].Value))", typeName, stackIndex);
+				string s = $"(({typeName})(stack_[stack_.Count - {stackIndex}].Value))";
 				parts[i] = s + part[j..];
 			}
 
 			code = string.Join("", parts);
 			if (lineDirectivesFilePath != null) {
-				code = string.Format("#line {1} \"{2}\"{0}{3}{0}#line default{0}", Environment.NewLine, actionCode.LineNumber, lineDirectivesFilePath, code);
+				code = string.Format("#line {1} \"{2}\"{0}{3}{0}#line default{0}",
+					Environment.NewLine, actionCode.LineNumber, lineDirectivesFilePath, code);
 			}
 			return code;
 		}
@@ -225,9 +243,10 @@ namespace Pard {
 				if (production.ActionCode != null) {
 					sb.AppendFormat("new R_({0},{1},{2}),", nonTerminalIndices[production.Lhs], production.Rhs.Count, --actionIndex);
 				} else {
+					string? lhsTypeName = production.Lhs.TypeName;
 					string? rhsTypeName = production.Rhs.Count == 0 ? null : production.Rhs[0].TypeName;
-					if (production.Lhs.TypeName != rhsTypeName) {
-						Console.WriteLine("warning: default action type mismatch; assigning '{0}' from '{1}'", production.Lhs.TypeName, rhsTypeName);
+					if (lhsTypeName != rhsTypeName) {
+						Console.WriteLine("warning: default action type mismatch; assigning '{0}' from '{1}'", lhsTypeName, rhsTypeName);
 					}
 					sb.AppendFormat("new R_({0},{1}),", nonTerminalIndices[production.Lhs], production.Rhs.Count);
 				}
@@ -240,14 +259,14 @@ namespace Pard {
 									let r = g.StateIndex
 									let i = nonTerminalIndices[g.Nonterminal]
 									orderby r, i
-									select new { Row = r, Column = i, Target = g.TargetStateIndex };
+									select (Row: r, Column: i, Target: g.TargetStateIndex);
 			if (!goTos.Any()) {
 				return "";
 			}
 			int goToRowCount = goTos.Max(g => g.Row) + 1;
 			var goToArray = new int[goToRowCount, nonTerminalIndices.Count];
-			foreach (var g in goTos) {
-				goToArray[g.Row, g.Column] = g.Target;
+			foreach (var (Row, Column, Target) in goTos) {
+				goToArray[Row, Column] = Target;
 			}
 			StringBuilder sb = new();
 			for (int i = 0; i < goToRowCount; ++i) {

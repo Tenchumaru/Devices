@@ -1,9 +1,9 @@
-﻿using System.Text.RegularExpressions;
-
-namespace Pard {
+﻿namespace Pard {
 	public class Options {
 		// Command line parameters
-		public readonly string ClassDeclaration;
+		public readonly string NamespaceName;
+		public readonly string[] ClassAccesses;
+		public readonly string[] ClassNames;
 		public readonly string ScannerClassName;
 		public readonly string? OutputFilePath;
 		public readonly string? StateOutputFilePath;
@@ -12,7 +12,6 @@ namespace Pard {
 		public readonly bool WantsWarnings;
 		public readonly IGrammarInput GrammarInput;
 		private readonly string? inputFilePath;
-		private static readonly Regex rx = new(@"\s+");
 
 		// From the input file
 		public readonly List<string> DefineDirectives = new();
@@ -42,12 +41,20 @@ namespace Pard {
 					Usage($"cannot find {directoryPath}");
 				}
 			}
-			ClassDeclaration = rx.Replace(commandLine.ClassDeclaration.Trim(), " ");
-			if (ClassDeclaration.EndsWith("{")) {
-				ClassDeclaration = ClassDeclaration[..^1].TrimEnd();
+			ClassAccesses = commandLine.ClassAccess.Split('.');
+			ClassNames = commandLine.ClassName.Split('.');
+			if (ClassAccesses.Length == 1) {
+				ClassAccesses = ClassNames.Select(_ => ClassAccesses.First()).ToArray();
+			} else if (ClassAccesses.Length != ClassNames.Length) {
+				Usage("unmatched class accesses and class names");
+			}
+			ClassNames.ToList().ForEach((s) => CheckName(s, "class"));
+			NamespaceName = commandLine.Namespace;
+			if (NamespaceName.Any()) {
+				CheckName(NamespaceName, "namespace");
 			}
 			ScannerClassName = commandLine.ScannerClassName;
-			CheckName(ScannerClassName, "scanner class name");
+			CheckName(ScannerClassName, "scanner class");
 			if (commandLine.WantsStates) {
 				if (commandLine.StateOutputFilePath != null) {
 					StateOutputFilePath = commandLine.StateOutputFilePath;
@@ -65,10 +72,10 @@ namespace Pard {
 			}
 			WantsTokenClass = commandLine.WantsTokenClass;
 			WantsWarnings = commandLine.WantsWarnings;
-			string grammarInputType = string.IsNullOrWhiteSpace(commandLine.GrammarInputType) ?
+			string grammarType = string.IsNullOrWhiteSpace(commandLine.GrammarType) ?
 				Path.GetExtension(inputFilePath ?? "").ToLowerInvariant() :
-				(commandLine.GrammarInputType ?? "").ToLowerInvariant();
-			switch (grammarInputType) {
+				(commandLine.GrammarType ?? "").ToLowerInvariant();
+			switch (grammarType) {
 				case ".xml":
 				case "xml":
 					GrammarInput = new XmlInput(this);
@@ -113,20 +120,24 @@ namespace Pard {
 			Environment.Exit(2);
 		}
 
-		[Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  Line
-directives are not available for XML grammars.")]
+		[Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  Line directives are
+not available for XML grammars.  To specify an inner class for the parser, concatenate the class names with a dot.  Do the same for
+the accesses of the classes if they differ.")]
 		class CommandLine {
-			private const string defaultClassDeclaration = "public class Parser";
+			private const string defaultClassAccess = "public";
+			private const string defaultClassName = "Parser";
 			private const string defaultScannerClassName = "Scanner";
 
-			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "grammar-input-type", ShortName = 't', Usage = "the type of the grammar; one of xml and yacc")]
-			public string? GrammarInputType { get; set; }
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "grammar-type", ShortName = 't', Usage = "the type of the grammar; one of xml and yacc")]
+			public string? GrammarType { get; set; }
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "access", ShortName = 'a', Usage = "the access of the parser class (default " + defaultClassAccess + ")")]
+			public string ClassAccess { get; set; } = defaultClassAccess;
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "class", ShortName = 'c', Usage = "the name of the parser class (default " + defaultClassName + ")")]
+			public string ClassName { get; set; } = defaultClassName;
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace to contain the parser class (default no namespace)")]
+			public string Namespace { get; set; } = "";
 
-
-			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "class-declaration", ShortName = 'c', Usage = "the declaration of the parser class (default " + defaultClassDeclaration + ")")]
-			public string ClassDeclaration { get; set; } = defaultClassDeclaration;
-
-			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-class-name", ShortName = 's', Usage = "the name of the scanner class (default " + defaultScannerClassName + ")")]
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-class", ShortName = 's', Usage = "the name of the scanner class (default " + defaultScannerClassName + ")")]
 			public string ScannerClassName { get; set; } = defaultScannerClassName;
 
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "state-output-file", ShortName = 'o', Usage = "the path of the state output file; assumes -v")]
