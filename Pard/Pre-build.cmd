@@ -2,6 +2,8 @@
 SETLOCAL
 
 IF "%~1" == "" EXIT /B 2
+CD /D "%~dp0"
+SET CLASS_DECL=namespace Pard{public partial class YaccInput{public partial class YaccInputParser
 SET CONFIGURATION=%~1
 SET D=bin\%CONFIGURATION%\net6.0
 SET LAD=..\Lad\%D%\Lad.exe
@@ -12,7 +14,6 @@ IF NOT EXIST %D%\Pard.exe (
 ) ELSE (
 	SET PARD=%D%\Pard.exe
 )
-CD /D "%~dp0"
 IF NOT EXIST obj MD obj
 IF EXIST "%LAD%" IF EXIST "%PARD%" (
 	CALL :full
@@ -29,8 +30,7 @@ CALL :doit
 IF ERRORLEVEL 1 EXIT /B %ERRORLEVEL%
 SET I=YaccInputParser.xml
 SET O=YaccInputParser.g.cs
-SET CLASS_DECL="namespace Pard{public partial class YaccInput{public partial class YaccInputParser"
-SET COMMAND="%PARD%" -o obj\%O%.txt --class-declaration=%CLASS_DECL% --scanner-class-name=YaccInputScanner %I% obj\%O%
+SET COMMAND="%PARD%" -o obj\%O%.txt --class-declaration="%CLASS_DECL%" --scanner-class-name=YaccInputScanner %I% obj\%O%
 CALL :doit
 IF NOT ERRORLEVEL 1 IF "%NEEDS_REBUILD%" == "" EXIT /B
 EXIT /B 1
@@ -61,7 +61,7 @@ FOR %%I IN (ReadSectionOne ReadIdentifier ReadSectionTwo ReadCodeBlock) DO (
 	ECHO private YaccInput.Token %%I^(^)=^>default; >> YaccInputScanner.g.cs
 )
 ECHO }} >> YaccInputScanner.g.cs
-ECHO namespace Pard{public partial class YaccInput {public partial class YaccInputParser{ > YaccInputParser.g.cs
+ECHO %CLASS_DECL%{ > YaccInputParser.g.cs
 FOR %%I IN (CodeBlock PCCB POCB PP PDefine PStart PToken, PType PPrec ErrorToken Literal Identifier) DO (
 	ECHO internal const int %%I=0; >> YaccInputParser.g.cs
 )
