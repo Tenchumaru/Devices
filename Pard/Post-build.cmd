@@ -5,6 +5,7 @@ IF "%~1" == "" EXIT /B 2
 SET CONFIGURATION=%~1
 SET D=bin\%CONFIGURATION%\net6.0
 CD /D "%~dp0"
-FOR %%I IN (dll exe pdb) DO COPY /Y %D%\Pard.%%I %D%\Pard-LKG.%%I
+MD %D%\LKG
+COPY /Y %D%\* %D%\LKG
 IF ERRORLEVEL 1 EXIT /B %ERRORLEVEL%
 CALL ..\%~nx0 %*
