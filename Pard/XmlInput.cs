@@ -3,12 +3,11 @@
 namespace Pard {
 	class XmlInput : IGrammarInput {
 		private static readonly List<string> associativityNames = Enum.GetNames(typeof(Grammar.Associativity)).Select(s => s.ToLowerInvariant()).ToList();
-		private Options options;
+		private readonly Options options;
 
 		public XmlInput(Options options) => this.options = options;
-		public Nonterminal? StartingSymbol => null;
 
-		public IReadOnlyList<Production> Read(TextReader reader) {
+		public (Nonterminal, IReadOnlyList<Production>) Read(TextReader reader) {
 			XElement xml = XDocument.Load(reader).Element("grammar") ?? throw new ApplicationException("no grammar in file");
 			var defines = xml.Elements("define").Select(u => (string)(u.Attribute("value") ?? throw new ApplicationException("no value for define")));
 			options.DefineDirectives.AddRange(defines);
@@ -74,7 +73,7 @@ namespace Pard {
 				}
 				productions.Add(production);
 			}
-			return productions;
+			return (productions[0].Lhs, productions);
 		}
 
 		private static Grammar.Associativity GetAssociativity(XElement symbol) {

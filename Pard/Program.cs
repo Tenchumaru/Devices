@@ -7,10 +7,11 @@ namespace Pard {
 		static void Main(string[] args) {
 			// Read the productions from the input.
 			Options options = new(args);
+			Nonterminal startingSymbol;
 			IReadOnlyList<Production>? productions;
 			try {
 				using TextReader reader = options.OpenReader();
-				productions = options.GrammarInput.Read(reader);
+				(startingSymbol, productions) = options.GrammarInput.Read(reader);
 			} catch (ApplicationException ex) {
 				Console.Error.WriteLine(ex.Message);
 				Environment.Exit(1);
@@ -31,7 +32,7 @@ namespace Pard {
 			}
 
 			// Create the grammar from the productions.
-			Grammar grammar = new(productions, options.GrammarInput.StartingSymbol);
+			Grammar grammar = new(productions, startingSymbol);
 
 			// Write the parser.
 			CodeOutput output = new();

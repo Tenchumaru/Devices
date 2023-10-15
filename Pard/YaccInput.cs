@@ -12,7 +12,7 @@
 
 		public YaccInput(Options options) => this.options = options;
 
-		public IReadOnlyList<Production> Read(TextReader reader) {
+		public (Nonterminal, IReadOnlyList<Production>) Read(TextReader reader) {
 			precedence = 0;
 			knownTerminals.Clear();
 			knownNonterminals.Clear();
@@ -21,7 +21,7 @@
 				StartingSymbol = parser.StartingRuleName == null ?
 					productions[0].Lhs :
 					productions.FirstOrDefault(p => p.Lhs.Name == parser.StartingRuleName)?.Lhs ?? throw new ApplicationException("start symbol undefined");
-				return productions;
+				return (StartingSymbol, productions);
 			} else {
 				throw new ApplicationException("syntax error");
 			}

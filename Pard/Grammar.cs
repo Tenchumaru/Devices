@@ -9,11 +9,11 @@ namespace Pard {
 		private readonly IReadOnlyList<GotoEntry> gotos;
 		private readonly IReadOnlyList<Item.Set> states;
 
-		public Grammar(IReadOnlyList<Production> productions, Nonterminal? startingSymbol) {
+		public Grammar(IReadOnlyList<Production> productions, Nonterminal startingSymbol) {
 			// Create a collection of referenced productions starting with those productions whose left-hand side is the given starting
 			// symbol or the first production's left-hand side if the starting symbol is not given.
 			HashSet<Production> referencedProductions = new();
-			CollectReferencedProductions(startingSymbol ?? productions[0].Lhs, productions, referencedProductions);
+			CollectReferencedProductions(startingSymbol, productions, referencedProductions);
 
 			// Check for unreferenced productions.
 			List<Production> unreferencedProductions = productions.Except(referencedProductions).ToList();
