@@ -15,6 +15,7 @@ namespace Pard {
 		private readonly TextReader reader;
 		private int scopeLevel;
 		private int precedence;
+		private int codeBlockLineNumber;
 		private readonly StringBuilder codeBlock = new();
 		private bool isCollecting;
 		private Func<Token?> previousFn;
@@ -31,7 +32,7 @@ namespace Pard {
 			fn = EndParse;
 			string code = reader_!.Consume(int.MaxValue);
 			code += reader.ReadToEnd();
-			return new Token { Symbol = YaccInputParser.CodeBlock, Value = new ActionCode(codeBlock.ToString(), LineNumber) };
+			return new Token { Symbol = YaccInputParser.CodeBlock, Value = new ActionCode(code, LineNumber) };
 		}
 
 		private Token? EndParse() {

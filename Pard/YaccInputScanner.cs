@@ -39,6 +39,7 @@ namespace Pard {
 					previousFn = fn;
 					fn = ReadCodeBlock;
 					codeBlock.Clear();
+					codeBlockLineNumber = LineNumber;
 					scopeLevel = 1;
 					return new Token { Symbol = YaccInputParser.POCB };
 				case @"%\}":
@@ -91,6 +92,7 @@ namespace Pard {
 					previousFn = fn;
 					codeBlock.Clear();
 					codeBlock.Append('{');
+					codeBlockLineNumber = LineNumber;
 					scopeLevel = 1;
 					return ReadCodeBlock();
 				case @"\/\/.*":
@@ -147,7 +149,7 @@ namespace Pard {
 							reader_!.Write("%}");
 						}
 						fn = previousFn;
-						return new Token { Symbol = YaccInputParser.CodeBlock, Value = new ActionCode(codeBlock.ToString(), LineNumber) };
+						return new Token { Symbol = YaccInputParser.CodeBlock, Value = new ActionCode(codeBlock.ToString(), codeBlockLineNumber) };
 					}
 					break;
 				case "[^\"'/{}]+":

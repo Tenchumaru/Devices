@@ -26,13 +26,20 @@ namespace Pard {
 				writer.WriteLine("using {0};", string.Join(";using ", uniqueUsingDirectives));
 			}
 
-			// Emit the namespace, class name, and constructor values.
+			// Emit the namespace, class name, code blocks, and constructor values.
 			string classDeclaration = options.ClassDeclaration.Trim();
 			string parserClassName = classDeclaration.Split(' ').Last();
 			writer.WriteLine(classDeclaration);
 			EmitSection(skeleton, writer);
 			writer.WriteLine("private {0} scanner;", options.ScannerClassName);
 			EmitSection(skeleton, writer);
+			foreach (ActionCode codeBlock in codeBlocks) {
+				if (options.LineDirectivesFilePath != null) {
+					writer.WriteLine($"#line {codeBlock.LineNumber} \"{options.LineDirectivesFilePath}\"");
+				}
+				writer.WriteLine(codeBlock.Code);
+				writer.WriteLine("#line default");
+			}
 			writer.WriteLine("#pragma warning disable CS8618");
 			writer.WriteLine("public {0}({1} scanner)", parserClassName, options.ScannerClassName);
 			writer.WriteLine("#pragma warning restore CS8618");
