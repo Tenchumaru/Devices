@@ -54,7 +54,6 @@ namespace Pard {
 						ReportError("unexpected end of input");
 					}
 					break;
-				// Escape a slash by doubling it since C# does not accept unknown escapes.
 				case @"\/\/.*":
 					// Ignore remarks.
 					break;

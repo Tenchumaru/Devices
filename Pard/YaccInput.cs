@@ -2,6 +2,7 @@
 	public partial class YaccInput : IGrammarInput {
 		public Nonterminal? StartingSymbol { get; private set; }
 		private readonly List<Production> productions = new();
+		private readonly List<ActionCode> codeBlocks = new();
 		private Grammar.Associativity terminalAssociativity;
 		private string? terminalTypeName;
 		private int? precedence;
@@ -12,7 +13,7 @@
 
 		public YaccInput(Options options) => this.options = options;
 
-		public (Nonterminal, IReadOnlyList<Production>) Read(TextReader reader) {
+		public (Nonterminal, IReadOnlyList<Production>, IReadOnlyList<ActionCode>) Read(TextReader reader) {
 			precedence = 0;
 			knownTerminals.Clear();
 			knownNonterminals.Clear();
@@ -21,7 +22,7 @@
 				StartingSymbol = parser.StartingRuleName == null ?
 					productions[0].Lhs :
 					productions.FirstOrDefault(p => p.Lhs.Name == parser.StartingRuleName)?.Lhs ?? throw new ApplicationException("start symbol undefined");
-				return (StartingSymbol, productions);
+				return (StartingSymbol, productions, codeBlocks);
 			} else {
 				throw new ApplicationException("syntax error");
 			}

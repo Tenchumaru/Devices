@@ -2,8 +2,6 @@
 	public partial class YaccInput {
 		public partial class YaccInputParser {
 			public string? StartingRuleName { get; private set; }
-			private readonly List<ActionCode> sectionOneCodeBlocks = new();
-			private ActionCode? sectionThreeCodeBlock;
 			private readonly YaccInput yaccInput;
 
 			public YaccInputParser(YaccInput yaccInput, YaccInputScanner scanner) : this(scanner) => this.yaccInput = yaccInput;

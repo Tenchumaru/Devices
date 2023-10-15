@@ -8,7 +8,7 @@ namespace Pard {
 			"System.Linq",
 		};
 
-		public void Write(IReadOnlyList<Grammar.ActionEntry> actions, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
+		public void Write(IReadOnlyList<Grammar.ActionEntry> actions, IReadOnlyList<ActionCode> codeBlocks, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
 			// Emit the define directives.
 			foreach (string defineDirective in options.DefineDirectives) {
 				writer.WriteLine("#define " + defineDirective);
@@ -22,7 +22,7 @@ namespace Pard {
 
 			// Add unique additional using directives.
 			string[] uniqueUsingDirectives = options.AdditionalUsingDirectives.Except(requiredUsingDirectives).ToArray();
-			if (uniqueUsingDirectives.Length > 0) {
+			if (uniqueUsingDirectives.Any()) {
 				writer.WriteLine("using {0};", string.Join(";using ", uniqueUsingDirectives));
 			}
 
@@ -255,6 +255,6 @@ namespace Pard {
 			return sb.ToString();
 		}
 
-		private static ApplicationException MakeMalformedSubstitutionException(Production production) => new ApplicationException("malformed substitution in " + production);
+		private static ApplicationException MakeMalformedSubstitutionException(Production production) => new("malformed substitution in " + production);
 	}
 }

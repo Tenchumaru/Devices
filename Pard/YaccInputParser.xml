@@ -51,13 +51,13 @@
 		<rule name="sec3"/>
 		<rule name="sec3">
 			<terminal name="CodeBlock"/>
-			<action><![CDATA[sectionThreeCodeBlock = $1;]]></action>
+			<action><![CDATA[yaccInput.codeBlocks.Add($1);]]></action>
 		</rule>
 		<rule name="decl">
 			<terminal name="POCB"/>
 			<terminal name="CodeBlock"/>
 			<terminal name="PCCB"/>
-			<action><![CDATA[sectionOneCodeBlocks.Add($2);]]></action>
+			<action><![CDATA[yaccInput.codeBlocks.Add($2);]]></action>
 		</rule>
 		<rule name="decl">
 			<terminal name="PDefine"/>

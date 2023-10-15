@@ -1,5 +1,5 @@
 ﻿namespace Pard {
-	class ActionCode {
+	public class ActionCode {
 		internal readonly string Code;
 		internal readonly int LineNumber;
 

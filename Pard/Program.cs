@@ -8,10 +8,11 @@ namespace Pard {
 			// Read the productions from the input.
 			Options options = new(args);
 			Nonterminal startingSymbol;
-			IReadOnlyList<Production>? productions;
+			IReadOnlyList<Production> productions;
+			IReadOnlyList<ActionCode> codeBlocks;
 			try {
 				using TextReader reader = options.OpenReader();
-				(startingSymbol, productions) = options.GrammarInput.Read(reader);
+				(startingSymbol, productions, codeBlocks) = options.GrammarInput.Read(reader);
 			} catch (ApplicationException ex) {
 				Console.Error.WriteLine(ex.Message);
 				Environment.Exit(1);
@@ -37,7 +38,7 @@ namespace Pard {
 			// Write the parser.
 			CodeOutput output = new();
 			using (TextWriter writer = options.OutputFilePath != null ? new StreamWriter(options.OutputFilePath, false, Encoding.UTF8) : Console.Out) {
-				output.Write(grammar.Actions, grammar.Gotos, productions, writer, options);
+				output.Write(grammar.Actions, codeBlocks, grammar.Gotos, productions, writer, options);
 			}
 
 			if (options.StateOutputFilePath != null) {
