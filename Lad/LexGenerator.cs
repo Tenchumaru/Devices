@@ -10,13 +10,17 @@ namespace Lad {
 		private readonly int? tabStop;
 		private readonly List<string> defineDirectives;
 		private readonly List<string> additionalUsingDirectives;
-		private readonly string classDeclaration;
+		private readonly string namespaceName;
+		private readonly string[] classAccesses;
+		private readonly string[] classNames;
 
 		public LexGenerator(Options options) : base(options) {
 			tabStop = options.TabStop;
 			defineDirectives = options.DefineDirectives;
 			additionalUsingDirectives = options.AdditionalUsingDirectives;
-			classDeclaration = options.ClassDeclaration;
+			namespaceName = options.NamespaceName;
+			classAccesses = options.ClassAccesses;
+			classNames = options.ClassNames;
 		}
 
 		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
@@ -90,14 +94,26 @@ namespace Lad {
 				writer.WriteLine(directive);
 			}
 			writer.Write(bones[0]);
-			writer.WriteLine($"{classDeclaration}{{");
+			if (namespaceName.Any()) {
+				writer.Write("namespace ");
+				writer.Write(namespaceName);
+				writer.Write('{');
+			}
+			var classPairs = classAccesses.Zip(classNames);
+			foreach ((string classAccess, string className) in classPairs) {
+				writer.Write(classAccess);
+				writer.Write(" class ");
+				writer.Write(className);
+				writer.Write('{');
+			}
+			writer.WriteLine();
 			writer.Write(bones[1]);
 		}
 
 		protected override void WriteFooter(StringWriter writer) {
 			writer.Write(moreCode.ToString());
 			writer.WriteLine(bones[3]);
-			writer.WriteLine(new string('}', classDeclaration.Split('{').Length - 1));
+			writer.WriteLine(new string('}', classNames.Length - 1));
 		}
 
 		private bool MakeNamedExpression(string line, Regex namedExpressionRx) {

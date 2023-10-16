@@ -1,9 +1,9 @@
-﻿using System.Text.RegularExpressions;
-
-namespace Lad {
+﻿namespace Lad {
 	public class Options {
 		// Command line parameters
-		public readonly string ClassDeclaration;
+		public readonly string NamespaceName;
+		public readonly string[] ClassAccesses;
+		public readonly string[] ClassNames;
 		public readonly string? InputFilePath;
 		public readonly string? OutputFilePath;
 		public readonly string? LineDirectivesFilePath;
@@ -14,7 +14,6 @@ namespace Lad {
 		public readonly int? TabStop;
 		public readonly NewLineOption NewLine;
 		public readonly IGenerator Generator;
-		private static readonly Regex rx = new(@"\s+");
 
 		// From the input file
 		public readonly List<string> DefineDirectives = new();
@@ -44,9 +43,17 @@ namespace Lad {
 					Usage($"cannot find {directoryPath}");
 				}
 			}
-			ClassDeclaration = rx.Replace(commandLine.ClassDeclaration.Trim(), " ");
-			if (ClassDeclaration.EndsWith("{")) {
-				ClassDeclaration = ClassDeclaration[..^1].TrimEnd();
+			ClassAccesses = commandLine.ClassAccess.Split('.');
+			ClassNames = commandLine.ClassName.Split('.');
+			if (ClassAccesses.Length == 1) {
+				ClassAccesses = ClassNames.Select(_ => ClassAccesses.First()).ToArray();
+			} else if (ClassAccesses.Length != ClassNames.Length) {
+				Usage("unmatched class accesses and class names");
+			}
+			ClassNames.ToList().ForEach((s) => CheckName(s, "class"));
+			NamespaceName = commandLine.Namespace;
+			if (NamespaceName.Any()) {
+				CheckName(NamespaceName, "namespace");
 			}
 			NewLine = commandLine.NewLine;
 			LineDirectivesFilePath = commandLine.LineDirectivesFilePath;
@@ -85,6 +92,21 @@ namespace Lad {
 			}
 		}
 
+		private static void CheckName(string name, string message) {
+			if (name != null) {
+				message = "invalid " + message;
+				if (name == "") {
+					Usage(message);
+				}
+				if (!char.IsLetter(name[0]) && name[0] != '_') {
+					Usage(message);
+				}
+				if (name.Any(c => !char.IsLetterOrDigit(c) && c != '_' && c != '.')) {
+					Usage(message);
+				}
+			}
+		}
+
 		private static void Usage(string message) {
 			string name = Path.GetFileNameWithoutExtension(Environment.GetCommandLineArgs()[0]);
 			Console.WriteLine("{0}: error: {1}", name, message);
@@ -95,18 +117,23 @@ namespace Lad {
 		[Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  The
 class-declaration option is for lex input only.")]
 		private class CommandLine {
-			private const string defaultClassDeclaration = "public class Scanner";
+			private const string defaultClassAccess = "public";
+			private const string defaultClassName = "Scanner";
 
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "scanner-input-type", ShortName = 't', Usage = "the type of the scanner; one of inline and lex")]
 			public string? ScannerInputType { get; set; }
 
 
-			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "class-declaration", ShortName = 'c', Usage = "the declaration of the parser class (default " + defaultClassDeclaration + ")")]
-			public string ClassDeclaration { get; set; } = defaultClassDeclaration;
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "access", ShortName = 'a', Usage = "the access of the scanner class (default " + defaultClassAccess + ")")]
+			public string ClassAccess { get; set; } = defaultClassAccess;
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "class", ShortName = 'c', Usage = "the name of the scanner class (default " + defaultClassName + ")")]
+			public string ClassName { get; set; } = defaultClassName;
+			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "namespace", ShortName = 'n', Usage = "the namespace to contain the scanner class (default no namespace)")]
+			public string Namespace { get; set; } = "";
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "line-file", ShortName = 'f', Usage = "emit line directives for file")]
 			public string? LineDirectivesFilePath { get; set; }
 
-			[Adrezdi.CommandLine.FlagArgument(LongName = "all-chars", ShortName = 'a', Usage = "'.' includes new line")]
+			[Adrezdi.CommandLine.FlagArgument(LongName = "all-chars", ShortName = 'r', Usage = "'.' includes new line")]
 			public bool DotIncludesNewline { get; set; }
 
 			[Adrezdi.CommandLine.FlagArgument(LongName = "ignore-case", ShortName = 'i', Usage = "ignore case")]
