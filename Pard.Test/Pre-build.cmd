@@ -11,8 +11,8 @@ CALL "%VCVARS%"
 CD /D "%~dp0"
 IF NOT EXIST obj MD obj
 SET MAKEFILE=obj\Pard.Test.make
-find ".xml" "%~dp0Pard.Test.csproj" | find "Content" > obj\xy
-find ".y" "%~dp0Pard.Test.csproj" | find "Content" >> obj\xy
+find ".xml" "%~dp0Pard.Test.csproj" | find "CodeAnalysisDictionary" > obj\xy
+find ".y" "%~dp0Pard.Test.csproj" | find "CodeAnalysisDictionary" >> obj\xy
 TYPE obj\xy | cscript //nologo //E:JScript "%~nx0" %1 > %MAKEFILE%
 nmake -nologo "ConfigurationName=%~1" -f %MAKEFILE% all
 EXIT /B
@@ -41,11 +41,11 @@ function REM() {
 		fout.WriteLine();
 		fout.WriteLine(csFileName + ": " + fileName);
 		fout.WriteLine("\tIF EXIST " + csFileName + " DEL /F /Q " + csFileName);
-		var classDeclaration = '"namespace Pard.Test{public partial class ' + parserName + '"';
 		var commandLine = [
 			exePath,
-			"--parser-class-declaration=" + classDeclaration,
-			"--scanner-class-name=Scanner",
+			"--access=partial",
+			"--class=" + parserName,
+			"--namespace=Pard.Test",
 			fileName,
 			csFileName,
 		];

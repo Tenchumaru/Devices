@@ -1,22 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <!-- Page 250 -->
 <grammar>
-  <rules>
-    <rule name="S">
-      <literal value="i"/>
-      <nonterminal name="S"/>
-      <literal value="e"/>
-      <nonterminal name="S"/>
-      <action><![CDATA[Result.Append("<iSeS>");]]></action>
-    </rule>
-    <rule name="S">
-      <literal value="i"/>
-      <nonterminal name="S"/>
-      <action><![CDATA[Result.Append("<iS>");]]></action>
-    </rule>
-    <rule name="S">
-      <literal value="a"/>
-      <action><![CDATA[Result.Append("<a>");]]></action>
-    </rule>
-  </rules>
+	<symbols>
+		<literal value="e" associativity="right"/>
+	</symbols>
+	<rules>
+		<rule name="S">
+			<literal value="i"/>
+			<nonterminal name="S"/>
+			<literal value="e"/>
+			<nonterminal name="S"/>
+			<action><![CDATA[Result.Append("<iSeS>");]]></action>
+		</rule>
+		<rule name="S">
+			<literal value="i"/>
+			<nonterminal name="S"/>
+			<action><![CDATA[Result.Append("<iS>");]]></action>
+		</rule>
+		<rule name="S">
+			<literal value="a"/>
+			<action><![CDATA[Result.Append("<a>");]]></action>
+		</rule>
+	</rules>
 </grammar>

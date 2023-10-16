@@ -1,5 +1,7 @@
 // Page 250
 
+%right 'e'
+
 %%
 
 S: 'i' S 'e' S { Result.Append("<iSeS>"); } ;
