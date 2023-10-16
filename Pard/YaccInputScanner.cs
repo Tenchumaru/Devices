@@ -12,8 +12,8 @@ namespace Pard {
 		private readonly string hex = "[0-9A-Fa-f]";
 		private readonly string id = "[A-Za-z_][0-9A-Za-z_]*";
 
-		private Token? ReadSectionOne(string tokenValue = "") {
-			switch (tokenValue) {
+		private Token? ReadSectionOne(string? pattern, string tokenValue) {
+			switch (pattern) {
 				case "%define":
 					return new Token { Symbol = YaccInputParser.PDefine };
 				case "%start":
@@ -51,7 +51,7 @@ namespace Pard {
 				case "$/*":
 					// Ignore comments.
 					isCollecting = false;
-					if (!CollectComments()) {
+					if (!CollectComments().HasValue) {
 						ReportError("unexpected end of input");
 					}
 					break;
@@ -69,11 +69,11 @@ namespace Pard {
 					}
 					return Token.End;
 			}
-			throw new NotImplementedException();
+			return null;
 		}
 
-		private Token? ReadSectionTwo(string tokenValue = "") {
-			switch (tokenValue) {
+		private Token? ReadSectionTwo(string? pattern, string tokenValue) {
+			switch (pattern) {
 				case "%%":
 					fn = ReadSectionThree;
 					return new Token { Symbol = YaccInputParser.PP };
@@ -101,7 +101,7 @@ namespace Pard {
 				case "$/*":
 					// Ignore comments.
 					isCollecting = false;
-					if (!CollectComments()) {
+					if (!CollectComments().HasValue) {
 						ReportError("unexpected end of input");
 					}
 					break;
@@ -111,12 +111,11 @@ namespace Pard {
 				default:
 					return new Token { Symbol = tokenValue[0] };
 			}
-			throw new NotImplementedException();
+			return null;
 		}
 
-
-		private Token? ReadCodeBlock(string tokenValue = "") {
-			switch (tokenValue) {
+		private Token? ReadCodeBlock(string? pattern, string tokenValue) {
+			switch (pattern) {
 				case "{str}":
 					codeBlock.Append(tokenValue);
 					break;
@@ -129,7 +128,7 @@ namespace Pard {
 				case "$/*":
 					codeBlock.Append(tokenValue);
 					isCollecting = true;
-					if (!CollectComments()) {
+					if (!CollectComments().HasValue) {
 						ReportError("unexpected end of input");
 					}
 					break;
@@ -157,11 +156,11 @@ namespace Pard {
 					codeBlock.Append(tokenValue);
 					break;
 			}
-			throw new NotImplementedException();
+			return null;
 		}
 
-		private bool CollectComments(string tokenValue = "") {
-			switch (tokenValue) {
+		private bool? CollectComments(string? pattern, string tokenValue) {
+			switch (pattern) {
 				case "$*/":
 					if (isCollecting) {
 						codeBlock.Append(tokenValue);
@@ -174,7 +173,7 @@ namespace Pard {
 					}
 					break;
 			}
-			throw new NotImplementedException();
+			return null;
 		}
 	}
 }

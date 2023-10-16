@@ -6,6 +6,9 @@ This is a solution containing projects that are .NET implementations of lex/flex
 
 The scanner requires a field, `reader`, of type `TextReader`.
 
+The scanner methods must be of the form `ReturnType? MethodName(string? pattern, string tokenValue)`.  They must return `null` if
+they want the invoking method to loop instead of returning a value.
+
 C# and Lad treat `"a\"b"` and `@"a""b"` the same.
 C# and Lad treat `"\a\"\b"` and `@"\a""\b"` differently since Lad always interprets escape sequences.
 	C# sees three and five characters, respectively, while Lad sees three characters in both.

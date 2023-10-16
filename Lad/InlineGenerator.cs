@@ -11,8 +11,14 @@ namespace Lad {
 
 		public InlineGenerator(Options options) : base(options) { }
 
+		protected override void WriteActions(int index, StateMachine stateMachine, StringWriter writer) {
+			writer.WriteLine($"actionMap_[{index}].TryGetValue(longest.Key,out string?pattern);");
+			writer.WriteLine($"var rv={stateMachine.MethodName}(pattern,tokenValue);");
+			writer.WriteLine("if(rv is not null)return rv;");
+		}
+
 		protected override void WriteFooter(StringWriter writer) {
-			writer.Write(bones[3]);
+			writer.Write(bones[2]);
 			writer.WriteLine(new string('}', namespaceNames.Length + classDeclarationText!.Split('{').Length - 1));
 		}
 
@@ -106,6 +112,10 @@ namespace Lad {
 		}
 
 		private StateMachine? ProcessMethod(MethodDeclarationSyntax methodDeclaration) {
+			if (methodDeclaration.ReturnType is not NullableTypeSyntax) {
+				Console.Error.WriteLine("return type must be nullable");
+				return default;
+			}
 			bool foundError = false;
 			Dictionary<Nfa, int> rules = new();
 			List<string> codes = new();
@@ -114,7 +124,8 @@ namespace Lad {
 				Console.Error.WriteLine("cannot find switch statement");
 				return default;
 			}
-			string methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodDeclaration.Identifier}()";
+			string methodName = methodDeclaration.Identifier.ToString();
+			string methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodName}()";
 			Dictionary<string, int> labelTexts = new();
 			int? defaultIndex = null;
 			foreach (var switchSection in firstSwitch.Sections) {
@@ -142,7 +153,7 @@ namespace Lad {
 					}
 				}
 			}
-			return foundError ? default : new StateMachine(methodDeclarationText, rules, codes, defaultIndex);
+			return foundError ? default : new StateMachine(methodDeclarationText, methodName, labelTexts, rules, codes, defaultIndex);
 		}
 	}
 }

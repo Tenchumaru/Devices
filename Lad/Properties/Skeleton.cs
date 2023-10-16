@@ -48,13 +48,7 @@ public int LineNumber{get;private set;}private int nextLineNumber=1;
 		}
 	}
 	private Reader_? reader_;
-	internal Token Read() {{switch (index) {case 0: { // method declaration, state machine, and rule actions $
-					}
-					break;
-			}
-		}
-	}
-	// additional code (section three) $
+	// method declaration, state machine, rule actions, and additional code (section three) $
 #if WANTS_MAIN
 	static void Main(string[] args) {
 		var scanner = new Scanner(Console.In);

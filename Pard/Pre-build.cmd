@@ -54,10 +54,10 @@ EXIT /B
 ECHO namespace Pard{ > YaccInputScanner.g.cs
 ECHO public partial class YaccInputScanner{class Reader{public void Write^(string s^){} >> YaccInputScanner.g.cs
 ECHO public string Consume^(int i^){return "";}}Reader reader_;int LineNumber; >> YaccInputScanner.g.cs
-FOR %%I IN (ReadSectionOne ReadIdentifier ReadSectionTwo ReadCodeBlock) DO (
+FOR %%I IN (ReadSectionOne ReadSectionTwo ReadCodeBlock) DO (
 	ECHO private YaccInput.Token %%I^(^)=^>default; >> YaccInputScanner.g.cs
 )
-ECHO }} >> YaccInputScanner.g.cs
+ECHO private bool? CollectComments^(^)=^>default;}} >> YaccInputScanner.g.cs
 ECHO namespace Pard{public partial class YaccInput{public partial class YaccInputParser{ > YaccInputParser.g.cs
 FOR %%I IN (CodeBlock PCCB POCB PP PDefine PStart PToken, PType PPrec ErrorToken Literal Identifier) DO (
 	ECHO internal const int %%I=0; >> YaccInputParser.g.cs

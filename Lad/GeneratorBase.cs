@@ -3,13 +3,17 @@
 namespace Lad {
 	public abstract class GeneratorBase {
 		protected class StateMachine {
-			public string MethodDeclarationText;
+			public string MethodDeclarationText { get; }
+			public string? MethodName { get; }
+			public Dictionary<int, string>? LabelTexts { get; }
 			public KeyValuePair<Nfa, int>[] Rules { get; }
 			public string[] Codes { get; }
 			public int? DefaultActionIndex { get; }
 
-			public StateMachine(string methodDeclarationText, IEnumerable<KeyValuePair<Nfa, int>> rules, IEnumerable<string> codes, int? defaultActionIndex) {
+			public StateMachine(string methodDeclarationText, string? methodName, Dictionary<string, int>? labelTexts, IEnumerable<KeyValuePair<Nfa, int>> rules, IEnumerable<string> codes, int? defaultActionIndex) {
 				MethodDeclarationText = methodDeclarationText;
+				MethodName = methodName;
+				LabelTexts = labelTexts?.ToDictionary(p => p.Value, p => p.Key);
 				Rules = rules.ToArray();
 				Codes = codes.ToArray();
 				DefaultActionIndex = defaultActionIndex;
@@ -47,32 +51,45 @@ namespace Lad {
 				writer.WriteLine("#define LAD_WANTS_LINE_NUMBERS");
 			}
 			WriteHeader(writer);
-			foreach (var stateMachine in stateMachines) {
+			if (stateMachines.All((s) => s.LabelTexts is not null)) {
+				writer.WriteLine("Dictionary<int,string>[]actionMap_=new Dictionary<int,string>[]{");
+				foreach (var stateMachine in stateMachines) {
+					writer.WriteLine("new(){");
+					foreach (KeyValuePair<int, string> item in stateMachine.LabelTexts!) {
+						writer.WriteLine($"{{{item.Key + 1},{item.Value}}},");
+					}
+					writer.WriteLine("},");
+				}
+				writer.WriteLine("};");
+			}
+			foreach ((StateMachine stateMachine, int index) in stateMachines.Select((s, i) => (s, i))) {
 				WriteStateMachine(stateMachine.MethodDeclarationText, stateMachine.Rules.GroupBy(p => p.Value).Select(CombineNfas), writer);
-				WriteActions(stateMachine, writer);
+				WriteActions(index, stateMachine, writer);
+				writer.WriteLine("break;}}}");
 			}
 			WriteFooter(writer);
 			WriteOutput(writer, outputFilePath);
 			return true;
 		}
 
+		protected abstract void WriteActions(int index, StateMachine stateMachine, StringWriter writer);
 		protected abstract void WriteFooter(StringWriter writer);
 		protected abstract void WriteHeader(StringWriter writer);
 		protected abstract IEnumerable<StateMachine>? ProcessInput(string text);
 
 		private static string MakeIfStatement(string name, KeyValuePair<ConcreteSymbol, DfaState> pair, string defaultState, Func<string, string> makeState, ref bool needsExit) {
-			string expression = pair.Key.MakeExpression("ch_");
+			string expression = pair.Key.MakeExpression("ch");
 			string targetState = makeState(pair.Value.Name);
 			var statement = new StringBuilder("if(").Append(expression).Append("){");
 			if (pair.Value.SaveForAcceptance != 0) {
-				statement.Append("saves_[-").Append(pair.Value.SaveForAcceptance).Append("]=reader_.Position;");
+				statement.Append("saves[-").Append(pair.Value.SaveForAcceptance).Append("]=reader_.Position;");
 			}
 			if (pair.Value.Acceptance != 0) {
-				statement.Append("saves_[").Append(pair.Value.Acceptance).Append("]=reader_.Position;");
+				statement.Append("saves[").Append(pair.Value.Acceptance).Append("]=reader_.Position;");
 			}
 			if (pair.Value.Acceptance == 0 || pair.Value.Transitions.Any()) {
 				if (name != pair.Value.Name) {
-					statement.Append("state_=").Append(targetState).Append(';');
+					statement.Append("state=").Append(targetState).Append(';');
 				}
 				if (pair.Key is BolSymbol) {
 					statement.Append("goto case ").Append(targetState).Append(';');
@@ -100,20 +117,20 @@ namespace Lad {
 				Console.Error.WriteLine(sb.ToString());
 			}
 			writer.WriteLine($"{methodDeclarationText}{{");
-			writer.WriteLine("Dictionary<int,int>saves_=new Dictionary<int,int>();");
+			writer.WriteLine("Dictionary<int,int>saves=new Dictionary<int,int>();");
 			writer.WriteLine("if(reader_==null)reader_=new Reader_(reader);");
 			string startStateName = makeState(startState.Name);
-			writer.WriteLine($"for(var state_={startStateName};;){{");
+			writer.WriteLine($"for(var state={startStateName};;){{");
 			writer.WriteLine("#if LAD_WANTS_LINE_NUMBERS");
 			writer.WriteLine("LineNumber=nextLineNumber;");
 			writer.WriteLine("#endif");
-			writer.WriteLine("int ch_=reader_.Read();");
-			writer.WriteLine("switch(state_){");
+			writer.WriteLine("int ch=reader_.Read();");
+			writer.WriteLine("switch(state){");
 			WriteTransitions(startState, new HashSet<string>(), defaultState, makeState, writer);
 			writer.WriteLine($"case {defaultState}:");
-			writer.WriteLine("var longest_=saves_.Where(p=>p.Key>0).Aggregate(new KeyValuePair<int,int>(int.MaxValue,1),(a,b)=>a.Value<b.Value?b:b.Value<a.Value?a:a.Key<b.Key?a:b);");
-			writer.WriteLine("if(!saves_.TryGetValue(-longest_.Key,out int consumptionValue)||longest_.Value<consumptionValue)consumptionValue=longest_.Value;");
-			writer.WriteLine($"string tokenValue=reader_.Consume(consumptionValue);saves_.Clear();state_={startStateName};");
+			writer.WriteLine("var longest=saves.Where(p=>p.Key>0).Aggregate(new KeyValuePair<int,int>(int.MaxValue,1),(a,b)=>a.Value<b.Value?b:b.Value<a.Value?a:a.Key<b.Key?a:b);");
+			writer.WriteLine("if(!saves.TryGetValue(-longest.Key,out int consumptionValue)||longest.Value<consumptionValue)consumptionValue=longest.Value;");
+			writer.WriteLine($"string tokenValue=reader_.Consume(consumptionValue);saves.Clear();state={startStateName};");
 			writer.Write("if(!tokenValue.Any())return");
 			if (!methodDeclarationText.Contains(" void ")) {
 				writer.Write(" default");
@@ -122,21 +139,6 @@ namespace Lad {
 			writer.WriteLine("#if LAD_WANTS_LINE_NUMBERS");
 			writer.WriteLine(@"nextLineNumber+=tokenValue.Count(c=>c=='\n');");
 			writer.WriteLine("#endif");
-			writer.WriteLine("switch(longest_.Key){");
-		}
-
-		private void WriteActions(StateMachine stateMachine, StringWriter writer) {
-			writer.WriteLine("#pragma warning disable CS0162 // Unreachable code detected");
-			foreach ((string code, int ruleNumber) in stateMachine.Codes.Select((s, i) => (s, i + 1))) {
-				writer.WriteLine($"case {ruleNumber}:");
-				if (ruleNumber == stateMachine.DefaultActionIndex + 1) {
-					writer.WriteLine("default:");
-				}
-				writer.WriteLine(code);
-				writer.WriteLine("break;");
-			}
-			writer.Write(bones[2]);
-			writer.WriteLine("#pragma warning restore CS0162 // Unreachable code detected");
 		}
 
 		private static void WriteOutput(StringWriter writer, string? outputFilePath) {
@@ -159,7 +161,7 @@ namespace Lad {
 			return rv;
 		}
 
-		private void WriteTransitions(DfaState dfa, HashSet<string> hashSet, string defaultState, Func<string, string> makeState, StringWriter writer) {
+		private static void WriteTransitions(DfaState dfa, HashSet<string> hashSet, string defaultState, Func<string, string> makeState, StringWriter writer) {
 			if (!hashSet.Contains(dfa.Name)) {
 				hashSet.Add(dfa.Name);
 				if (dfa.Transitions.Any()) {

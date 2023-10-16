@@ -82,7 +82,31 @@ namespace Lad {
 						break;
 				}
 			}
-			return foundError ? default : new[] { new StateMachine("internal Token? Read()", rules, codes.Select(s => s.ToString()), null) };
+			return foundError ? default : new[] { new StateMachine("internal Token? Read()", null, null, rules, codes.Select(s => s.ToString()), null) };
+		}
+
+		protected override void WriteActions(int index, StateMachine stateMachine, StringWriter writer) {
+			writer.WriteLine("switch(longest.Key){");
+			writer.WriteLine("#pragma warning disable CS0162 // Unreachable code detected");
+			foreach ((string code, int ruleIndex) in stateMachine.Codes.Select((s, i) => (s, i))) {
+				writer.WriteLine($"case {ruleIndex + 1}:");
+				if (ruleIndex == stateMachine.DefaultActionIndex) {
+					writer.WriteLine("default:");
+				}
+				writer.WriteLine(code);
+				writer.WriteLine("break;");
+			}
+			writer.WriteLine("#pragma warning restore CS0162 // Unreachable code detected");
+			writer.WriteLine('}');
+		}
+
+		protected override void WriteFooter(StringWriter writer) {
+			writer.Write(moreCode.ToString());
+			writer.WriteLine(bones[2]);
+			if (namespaceName.Any()) {
+				writer.WriteLine('}');
+			}
+			writer.WriteLine(new string('}', classNames.Length - 1));
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
@@ -108,12 +132,6 @@ namespace Lad {
 			}
 			writer.WriteLine();
 			writer.Write(bones[1]);
-		}
-
-		protected override void WriteFooter(StringWriter writer) {
-			writer.Write(moreCode.ToString());
-			writer.WriteLine(bones[3]);
-			writer.WriteLine(new string('}', classNames.Length - 1));
 		}
 
 		private bool MakeNamedExpression(string line, Regex namedExpressionRx) {
