@@ -2,8 +2,18 @@
 !ERROR No configuration specified
 !ENDIF
 
-all: $(MAKEDIR)\$(Configuration)\step3
+all: $(MAKEDIR)\$(Configuration)\step5
 	@echo Build of configuration $(Configuration) is complete
+
+$(MAKEDIR)\$(Configuration)\step5: $(MAKEDIR)\$(Configuration)\step4
+	REM Build Pard.Test
+	CD ..\Pard.Test && msbuild -noLogo -p:Configuration=$(Configuration) -p:Platform=AnyCPU > NUL || msbuild -noLogo -p:Configuration=$(Configuration) -p:Platform=AnyCPU
+	COPY /Y NUL $(MAKEDIR)\$(Configuration)\step5
+
+$(MAKEDIR)\$(Configuration)\step4: $(MAKEDIR)\$(Configuration)\step3
+	REM Build Lad.Test
+	CD ..\Lad.Test && msbuild -noLogo -p:Configuration=$(Configuration) -p:Platform=AnyCPU > NUL || msbuild -noLogo -p:Configuration=$(Configuration) -p:Platform=AnyCPU
+	COPY /Y NUL $(MAKEDIR)\$(Configuration)\step4
 
 $(MAKEDIR)\$(Configuration)\step3: $(MAKEDIR)\$(Configuration)\step2
 	REM Build full version of Pard

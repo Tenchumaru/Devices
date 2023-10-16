@@ -40,3 +40,14 @@ Allow nullable object nonterminals to have an empty action.  See modification to
 ## Both
 
 I plan to produce only errors, no warnings, converting current warnings into errors.
+
+## Build
+
+The solution requires a specific build order.
+
+1. Build the `Lad` project until it doesn't fail.  This will be no more than three times.
+1. Build the `Pard` project until it doesn't fail.  This will be no more than two times.
+1. Build the solution until it doesn't fail.  This will be no more than two times.  This will build the unit test projects.
+
+Instead of building the projects and the solution, build the `Make` project.  The solution is configured to skip it so you must
+build it explicitly.  It will build all other projects.
