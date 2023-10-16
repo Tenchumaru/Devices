@@ -8,8 +8,6 @@ SET D=bin\%CONFIGURATION%\net6.0
 SET LAD=..\Lad\%D%\Lad.exe
 IF NOT EXIST %D%\Pard.exe (
 	SET PARD=NOT\Pard.exe
-) ELSE IF EXIST %D%\LKG\Pard.exe (
-	SET PARD=%D%\LKG\Pard.exe
 ) ELSE (
 	SET PARD=%D%\Pard.exe
 )
