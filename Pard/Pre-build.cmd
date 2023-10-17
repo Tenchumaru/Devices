@@ -22,7 +22,7 @@ EXIT /B
 :full
 SET I=YaccInputScanner.cs
 SET O=YaccInputScanner.g.cs
-SET COMMAND="%LAD%" --namespace=Pard --access="public partial" --class=YaccInputScanner -p 2 -# %I% obj\%O%
+SET COMMAND="%LAD%" --namespace=Pard --access="public partial" --class=YaccInputScanner -# %I% obj\%O%
 CALL :doit
 IF ERRORLEVEL 1 EXIT /B %ERRORLEVEL%
 SET I=YaccInputParser.xml

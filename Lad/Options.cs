@@ -11,7 +11,6 @@
 		public readonly bool IgnoringCase;
 		public readonly bool IsDebug;
 		public readonly bool WantsLineNumbers;
-		public readonly int? TabStop;
 		public readonly NewLineOption NewLine;
 		public readonly IGenerator Generator;
 
@@ -64,7 +63,6 @@
 			IgnoringCase = commandLine.IgnoringCase;
 			IsDebug = commandLine.IsDebug;
 			WantsLineNumbers = commandLine.WantsLineNumbers;
-			TabStop = commandLine.TabStop;
 			if (commandLine.ScannerInputType is null) {
 				switch (Path.GetExtension(InputFilePath ?? "").ToLowerInvariant()) {
 					case ".cs":
@@ -148,8 +146,6 @@ class-declaration option is for lex input only.")]
 
 			[Adrezdi.CommandLine.FlagArgument(LongName = "line-numbers", ShortName = '#', Usage = "track line numbers in a property")]
 			public bool WantsLineNumbers { get; set; }
-			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "tab-stop", ShortName = 'p', Usage = $"the tab stop to use in the output (default none; use spaces)")]
-			public int? TabStop { get; set; }
 			[Adrezdi.CommandLine.OptionalValueArgument(LongName = "new-line", ShortName = 'w', Usage = $"the line separator (default POSIX on POSIX, Either on Windows)")]
 			public NewLineOption NewLine { get; set; } = OperatingSystem.IsWindows() ? NewLineOption.Either : NewLineOption.POSIX;
 		}

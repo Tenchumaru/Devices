@@ -7,7 +7,6 @@ namespace Lad {
 		private readonly Regex namedExpressionRx = new(@"^([A-Za-z]\w+)\s+(.+)");
 		private readonly StringBuilder sectionOneCode = new();
 		private readonly StringBuilder moreCode = new();
-		private readonly int? tabStop;
 		private readonly List<string> defineDirectives;
 		private readonly List<string> additionalUsingDirectives;
 		private readonly string namespaceName;
@@ -15,7 +14,6 @@ namespace Lad {
 		private readonly string[] classNames;
 
 		public LexGenerator(Options options) : base(options) {
-			tabStop = options.TabStop;
 			defineDirectives = options.DefineDirectives;
 			additionalUsingDirectives = options.AdditionalUsingDirectives;
 			namespaceName = options.NamespaceName;
@@ -220,18 +218,9 @@ namespace Lad {
 					rules[pair.Key] = codesIndex;
 				}
 				rules.Add(nfa, codesIndex);
-				if (tabStop > 0) {
-					string s = new string(' ', index) + line[index..];
-					string ws = s[..^s.TrimStart().Length];
-					ws = string.Join("", ws.Chunk(tabStop.Value).Select(a => a.All(c => c == ' ') ? "\t" : string.Join("", a.SkipWhile(c => c == ' '))));
-					StringBuilder sb = new(ws);
-					sb.AppendLine(s.TrimStart());
-					codes.Add(sb);
-				} else {
-					StringBuilder sb = new(new string(' ', index));
-					sb.AppendLine(line[index..]);
-					codes.Add(sb);
-				}
+				StringBuilder sb = new(new string(';', index));
+				sb.AppendLine(line[index..]);
+				codes.Add(sb);
 			}
 			return null;
 		}

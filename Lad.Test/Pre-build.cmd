@@ -41,7 +41,6 @@ function REM() {
 		fout.WriteLine("\tIF EXIST " + csFileName + " DEL /F /Q " + csFileName);
 		var commandLine = [
 			exePath,
-			"-p 4",
 			"--access=partial",
 			"--class=" + scannerName,
 			"--namespace=Lad.Test",
