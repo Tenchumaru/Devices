@@ -9,14 +9,14 @@ namespace Lad {
 		private readonly StringBuilder moreCode = new();
 		private readonly List<string> defineDirectives;
 		private readonly List<string> additionalUsingDirectives;
-		private readonly string namespaceName;
+		private readonly string[] namespaceNames;
 		private readonly string[] classAccesses;
 		private readonly string[] classNames;
 
 		public LexGenerator(Options options) : base(options) {
 			defineDirectives = options.DefineDirectives;
 			additionalUsingDirectives = options.AdditionalUsingDirectives;
-			namespaceName = options.NamespaceName;
+			namespaceNames = options.NamespaceNames;
 			classAccesses = options.ClassAccesses;
 			classNames = options.ClassNames;
 		}
@@ -101,10 +101,7 @@ namespace Lad {
 		protected override void WriteFooter(StringWriter writer) {
 			writer.Write(moreCode.ToString());
 			writer.WriteLine(bones[2]);
-			if (namespaceName.Any()) {
-				writer.WriteLine('}');
-			}
-			writer.WriteLine(new string('}', classNames.Length - 1));
+			writer.WriteLine(new string('}', namespaceNames.Length + classNames.Length - 1));
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
@@ -116,7 +113,7 @@ namespace Lad {
 				writer.WriteLine(directive);
 			}
 			writer.Write(bones[0]);
-			if (namespaceName.Any()) {
+			foreach (string namespaceName in namespaceNames) {
 				writer.Write("namespace ");
 				writer.Write(namespaceName);
 				writer.Write('{');

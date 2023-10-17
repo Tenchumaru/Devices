@@ -7,7 +7,7 @@ namespace Devices {
 		public string[] ClassNames { get; protected set; }
 		public string? InputFilePath { get; protected set; }
 		public string? LineDirectivesFilePath { get; protected set; }
-		public string NamespaceName { get; protected set; }
+		public string[] NamespaceNames { get; protected set; } = Array.Empty<string>();
 		public string? OutputFilePath { get; protected set; }
 
 		// From the input file
@@ -47,9 +47,9 @@ namespace Devices {
 				Usage(type, "unmatched class accesses and class names");
 			}
 			ClassNames.ToList().ForEach((s) => CheckName(type, s, "class"));
-			NamespaceName = commandLineBase.NamespaceName;
-			if (NamespaceName.Any()) {
-				CheckName(type, NamespaceName, "namespace");
+			if (commandLineBase.NamespaceName.Any()) {
+				NamespaceNames = commandLineBase.NamespaceName.Split('.');
+				NamespaceNames.ToList().ForEach((s) => CheckName(type, s, "namespace"));
 			}
 			if (!commandLineBase.SkippingLineDirectives) {
 				LineDirectivesFilePath = commandLineBase.LineDirectivesFilePath ?? InputFilePath;

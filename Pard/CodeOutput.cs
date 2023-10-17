@@ -27,9 +27,9 @@ namespace Pard {
 			}
 
 			// Emit the namespace, class name, code blocks, and constructor values.
-			if (options.NamespaceName.Any()) {
+			foreach (string namespaceName in options.NamespaceNames) {
 				writer.Write("namespace ");
-				writer.Write(options.NamespaceName);
+				writer.Write(namespaceName);
 				writer.Write('{');
 			}
 			var classPairs = options.ClassAccesses.Zip(options.ClassNames);
@@ -155,9 +155,9 @@ namespace Pard {
 
 			// Emit the token class, if requested.
 			if (options.WantsTokenClass) {
-				writer.WriteLine("public partial class Token { public int Symbol; public object Value; }");
+				writer.WriteLine("public partial class Token { public int Symbol; public object? Value; }");
 			}
-			for (int i = 0; i < options.ClassNames.Length; ++i) {
+			for (int i = 0; i < options.NamespaceNames.Length + options.ClassNames.Length - 1; ++i) {
 				writer.WriteLine('}');
 			}
 		}
