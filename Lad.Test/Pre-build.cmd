@@ -39,11 +39,12 @@ function REM() {
 		fout.WriteLine();
 		fout.WriteLine(csFileName + ": " + fileName);
 		fout.WriteLine("\tIF EXIST " + csFileName + " DEL /F /Q " + csFileName);
-		var classDeclaration = '"namespace Lad.Test{public partial class ' + scannerName + '"'
 		var commandLine = [
 			exePath,
 			"-p 4",
-			"--class-declaration=" + classDeclaration,
+			"--access=partial",
+			"--class=" + scannerName,
+			"--namespace=Lad.Test",
 			fileName,
 			csFileName,
 		];
