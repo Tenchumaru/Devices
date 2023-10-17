@@ -11,7 +11,7 @@ namespace Pard {
 			IReadOnlyList<Production> productions;
 			IReadOnlyList<ActionCode> codeBlocks;
 			try {
-				using TextReader reader = options.OpenReader();
+				using TextReader reader = options.InputFilePath == null ? Console.In : new StreamReader(options.InputFilePath);
 				(startingSymbol, productions, codeBlocks) = options.GrammarInput.Read(reader);
 			} catch (ApplicationException ex) {
 				Console.Error.WriteLine(ex.Message);

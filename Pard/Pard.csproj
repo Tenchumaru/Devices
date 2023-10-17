@@ -25,6 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\OptionsBase.cs" Link="OptionsBase.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Properties\Skeleton.cs" />
   </ItemGroup>
 
