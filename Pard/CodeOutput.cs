@@ -8,7 +8,7 @@ namespace Pard {
 			"System.Linq",
 		};
 
-		public void Write(IReadOnlyList<Grammar.ActionEntry> actionEntries, IReadOnlyList<ActionCode> codeBlocks, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
+		public void Write(IEnumerable<(string, int)> namedTerminals, IReadOnlyList<Grammar.ActionEntry> actionEntries, IReadOnlyList<ActionCode> codeBlocks, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
 			// Emit the define directives.
 			foreach (string defineDirective in options.DefineDirectives) {
 				writer.WriteLine("#define " + defineDirective);
@@ -144,12 +144,8 @@ namespace Pard {
 			EmitSection(skeleton, writer);
 
 			// Emit any terminal definitions.
-			var terminals = from e in actionEntries
-											let t = e.Terminal
-											where t.Name[0] != '\'' && t.Name != "(end)"
-											select t;
-			foreach (Terminal terminal in terminals.Distinct()) {
-				writer.WriteLine("public const int {0}= {1};", terminal.Name, terminal.Value);
+			foreach ((string name, int value) in namedTerminals) {
+				writer.WriteLine("public const int {0}={1};", name, value);
 			}
 			EmitSection(skeleton, writer);
 

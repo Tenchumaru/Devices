@@ -7,7 +7,7 @@ namespace Pard {
 
 		public XmlInput(Options options) => this.options = options;
 
-		public (Nonterminal, IReadOnlyList<Production>, IReadOnlyList<ActionCode>) Read(TextReader reader) {
+		public (Nonterminal, IEnumerable<(string, int)>, IReadOnlyList<Production>, IReadOnlyList<ActionCode>) Read(TextReader reader) {
 			XElement xml = XDocument.Load(reader).Element("grammar") ?? throw new ApplicationException("no grammar in file");
 			var defines = xml.Elements("define").Select(u => (string)(u.Attribute("value") ?? throw new ApplicationException("no value for define")));
 			options.DefineDirectives.AddRange(defines);
@@ -71,7 +71,7 @@ namespace Pard {
 				}
 				productions.Add(production);
 			}
-			return (productions[0].Lhs, productions, Array.Empty<ActionCode>());
+			return (productions[0].Lhs, terminals.Values.Select((t) => (t.Name, t.Value)), productions, Array.Empty<ActionCode>());
 		}
 
 		private static Grammar.Associativity GetAssociativity(XElement symbol) {

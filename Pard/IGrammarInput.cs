@@ -1,5 +1,5 @@
 ﻿namespace Pard {
 	public interface IGrammarInput {
-		(Nonterminal, IReadOnlyList<Production>, IReadOnlyList<ActionCode>) Read(TextReader reader);
+		(Nonterminal, IEnumerable<(string, int)>, IReadOnlyList<Production>, IReadOnlyList<ActionCode>) Read(TextReader reader);
 	}
 }

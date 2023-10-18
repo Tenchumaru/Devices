@@ -8,11 +8,12 @@ namespace Pard {
 			// Read the productions from the input.
 			Options options = new(args);
 			Nonterminal startingSymbol;
+			IEnumerable<(string, int)> terminals;
 			IReadOnlyList<Production> productions;
 			IReadOnlyList<ActionCode> codeBlocks;
 			try {
 				using TextReader reader = options.InputFilePath == null ? Console.In : new StreamReader(options.InputFilePath);
-				(startingSymbol, productions, codeBlocks) = options.GrammarInput.Read(reader);
+				(startingSymbol, terminals, productions, codeBlocks) = options.GrammarInput.Read(reader);
 			} catch (ApplicationException ex) {
 				Console.Error.WriteLine(ex.Message);
 				Environment.Exit(1);
@@ -32,13 +33,21 @@ namespace Pard {
 				Environment.Exit(1);
 			}
 
+			// Collect all non-literal terminals.
+			var u = from p in productions
+							from s in p.Rhs
+							let t = s as Terminal
+							where t != null
+							select (t.Name, t.Value);
+			terminals = terminals.Union(u).Where((p) => p.Item1[0] != '\'');
+
 			// Create the grammar from the productions.
 			Grammar grammar = new(productions, startingSymbol);
 
 			// Write the parser.
 			CodeOutput output = new();
 			using (TextWriter writer = options.OutputFilePath != null ? new StreamWriter(options.OutputFilePath, false, Encoding.UTF8) : Console.Out) {
-				output.Write(grammar.Actions, codeBlocks, grammar.Gotos, productions, writer, options);
+				output.Write(terminals, grammar.Actions, codeBlocks, grammar.Gotos, productions, writer, options);
 			}
 
 			if (options.StateOutputFilePath != null) {
