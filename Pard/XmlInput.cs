@@ -14,8 +14,8 @@ namespace Pard {
 			var usings = xml.Elements("using").Select(u => (string)(u.Attribute("value") ?? throw new ApplicationException("no value for using")));
 			options.AdditionalUsingDirectives.AddRange(usings);
 			List<Production> productions = new();
-			HashSet<Terminal> knownTerminals = new();
-			HashSet<Nonterminal> knownNonterminals = new();
+			Dictionary<string, Terminal> terminals = new();
+			Dictionary<string, Nonterminal> nonterminals = new();
 			var symbols = xml.Elements("symbols").SelectMany(e => e.Elements()).Select((x, i) => new { Element = x, Precedence = i + 1 });
 			foreach (var pair in symbols) {
 				XElement symbol = pair.Element;
@@ -25,26 +25,24 @@ namespace Pard {
 				switch (symbol.Name.LocalName) {
 					case "literal":
 						name = Terminal.FormatLiteralName(value);
-						knownTerminals.Add(new Terminal(name, typeName, GetAssociativity(symbol), pair.Precedence, name[1]));
+						terminals.Add(name, new Terminal(name, typeName, GetAssociativity(symbol), pair.Precedence, name[1]));
 						break;
 					case "terminal":
 						if (name == null) {
 							throw new ApplicationException("no name for terminal");
 						}
-						knownTerminals.Add(new Terminal(name, typeName, GetAssociativity(symbol), pair.Precedence));
+						terminals.Add(name, new Terminal(name, typeName, GetAssociativity(symbol), pair.Precedence));
 						break;
 					case "nonterminal":
 						if (name == null) {
 							throw new ApplicationException("no name for nonterminal");
 						}
-						knownNonterminals.Add(new Nonterminal(name, typeName));
+						nonterminals.Add(name, new Nonterminal(name, typeName));
 						break;
 					default:
 						throw new ApplicationException($"unknown symbol element '{symbol.Name.LocalName}'");
 				}
 			}
-			Dictionary<string, Terminal> terminals = knownTerminals.ToDictionary(t => t.Name);
-			Dictionary<string, Nonterminal> nonterminals = knownNonterminals.ToDictionary(t => t.Name);
 			XElement rules = xml.Element("rules") ?? throw new ApplicationException("no rules in grammar");
 			foreach (XElement rule in rules.Elements("rule")) {
 				var name = (string)(rule.Attribute("name") ?? throw new ApplicationException("no name for rule"));
@@ -54,9 +52,9 @@ namespace Pard {
 								let v = (string?)x.Attribute("value")
 								let n = (string?)x.Attribute("name")
 								let l = x.Name == "literal" ? Terminal.FormatLiteralName(v) : null
-								let s = l != null ? terminals.TryGetValue(l, out Terminal? terminal) ? terminal : new Terminal(l, null, Grammar.Associativity.None, 0, l[1]) :
+								let s = l != null ? terminals.GetOrPutLiteral(l) :
 									x.Name == "nonterminal" ? nonterminals.TryGetValue(n, out nonterminal) ? (Symbol)nonterminal : new Nonterminal(n, null) :
-									x.Name == "terminal" ? terminals.TryGetValue(n, out terminal) ? terminal : new Terminal(n, null, Grammar.Associativity.None, 0) :
+									x.Name == "terminal" ? terminals.GetOrPutNonliteral(n) :
 									throw new ApplicationException($"unknown symbol element '{x.Name}'")
 								select s;
 				List<Symbol> rhs = q.ToList();
@@ -82,6 +80,26 @@ namespace Pard {
 				Enum.Parse<Grammar.Associativity>(associativityString, true) :
 				throw new ApplicationException($"unknown associativity '{associativityString}'");
 			return associativity;
+		}
+	}
+
+	internal static class Extensions {
+		private static Terminal GetOrPut(this Dictionary<string, Terminal> dict, string name, Func<Terminal> fn) {
+			if (dict.TryGetValue(name, out Terminal? terminal)) {
+				return terminal;
+			} else {
+				terminal = fn();
+			}
+			dict.Add(name, terminal);
+			return terminal;
+		}
+
+		internal static Terminal GetOrPutLiteral(this Dictionary<string, Terminal> dict, string name) {
+			return GetOrPut(dict, name, () => new Terminal(name, null, Grammar.Associativity.None, 0, name[1]));
+		}
+
+		internal static Terminal GetOrPutNonliteral(this Dictionary<string, Terminal> dict, string name) {
+			return GetOrPut(dict, name, () => new Terminal(name, null, Grammar.Associativity.None, 0));
 		}
 	}
 }
