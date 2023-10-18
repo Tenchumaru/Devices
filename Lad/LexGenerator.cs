@@ -5,6 +5,7 @@ namespace Lad {
 	public class LexGenerator : GeneratorBase, IGenerator {
 		private readonly Regex continuationRx = new(@"\s*\|");
 		private readonly Regex namedExpressionRx = new(@"^([A-Za-z]\w+)\s+(.+)");
+		private readonly Regex startStateRx = new(@"<([A-Z_a-z][0-9A-Z_a-z]*)>{");
 		private readonly StringBuilder sectionOneCode = new();
 		private readonly StringBuilder moreCode = new();
 		private readonly List<string> defineDirectives;
@@ -12,6 +13,7 @@ namespace Lad {
 		private readonly string[] namespaceNames;
 		private readonly string[] classAccesses;
 		private readonly string[] classNames;
+		private string[] startStateNames = Array.Empty<string>();
 
 		public LexGenerator(Options options) : base(options) {
 			defineDirectives = options.DefineDirectives;
@@ -23,9 +25,11 @@ namespace Lad {
 
 		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
 			string[] lines = text.Split('\n').Select(s => s.TrimEnd()).ToArray();
+			string startState = "INITIAL";
 			bool foundError = false;
 			Dictionary<Nfa, int> rules = new();
 			List<StringBuilder> codes = new();
+			Dictionary<string, (Dictionary<Nfa, int>, List<StringBuilder>)> startStates = new();
 			State state = State.InSectionOne;
 			foreach ((string line, int lineNumber) in lines.Select((l, i) => (l, i + 1))) {
 				switch (state) {
@@ -36,8 +40,8 @@ namespace Lad {
 							state = State.InSectionTwo;
 						} else if (line.StartsWith("%option")) {
 							// There are no options for now.
-						} else if (line == "" || line[0] == '/') {
-							// Ignore.
+						} else if (line == "" || line[0] == '/' || line.StartsWith("%x")) {
+							// Ignore blank lines, comments, remarks, and start state declarations.
 						} else if (char.IsLetter(line[0])) {
 							foundError |= !MakeNamedExpression(line, namedExpressionRx);
 						} else {
@@ -55,6 +59,22 @@ namespace Lad {
 					case State.InSectionTwo:
 						if (line == "") {
 							// Ignore.
+						} else if (line[0] == '<') {
+							// Check for start state.
+							Match match = startStateRx.Match(line);
+							if (match.Success) {
+								startStates[startState] = (rules, codes);
+								rules = new Dictionary<Nfa, int>();
+								codes = new List<StringBuilder>();
+								startState = match.Groups[1].Value;
+							} else {
+								Console.Error.WriteLine($"invalid start state expression in line {lineNumber}");
+								foundError = true;
+							}
+						} else if (line == "}") {
+							startStates[startState] = (rules, codes);
+							startState = "INITIAL";
+							(rules, codes) = startStates[startState];
 						} else if (line[0] == '"') {
 							string? s = StartWithLiteral(line, rules, codes);
 							if (s != null) {
@@ -62,6 +82,10 @@ namespace Lad {
 								foundError = true;
 							}
 						} else if (line == "%%") {
+							if (startState != "INITIAL") {
+								Console.Error.WriteLine($"unclosed start state in line {lineNumber}");
+								foundError = true;
+							}
 							state = State.InSectionThree;
 						} else if (char.IsWhiteSpace(line[0])) {
 							if (codes.Any()) {
@@ -80,7 +104,16 @@ namespace Lad {
 						break;
 				}
 			}
-			return foundError ? default : new[] { new StateMachine("internal Token? Read()", null, null, rules, codes.Select(s => s.ToString()), null) };
+			if (state == State.InSectionTwo && startState != "INITIAL") {
+				Console.Error.WriteLine($"unclosed start state");
+				foundError = true;
+			}
+			startStateNames = startStates.Keys.OrderBy((s) => s != "INITIAL").ToArray();
+			var q = from p in startStates
+							let r = p.Value.Item1
+							let c = p.Value.Item2
+							select new StateMachine($"internal Token? Read{p.Key}()", null, null, r, c.Select(s => s.ToString()), null);
+			return foundError ? default : q.ToArray();
 		}
 
 		protected override void WriteActions(int index, StateMachine stateMachine, StringWriter writer) {
@@ -99,6 +132,22 @@ namespace Lad {
 		}
 
 		protected override void WriteFooter(StringWriter writer) {
+			foreach ((string s, int i) in startStateNames.Select((s, i) => (s, i))) {
+				writer.WriteLine($"private const int {s}={i};");
+			}
+			writer.WriteLine("private int startState_=INITIAL;");
+			writer.WriteLine("public Token? Read(){");
+			writer.WriteLine("switch(startState_){");
+			foreach(string s in startStateNames) {
+				writer.WriteLine($"case {s}:");
+				writer.WriteLine($"return Read{s}();");
+			}
+			writer.WriteLine('}');
+			writer.WriteLine("throw new InvalidOperationException($\"invalid start state {startState_}\");");
+			writer.WriteLine('}');
+			writer.WriteLine("private void BEGIN(int startState){");
+			writer.WriteLine("startState_=startState;");
+			writer.WriteLine('}');
 			writer.Write(moreCode.ToString());
 			writer.WriteLine(bones[2]);
 			writer.WriteLine(new string('}', namespaceNames.Length + classNames.Length - 1));
