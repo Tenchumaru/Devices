@@ -3,17 +3,18 @@ using System.Text.RegularExpressions;
 
 namespace Lad {
 	public class LexGenerator : GeneratorBase, IGenerator {
+		private const string initialStartState = "INITIAL";
 		private readonly Regex continuationRx = new(@"\s*\|");
 		private readonly Regex namedExpressionRx = new(@"^([A-Za-z]\w+)\s+(.+)");
 		private readonly Regex startStateRx = new(@"<([A-Z_a-z][0-9A-Z_a-z]*)>{");
 		private readonly StringBuilder sectionOneCode = new();
 		private readonly StringBuilder moreCode = new();
+		private readonly List<string> startStateNames = new();
 		private readonly List<string> defineDirectives;
 		private readonly List<string> additionalUsingDirectives;
 		private readonly string[] namespaceNames;
 		private readonly string[] classAccesses;
 		private readonly string[] classNames;
-		private string[] startStateNames = Array.Empty<string>();
 
 		public LexGenerator(Options options) : base(options) {
 			defineDirectives = options.DefineDirectives;
@@ -25,7 +26,7 @@ namespace Lad {
 
 		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
 			string[] lines = text.Split('\n').Select(s => s.TrimEnd()).ToArray();
-			string startState = "INITIAL";
+			string startState = initialStartState;
 			bool foundError = false;
 			Dictionary<Nfa, int> rules = new();
 			List<StringBuilder> codes = new();
@@ -73,7 +74,7 @@ namespace Lad {
 							}
 						} else if (line == "}") {
 							startStates[startState] = (rules, codes);
-							startState = "INITIAL";
+							startState = initialStartState;
 							(rules, codes) = startStates[startState];
 						} else if (line[0] == '"') {
 							string? s = StartWithLiteral(line, rules, codes);
@@ -82,7 +83,7 @@ namespace Lad {
 								foundError = true;
 							}
 						} else if (line == "%%") {
-							if (startState != "INITIAL") {
+							if (startState != initialStartState) {
 								Console.Error.WriteLine($"unclosed start state in line {lineNumber}");
 								foundError = true;
 							}
@@ -104,15 +105,19 @@ namespace Lad {
 						break;
 				}
 			}
-			if (state == State.InSectionTwo && startState != "INITIAL") {
+			if (state == State.InSectionTwo && startState != initialStartState) {
 				Console.Error.WriteLine($"unclosed start state");
 				foundError = true;
 			}
-			startStateNames = startStates.Keys.OrderBy((s) => s != "INITIAL").ToArray();
 			var q = from p in startStates
 							let r = p.Value.Item1
 							let c = p.Value.Item2
 							select new StateMachine($"internal Token? Read{p.Key}()", null, null, r, c.Select(s => s.ToString()), null);
+			if (startStates.Any()) {
+				startStateNames.AddRange(startStates.Keys.OrderBy((s) => s != initialStartState));
+			} else {
+				q = new[] { new StateMachine($"internal Token? Read()", null, null, rules, codes.Select(s => s.ToString()), null) };
+			}
 			return foundError ? default : q.ToArray();
 		}
 
@@ -132,22 +137,24 @@ namespace Lad {
 		}
 
 		protected override void WriteFooter(StringWriter writer) {
-			foreach ((string s, int i) in startStateNames.Select((s, i) => (s, i))) {
-				writer.WriteLine($"private const int {s}={i};");
+			if (startStateNames.Any()) {
+				foreach ((string s, int i) in startStateNames.Select((s, i) => (s, i))) {
+					writer.WriteLine($"private const int {s}={i};");
+				}
+				writer.WriteLine($"private int startState_={initialStartState};");
+				writer.WriteLine("public Token? Read(){");
+				writer.WriteLine("switch(startState_){");
+				foreach (string s in startStateNames) {
+					writer.WriteLine($"case {s}:");
+					writer.WriteLine($"return Read{s}();");
+				}
+				writer.WriteLine('}');
+				writer.WriteLine("throw new InvalidOperationException($\"invalid start state {startState_}\");");
+				writer.WriteLine('}');
+				writer.WriteLine("private void BEGIN(int startState){");
+				writer.WriteLine("startState_=startState;");
+				writer.WriteLine('}');
 			}
-			writer.WriteLine("private int startState_=INITIAL;");
-			writer.WriteLine("public Token? Read(){");
-			writer.WriteLine("switch(startState_){");
-			foreach(string s in startStateNames) {
-				writer.WriteLine($"case {s}:");
-				writer.WriteLine($"return Read{s}();");
-			}
-			writer.WriteLine('}');
-			writer.WriteLine("throw new InvalidOperationException($\"invalid start state {startState_}\");");
-			writer.WriteLine('}');
-			writer.WriteLine("private void BEGIN(int startState){");
-			writer.WriteLine("startState_=startState;");
-			writer.WriteLine('}');
 			writer.Write(moreCode.ToString());
 			writer.WriteLine(bones[2]);
 			writer.WriteLine(new string('}', namespaceNames.Length + classNames.Length - 1));
