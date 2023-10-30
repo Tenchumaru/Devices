@@ -30,6 +30,9 @@ namespace Pard {
 					return new Token { Symbol = YaccInputParser.PToken, Value = new KeyValuePair<Associativity, int?>(Associativity.None, ++precedence) };
 				case "%type":
 					return new Token { Symbol = YaccInputParser.PType };
+				case "%{id}":
+					IgnoreUnknown();
+					return new Token { Symbol = YaccInputParser.PUnknown, Value = tokenValue[1..] };
 				case "{id}":
 					return new Token { Symbol = YaccInputParser.Identifier, Value = tokenValue };
 				case "%%":
@@ -68,6 +71,18 @@ namespace Pard {
 						ReportError("unexpected end of input");
 					}
 					return Token.End;
+			}
+			return null;
+		}
+
+		private Token? IgnoreUnknown(string? pattern, string tokenValue) {
+			switch (pattern) {
+				case ".+":
+					// Ignore all characters.
+					break;
+				case @"\N":
+					// The ReadSectionOne method invokes this one and ignores its return value.
+					return new Token();
 			}
 			return null;
 		}

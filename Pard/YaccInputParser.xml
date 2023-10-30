@@ -8,6 +8,7 @@
 	<symbols>
 		<terminal name="PToken" type="TokenPair"/>
 		<terminal name="Identifier" type="string"/>
+		<terminal name="PUnknown" type="string"/>
 		<terminal name="CodeBlock" type="ActionCode"/>
 		<terminal name="Literal" type="char"/>
 		<terminal name="POCB"/>
@@ -81,6 +82,10 @@
 			<nonterminal name="token"/>
 			<nonterminal name="tokens"/>
 			<action><![CDATA[AddTokens($1, $2);]]></action>
+		</rule>
+		<rule name="decl">
+			<terminal name="PUnknown"/>
+			<action><![CDATA[throw new ApplicationException(string.Format("unknown % directive '{0}'", $1));]]></action>
 		</rule>
 		<rule name="identifiers">
 			<nonterminal name="identifiers"/>
