@@ -14,6 +14,8 @@ C# and Lad treat `"\a\"\b"` and `@"\a""\b"` differently since Lad always interpr
 	C# sees three and five characters, respectively, while Lad sees three characters in both.
 Specifying an initial `$` to signal a literal string results in each of those four strings having its own interpretation.
 
+Lad has a special escape, `\N`, that denotes a platform-specific newline.  The `\n` escape is specifically the line feed character.
+
 ### Lad Operator Precedence
 
 Here is the precedence of operations in Lad from highest to lowest.
