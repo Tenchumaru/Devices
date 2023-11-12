@@ -34,7 +34,7 @@ function REM() {
 	for(var i = 0, n = fileNames.length; i < n; ++i) {
 		var fileName = fileNames[i];
 		var parts = fileName.split(".");
-		var scannerName = parts[0] + parts[1].substr(0, 1);
+		var scannerName = parts[0];
 		var csFileName = fileName + ".g.cs";
 		fout.WriteLine();
 		fout.WriteLine(csFileName + ": " + fileName);

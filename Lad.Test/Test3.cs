@@ -1,6 +1,6 @@
 ﻿namespace Lad.Test {
 	[TestClass]
-	public partial class Test3l {
+	public partial class Test3 {
 		private readonly TextReader reader = new StringReader("abbabbaba zxy zxyy zy zyy");
 
 		[TestMethod]

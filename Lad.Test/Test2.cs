@@ -1,6 +1,6 @@
 ﻿namespace Lad.Test {
 	[TestClass]
-	public partial class Test2l {
+	public partial class Test2 {
 		[TestMethod]
 		public void Doit() {
 			// Assemble
