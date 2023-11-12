@@ -16,6 +16,9 @@ Specifying an initial `$` to signal a literal string results in each of those fo
 
 Lad has a special escape, `\N`, that denotes a platform-specific newline.  The `\n` escape is specifically the line feed character.
 
+The `Write` method of the scanner's internal `Reader_` class adds a string to its internal buffer after the recognized token text
+but before any trailing context.
+
 ### Lad Operator Precedence
 
 Here is the precedence of operations in Lad from highest to lowest.

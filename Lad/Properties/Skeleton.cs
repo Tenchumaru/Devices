@@ -35,7 +35,7 @@ return -1;
 }
 
 internal void Write(string s) {
-buffer.Append(s);
+buffer.Insert(index, s);
 }
 
 internal Reader_(IEnumerable<char> reader) {
