@@ -42,15 +42,17 @@
 		}
 
 		[System.Diagnostics.Conditional("DEBUG")]
-		public void Dump(System.Text.StringBuilder sb) {
+		public void Dump(System.Text.StringBuilder sb, bool wantsFullName = false) {
 #if DEBUG
-			Dump(sb, new HashSet<DfaState>());
+			Dictionary<DfaState, (int, bool)> dumpedStates = new();
+			Func<DfaState, string> fn = wantsFullName ? (d) => d.Name : (d) => dumpedStates[d].Item1.ToString();
+			Dump(sb, fn, dumpedStates);
 		}
 
-		public void Dump(System.Text.StringBuilder sb, HashSet<DfaState> dumpedStates) {
-			if (!dumpedStates.Contains(this)) {
-				dumpedStates.Add(this);
-				sb.Append($"{Name}");
+		private void Dump(System.Text.StringBuilder sb, Func<DfaState, string> fn, Dictionary<DfaState, (int, bool)> dumpedStates) {
+			if (dumpedStates.TryAdd(this, (dumpedStates.Count, false)) || !dumpedStates[this].Item2) {
+				dumpedStates[this] = (dumpedStates[this].Item1, true);
+				sb.Append(fn(this));
 				if (Acceptance != 0) {
 					sb.Append($" accepting {Acceptance}");
 				}
@@ -59,10 +61,11 @@
 				}
 				sb.AppendLine(Transitions.Any() ? ":" : ".");
 				foreach (KeyValuePair<ConcreteSymbol, DfaState> transition in Transitions) {
-					sb.AppendLine($"\t{transition.Key} -> {transition.Value.Name}");
+					dumpedStates.TryAdd(transition.Value, (dumpedStates.Count, false));
+					sb.AppendLine($"\t{transition.Key} -> {fn(transition.Value)}");
 				}
 				foreach (KeyValuePair<ConcreteSymbol, DfaState> transition in Transitions) {
-					transition.Value.Dump(sb, dumpedStates);
+					transition.Value.Dump(sb, fn, dumpedStates);
 				}
 			}
 #endif
