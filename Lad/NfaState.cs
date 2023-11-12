@@ -161,9 +161,7 @@ namespace Lad {
 			return new HashSet<NfaState>(q);
 		}
 
-		[Conditional("DEBUG")]
 		public void Dump(StringBuilder sb, HashSet<NfaState> dumpedStates) {
-#if DEBUG
 			if (!dumpedStates.Contains(this)) {
 				dumpedStates.Add(this);
 				sb.AppendLine($"{Number}:");
@@ -174,7 +172,6 @@ namespace Lad {
 					transition.Value.Dump(sb, dumpedStates);
 				}
 			}
-#endif
 		}
 
 #if DEBUG

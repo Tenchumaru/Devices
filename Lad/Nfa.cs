@@ -91,13 +91,11 @@ namespace Lad {
 			return this;
 		}
 
-#if DEBUG
 		public string Dump() {
 			StringBuilder sb = new();
 			initialState.Dump(sb, new HashSet<NfaState>());
 			return sb.ToString();
 		}
-#endif
 
 		public (DfaState startState, Dictionary<string, int> acceptanceValues) MakeDfa() {
 			// Create the DFA starting from this NFA's initial state.

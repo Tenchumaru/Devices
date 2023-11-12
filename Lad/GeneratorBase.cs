@@ -114,7 +114,7 @@ namespace Lad {
 				Console.Error.WriteLine("DFA:");
 				StringBuilder sb = new();
 				startState.Dump(sb);
-				Console.Error.WriteLine(sb.ToString());
+				Console.Error.Write(sb.ToString());
 			}
 			writer.WriteLine($"{methodDeclarationText}{{");
 			writer.WriteLine("Dictionary<int,int>saves=new Dictionary<int,int>();");
@@ -152,12 +152,10 @@ namespace Lad {
 			int acceptanceValue = groups.Key + 1;
 			rv += new Nfa(new AcceptingSymbol(acceptanceValue));
 			rv.SetSavePointValue(acceptanceValue);
-#if DEBUG
 			if (isDebug) {
 				Console.Error.WriteLine($"for acceptance value {acceptanceValue}:");
 				Console.Error.WriteLine(rv.Dump());
 			}
-#endif
 			return rv;
 		}
 

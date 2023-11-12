@@ -41,9 +41,7 @@
 			}
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
 		public void Dump(System.Text.StringBuilder sb, bool wantsFullName = false) {
-#if DEBUG
 			Dictionary<DfaState, (int, bool)> dumpedStates = new();
 			Func<DfaState, string> fn = wantsFullName ? (d) => d.Name : (d) => dumpedStates[d].Item1.ToString();
 			Dump(sb, fn, dumpedStates);
@@ -68,7 +66,6 @@
 					transition.Value.Dump(sb, fn, dumpedStates);
 				}
 			}
-#endif
 		}
 	}
 }
