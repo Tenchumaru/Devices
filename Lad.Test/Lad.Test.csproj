@@ -33,6 +33,13 @@
     </Compile>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Test3.l.g.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Test3.l</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="$(ProjectDir)Pre-build.cmd &quot;$(ConfigurationName)&quot;" />
   </Target>
