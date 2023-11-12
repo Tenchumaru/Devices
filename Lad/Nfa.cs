@@ -111,5 +111,9 @@ namespace Lad {
 		public void SetSavePointValue(int acceptanceValue) => initialState.SetSavePointValue(acceptanceValue, new HashSet<NfaState>());
 
 		public bool CheckForEmpty() => initialState.CanReachOnEpsilon(finalState);
+
+		public void RemoveEpsilonTransitions() {
+			initialState.RemoveEpsilonTransitions();
+		}
 	}
 }

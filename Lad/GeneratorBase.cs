@@ -152,6 +152,7 @@ namespace Lad {
 			int acceptanceValue = groups.Key + 1;
 			rv += new Nfa(new AcceptingSymbol(acceptanceValue));
 			rv.SetSavePointValue(acceptanceValue);
+			rv.RemoveEpsilonTransitions();
 			if (isDebug) {
 				Console.Error.WriteLine($"for acceptance value {acceptanceValue}:");
 				Console.Error.WriteLine(rv.Dump());

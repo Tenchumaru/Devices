@@ -153,9 +153,9 @@ namespace Lad {
 		private static HashSet<NfaState> Move(HashSet<NfaState> value, ConcreteSymbol inputSymbol) {
 #if DEBUG
 			var q = from s in value
-				from t in s.transitions
-				where inputSymbol.IsIn(t.Key)
-				select t.Value;
+							from t in s.transitions
+							where inputSymbol.IsIn(t.Key)
+							select t.Value;
 #else
 			var q = value.SelectMany(s => s.transitions).Where(t => inputSymbol.IsIn(t.Key)).Select(t => t.Value);
 #endif
@@ -227,6 +227,26 @@ namespace Lad {
 				return this == finalState || transitions.Any(p => p.Key is EpsilonSymbol && p.Value.CanReachOnEpsilon(finalState, nfaStates));
 			}
 			return false;
+		}
+
+		public void RemoveEpsilonTransitions() {
+			RemoveEpsilonTransitions(new HashSet<NfaState>());
+		}
+
+		private void RemoveEpsilonTransitions(HashSet<NfaState> nfaStates) {
+			if (!nfaStates.Contains(this)) {
+				nfaStates.Add(this);
+				if (transitions.Any()) {
+					while (transitions.All(t => t.Key is EpsilonSymbol symbol && !symbol.IsSavePoint)) {
+						var newTransitions = new Multimap<Symbol, NfaState>(transitions.SelectMany(t => t.Value.transitions).Where(t => t.Key is not EpsilonSymbol || t.Value != this));
+						transitions.Clear();
+						transitions.AddRange(newTransitions);
+					}
+					foreach (var item in transitions) {
+						item.Value.RemoveEpsilonTransitions(nfaStates);
+					}
+				}
+			}
 		}
 
 		private class EpsilonClosure {
