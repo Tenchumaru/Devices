@@ -89,9 +89,7 @@ namespace Lad {
 					if (nfaState.transitions.Any(p => p.Key is BolSymbol)) {
 						return true;
 					}
-					foreach (NfaState targetState in nfaState.transitions.Where(p => p.Key is EpsilonSymbol).Select(p => p.Value)) {
-						queue.Enqueue(targetState);
-					}
+					queue.EnqueueRange(nfaState.transitions.Where(p => p.Key is EpsilonSymbol).Select(p => p.Value));
 				}
 			}
 			return false;
