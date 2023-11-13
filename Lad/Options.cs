@@ -44,7 +44,9 @@ namespace Lad {
 		}
 
 		[Adrezdi.CommandLine.Usage(Epilog = @"The line-file and no-lines options are incompatible with each other.  The
-class-declaration option is for lex input only.")]
+access, class, and namespace options are for lex input only.  To specify an
+inner class for the scanner, concatenate the class names with a dot.  Do the
+same for the namespaces and, if they differ, the accesses of the classes.")]
 		private class CommandLine : CommandLineBase {
 			private const string defaultClassName = "Scanner";
 

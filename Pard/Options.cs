@@ -3,6 +3,7 @@
 namespace Pard {
 	public class Options : OptionsBase {
 		public IGrammarInput GrammarInput { get; }
+		public List<string> AdditionalUsingDirectives { get; } = new();
 		public List<string> DefineDirectives { get; } = new();
 		public bool WantsTokenClass { get; }
 		public bool WantsWarnings { get; }
