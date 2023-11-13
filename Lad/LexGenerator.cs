@@ -10,15 +10,8 @@ namespace Lad {
 		private readonly StringBuilder sectionOneCode = new();
 		private readonly StringBuilder moreCode = new();
 		private readonly List<string> startStateNames = new();
-		private readonly string[] namespaceNames;
-		private readonly string[] classAccesses;
-		private readonly string[] classNames;
 
-		public LexGenerator(Options options) : base(options) {
-			namespaceNames = options.NamespaceNames;
-			classAccesses = options.ClassAccesses;
-			classNames = options.ClassNames;
-		}
+		public LexGenerator(Options options) : base(options) { }
 
 		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
 			string[] lines = text.Split('\n').Select(s => s.TrimEnd()).ToArray();
@@ -152,27 +145,10 @@ namespace Lad {
 				writer.WriteLine('}');
 			}
 			writer.Write(moreCode.ToString());
-			writer.WriteLine(bones[2]);
-			writer.WriteLine(new string('}', namespaceNames.Length + classNames.Length - 1));
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
 			writer.Write(sectionOneCode.ToString());
-			writer.Write(bones[0]);
-			foreach (string namespaceName in namespaceNames) {
-				writer.Write("namespace ");
-				writer.Write(namespaceName);
-				writer.Write('{');
-			}
-			var classPairs = classAccesses.Zip(classNames);
-			foreach ((string classAccess, string className) in classPairs) {
-				writer.Write(classAccess);
-				writer.Write(" class ");
-				writer.Write(className);
-				writer.Write('{');
-			}
-			writer.WriteLine();
-			writer.Write(bones[1]);
 		}
 
 		private bool MakeNamedExpression(string line, Regex namedExpressionRx) {

@@ -48,5 +48,4 @@ Select(f => f()).TakeWhile(v => v >= 0).Select(v => (char)v).GetEnumerator();
 }
 }
 private Reader_? reader_;
-// method declaration, state machine, rule actions, and additional code (section three) $
-}
+} // method declaration, state machine, rule actions, and additional code (section three) $

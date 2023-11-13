@@ -21,22 +21,27 @@ namespace Lad {
 		}
 
 		protected readonly Dictionary<string, Nfa> namedExpressions = new();
-		protected readonly string[] bones;
 		protected readonly bool isDebug;
 		protected readonly RegularExpressionParser.Parameters parameters;
+		protected string[] classAccesses;
+		protected string[] classNames;
+		protected string[] namespaceNames;
 		private readonly string? inputFilePath;
 		private readonly string? outputFilePath;
+		private readonly string[] bones;
 		private readonly bool wantsLineNumbers;
 
 		protected GeneratorBase(Options options) {
-			// Derivations parse options in their constructors.
 			parameters = new RegularExpressionParser.Parameters(namedExpressions, options.DotIncludesNewline, options.NewLine);
+			namespaceNames = options.NamespaceNames;
+			classAccesses = options.ClassAccesses;
+			classNames = options.ClassNames;
 			inputFilePath = options.InputFilePath;
 			outputFilePath = options.OutputFilePath;
 			wantsLineNumbers = options.WantsLineNumbers;
 			isDebug = options.IsDebug;
 			string skeleton = Properties.Resources.Skeleton;
-			var parts = skeleton.Split('$');
+			string[] parts = skeleton.Split('$');
 			bones = parts.Select(s => s[..(s.LastIndexOf('\n') + 1)]).ToArray();
 		}
 
@@ -50,7 +55,17 @@ namespace Lad {
 			if (wantsLineNumbers) {
 				writer.WriteLine("#define LAD_WANTS_LINE_NUMBERS");
 			}
+			writer.Write(bones[0]);
 			WriteHeader(writer);
+			foreach (string namespaceName in namespaceNames) {
+				writer.Write($"namespace {namespaceName}{{");
+			}
+			var classPairs = classAccesses.Zip(classNames);
+			foreach ((string classAccess, string className) in classPairs) {
+				writer.Write($"{classAccess} class {className}{{");
+			}
+			writer.WriteLine();
+			writer.Write(bones[1]);
 			if (stateMachines.All((s) => s.LabelTexts is not null)) {
 				writer.WriteLine("Dictionary<int,string>[]actionMap_=new Dictionary<int,string>[]{");
 				foreach (var stateMachine in stateMachines) {
@@ -68,6 +83,7 @@ namespace Lad {
 				writer.WriteLine("break;}}}");
 			}
 			WriteFooter(writer);
+			writer.WriteLine(new string('}', namespaceNames.Length + classNames.Length));
 			WriteOutput(writer, outputFilePath);
 			return true;
 		}

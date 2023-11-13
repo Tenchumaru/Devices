@@ -1,13 +1,13 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Lad {
 	public class InlineGenerator : GeneratorBase, IGenerator {
-		private string? classDeclarationText;
 		private string[] usingDirectives = Array.Empty<string>();
-		private string[] namespaceNames = Array.Empty<string>();
+		private readonly Regex wsRx = new(@"\s", RegexOptions.Compiled);
 
 		public InlineGenerator(Options options) : base(options) { }
 
@@ -17,30 +17,23 @@ namespace Lad {
 			writer.WriteLine("if(rv!=default)return rv;");
 		}
 
-		protected override void WriteFooter(StringWriter writer) {
-			writer.Write(bones[2]);
-			writer.WriteLine(new string('}', namespaceNames.Length + classDeclarationText!.Split('{').Length - 1));
-		}
+		protected override void WriteFooter(StringWriter writer) { }
 
 		protected override void WriteHeader(StringWriter writer) {
 			foreach (string usingDirective in usingDirectives) {
 				writer.WriteLine(usingDirective);
 			}
-			writer.Write(bones[0]);
-			foreach (string namespaceName in namespaceNames) {
-				writer.WriteLine($"namespace {namespaceName}{{");
-			}
-			writer.Write($"{classDeclarationText}{{");
-			writer.Write(bones[1]);
 		}
 
 		protected override IEnumerable<StateMachine>? ProcessInput(string text) {
-			Dictionary<Nfa, int> rules = new();
-			List<string> codes = new();
 			CompilationUnitSyntax root = CSharpSyntaxTree.ParseText(text).GetCompilationUnitRoot();
-			var usingDirectives = root.DescendantNodes().OfType<UsingDirectiveSyntax>().ToList();
-			this.usingDirectives = usingDirectives.Select(s => s.ToString()).Where(s => !s.Contains(" System.Linq;") && !s.Contains(" System.Collections.Generic;")).ToArray();
-			var classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+			var q = from u in root.DescendantNodes().OfType<UsingDirectiveSyntax>()
+							let s = u.ToString()
+							let t = wsRx.Replace(s, "")
+							where t != "usingSystem.Linq;" && t != "usingSystem.Collections.Generic;"
+							select s;
+			usingDirectives = q.ToArray();
+			ClassDeclarationSyntax? classDeclaration = root.DescendantNodes().OfType<ClassDeclarationSyntax>().FirstOrDefault();
 			if (classDeclaration == null) {
 				Console.Error.WriteLine("no class in file");
 				return default;
@@ -51,22 +44,22 @@ namespace Lad {
 				Console.Error.WriteLine("no methods in class");
 				return default;
 			}
-			if (!methodDeclarations.Skip(1).All((m) => m.Parent == methodDeclarations.First().Parent)) {
+			classDeclaration = methodDeclarations.First().Parent as ClassDeclarationSyntax;
+			if (classDeclaration == null) {
+				Console.Error.WriteLine("methods are not in a class");
+				return default;
+			}
+			if (!methodDeclarations.Skip(1).All((m) => m.Parent == classDeclaration)) {
 				Console.Error.WriteLine("not all methods are in the same class");
 				return default;
 			}
-			classDeclaration = (ClassDeclarationSyntax)methodDeclarations.First().Parent!;
-			classDeclarationText = $"{classDeclaration.Modifiers} class {classDeclaration.Identifier.Value}";
-			for (var parentClass = classDeclaration.Parent as ClassDeclarationSyntax; parentClass != null; parentClass = parentClass.Parent as ClassDeclarationSyntax) {
-				classDeclarationText = $"{parentClass.Modifiers} class {parentClass.Identifier.Value}{{{classDeclarationText}";
-			}
-			var q = from f in classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>()
+			var r = from f in classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>()
 							from v in f.Declaration.Variables
 							let i = v.Initializer
 							where i is not null
 							select (v.Identifier.ToString(), i.Value.ToString());
 			bool foundError = false;
-			foreach ((string name, string rx) in q) {
+			foreach ((string name, string rx) in r) {
 				Nfa? nfa = ParseSyntaxValue(rx, $" named '{name}'");
 				if (nfa is not null) {
 					namedExpressions.Add(name, nfa);
@@ -74,6 +67,13 @@ namespace Lad {
 					foundError = true;
 				}
 			}
+			List<ClassDeclarationSyntax> classDeclarations = new();
+			do {
+				classDeclarations.Insert(0, classDeclaration);
+				classDeclaration = classDeclaration.Parent as ClassDeclarationSyntax;
+			} while (classDeclaration != null);
+			classAccesses = classDeclarations.Select(c => c.Modifiers.ToString()).ToArray();
+			classNames = classDeclarations.Select(c => c.Identifier.Value!.ToString()!).ToArray();
 			StateMachine?[] stateMachines = methodDeclarations.Select(ProcessMethod).ToArray();
 			if (foundError || stateMachines.Any(s => s is null)) {
 				return default;
