@@ -40,6 +40,13 @@
     </Compile>
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Test4.l.g.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Test4.l</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
     <Exec Command="$(ProjectDir)Pre-build.cmd &quot;$(ConfigurationName)&quot;" />
   </Target>

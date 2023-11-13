@@ -108,7 +108,7 @@ namespace Lad {
 	}
 
 	public class AnySymbol : ConcreteSymbol {
-		public override int Order => 3;
+		public override int Order => int.MaxValue;
 		public static readonly AnySymbol Value = new();
 
 		private AnySymbol() { }
@@ -167,6 +167,29 @@ namespace Lad {
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
 		internal override string InternalToString() => "(bol)";
+	}
+
+	public class EofSymbol : ConcreteSymbol {
+		public override int Order => 3;
+		public static readonly EofSymbol Value = new();
+
+		private EofSymbol() { }
+
+		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+			return that as EofSymbol;
+		}
+
+		public override bool IsIn(Symbol that) {
+			return that is EofSymbol;
+		}
+
+		public override string MakeExpression(string name) {
+			return $"{name}==-1";
+		}
+
+		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
+
+		internal override string InternalToString() => "(eof)";
 	}
 
 	public class RangeSymbol : ConcreteSymbol {
