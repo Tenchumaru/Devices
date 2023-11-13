@@ -49,11 +49,4 @@ Select(f => f()).TakeWhile(v => v >= 0).Select(v => (char)v).GetEnumerator();
 }
 private Reader_? reader_;
 // method declaration, state machine, rule actions, and additional code (section three) $
-#if WANTS_MAIN
-static void Main(string[] args) {
-var scanner = new Scanner(Console.In);
-scanner.Read();
-}
-internal class Token { }
-#endif
 }
