@@ -48,7 +48,7 @@ namespace Lad {
 			// p. 118, Fig. 3.25
 			Queue<EpsilonClosure> queue = new();
 			EpsilonClosure startClosure = MakeEpsilonClosure(new[] { this });
-			DfaState startState = new(startClosure.Name, startClosure.SaveForAcceptance);
+			DfaState startState = new(startClosure.Name, 0);
 			startClosure.Dfa = startState;
 			Dictionary<string, DfaState> dfaStates = new() {
 				{ startClosure.Name, startState },
@@ -67,7 +67,7 @@ namespace Lad {
 					HashSet<NfaState> nfaTargets = Move(closure.Nfas, inputSymbol);
 					EpsilonClosure targetClosure = MakeEpsilonClosure(nfaTargets);
 					if (!dfaStates.TryGetValue(targetClosure.Name, out DfaState? dfaState)) {
-						dfaState = new DfaState(targetClosure.Name, targetClosure.SaveForAcceptance);
+						dfaState = new DfaState(targetClosure.Name, inputSymbol.SaveForAcceptance);
 						dfaStates.Add(targetClosure.Name, dfaState);
 						targetClosure.Dfa = dfaState;
 						queue.Enqueue(targetClosure);
@@ -180,31 +180,25 @@ namespace Lad {
 			HashSet<NfaState> closure = new();
 			Queue<NfaState> queue = new(nfaStates);
 			List<int> numbers = new();
-			int saveForAcceptance = 0;
 			while (queue.Any()) {
 				NfaState next = queue.Dequeue();
 				if (closure.Add(next)) {
 					numbers.Add(next.Number);
-					foreach (var epsilonTransition in next.transitions.Where(p => p.Key is EpsilonSymbol).Select(p => new { Key = (EpsilonSymbol)p.Key, p.Value })) {
-						queue.Enqueue(epsilonTransition.Value);
-						if (epsilonTransition.Key.IsSavePoint) {
-							saveForAcceptance = epsilonTransition.Key.SaveForAcceptance;
-						}
-					}
+					queue.EnqueueRange(next.transitions.Where(p => p.Key is EpsilonSymbol).Select(p => p.Value));
 				}
 			}
 			numbers.Sort();
-			return new EpsilonClosure(string.Join(", ", numbers), closure, saveForAcceptance);
+			return new EpsilonClosure(string.Join(", ", numbers), closure);
 		}
 
-		public bool SetSavePointValue(int acceptanceValue, HashSet<NfaState> nfaStates) {
+		public bool SetSavePoint(int acceptanceValue, HashSet<NfaState> nfaStates) {
 			if (nfaStates.Add(this)) {
 				foreach (var pair in transitions) {
-					if (pair.Key is EpsilonSymbol epsilon && epsilon.IsSavePoint) {
-						epsilon.SaveForAcceptance = acceptanceValue;
+					if (pair.Key is ConcreteSymbol symbol && symbol.SaveForAcceptance < 0) {
+						symbol.SaveForAcceptance = acceptanceValue;
 						return true;
 					}
-					if (pair.Value.SetSavePointValue(acceptanceValue, nfaStates)) {
+					if (pair.Value.SetSavePoint(acceptanceValue, nfaStates)) {
 						return true;
 					}
 				}
@@ -230,7 +224,7 @@ namespace Lad {
 		private void RemoveEpsilonTransitions(HashSet<NfaState> nfaStates) {
 			if (nfaStates.Add(this)) {
 				if (transitions.Any()) {
-					while (transitions.All(t => t.Key is EpsilonSymbol symbol && !symbol.IsSavePoint)) {
+					while (transitions.All(t => t.Key is EpsilonSymbol)) {
 						var newTransitions = new Multimap<Symbol, NfaState>(transitions.SelectMany(t => t.Value.transitions).Where(t => t.Key is not EpsilonSymbol || t.Value != this));
 						transitions.Clear();
 						transitions.AddRange(newTransitions);
@@ -242,18 +236,45 @@ namespace Lad {
 			}
 		}
 
+		public void CreateSavePoint() {
+			// Find all concrete symbols reachable from here through epsilon symbols and set them as save points.
+			CreateSavePoint(new HashSet<NfaState>());
+		}
+
+		private void CreateSavePoint(HashSet<NfaState> nfaStates) {
+			if (nfaStates.Add(this)) {
+				foreach (var item in transitions.Where(t => t.Key is EpsilonSymbol).SelectMany(t => t.Value.transitions)) {
+					item.Value.CreateSavePoint(nfaStates);
+				}
+				foreach (var symbol in transitions.Select(t => t.Key).OfType<ConcreteSymbol>()) {
+					// Mark this symbol as a save point.  The SetSavePoint method will set it.
+					symbol.SaveForAcceptance = -1;
+				}
+			}
+		}
+
+		private void CollectAcceptanceValues(HashSet<int> acceptanceValues, HashSet<NfaState> nfaStates) {
+			if (nfaStates.Add(this)) {
+				acceptanceValues.AddRange(transitions.Select(t => t.Key).OfType<ConcreteSymbol>().Select(s => s.SaveForAcceptance).Where(n => n > 0));
+				foreach (var item in transitions.Where(t => t.Key is EpsilonSymbol)) {
+					item.Value.CollectAcceptanceValues(acceptanceValues, nfaStates);
+				}
+				Debug.Assert(!acceptanceValues.Contains(-1));
+			}
+		}
+
 		private class EpsilonClosure {
 			public readonly string Name;
 			public readonly HashSet<NfaState> Nfas;
 			public DfaState? Dfa;
-			public readonly int SaveForAcceptance;
 
-			public EpsilonClosure(string name, HashSet<NfaState> nfas, int saveForAcceptance) {
+			public EpsilonClosure(string name, HashSet<NfaState> nfas) {
 				Name = name;
 				Nfas = nfas;
 				Dfa = null;
-				SaveForAcceptance = saveForAcceptance;
 			}
+
+			public override string ToString() => Name;
 		}
 	}
 }

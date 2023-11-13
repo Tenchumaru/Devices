@@ -15,7 +15,7 @@
 		}
 
 #if DEBUG
-		public override string ToString() => Name;
+		public override string ToString() => SaveForAcceptance == 0 ? Name : $"{Name} (save {SaveForAcceptance})";
 #endif
 
 		/// <summary>
@@ -28,8 +28,8 @@
 		public void MarkAcceptingStates(Dictionary<string, int> dfaCaseValues) {
 			if (!dfaCaseValues.ContainsKey(Name)) {
 				dfaCaseValues.Add(Name, dfaCaseValues.Count + 1);
-				var q = Transitions.Select(p => p.Key).OfType<AcceptingSymbol>();
-				foreach (var acceptingSymbol in q) {
+				AcceptingSymbol[] acceptingSymbols = Transitions.Select(p => p.Key).OfType<AcceptingSymbol>().ToArray();
+				foreach (var acceptingSymbol in acceptingSymbols) {
 					if (Acceptance == 0 || acceptingSymbol.Value < Acceptance) {
 						Acceptance = acceptingSymbol.Value;
 					}
@@ -52,10 +52,7 @@
 				dumpedStates[this] = (dumpedStates[this].Item1, true);
 				sb.Append(fn(this));
 				if (Acceptance != 0) {
-					sb.Append($" accepting {Acceptance}");
-				}
-				if (SaveForAcceptance != 0) {
-					sb.Append($" saving {SaveForAcceptance}");
+					sb.Append($" accept {Acceptance}");
 				}
 				sb.AppendLine(Transitions.Any() ? ":" : ".");
 				foreach (KeyValuePair<ConcreteSymbol, DfaState> transition in Transitions) {

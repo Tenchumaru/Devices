@@ -82,7 +82,7 @@ namespace Lad {
 			string targetState = makeState(pair.Value.Name);
 			var statement = new StringBuilder("if(").Append(expression).Append("){");
 			if (pair.Value.SaveForAcceptance != 0) {
-				statement.Append("saves[-").Append(pair.Value.SaveForAcceptance).Append("]=reader_.Position;");
+				statement.Append("saves[-").Append(pair.Value.SaveForAcceptance).Append("]=reader_.Position-1;");
 			}
 			if (pair.Value.Acceptance != 0) {
 				statement.Append("saves[").Append(pair.Value.Acceptance).Append("]=reader_.Position;");
@@ -113,7 +113,11 @@ namespace Lad {
 			if (isDebug) {
 				Console.Error.WriteLine("DFA:");
 				StringBuilder sb = new();
+#if DEBUG
+				startState.Dump(sb, true);
+#else
 				startState.Dump(sb);
+#endif
 				Console.Error.Write(sb.ToString());
 			}
 			writer.WriteLine($"{methodDeclarationText}{{");
@@ -151,7 +155,7 @@ namespace Lad {
 			var rv = Nfa.Or(groups.Select(p => p.Key).ToArray());
 			int acceptanceValue = groups.Key + 1;
 			rv += new Nfa(new AcceptingSymbol(acceptanceValue));
-			rv.SetSavePointValue(acceptanceValue);
+			rv.SetSavePoint(acceptanceValue);
 			rv.RemoveEpsilonTransitions();
 			if (isDebug) {
 				Console.Error.WriteLine($"for acceptance value {acceptanceValue}:");

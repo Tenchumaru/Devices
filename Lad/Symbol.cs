@@ -22,14 +22,12 @@ namespace Lad {
 	}
 
 	public class EpsilonSymbol : Symbol {
-		public bool IsSavePoint { get; set; }
-		public int SaveForAcceptance { get; set; }
-
-		public override string ToString() => IsSavePoint ? $"(save {SaveForAcceptance})" : "(epsilon)";
+		public override string ToString() => "(epsilon)";
 	}
 
 	public abstract class ConcreteSymbol : Symbol {
 		public virtual int Order => throw new NotImplementedException();
+		public int SaveForAcceptance { get; set; }
 		private static readonly Dictionary<char, char> knownEscapes = new() {
 			{'\a', 'a' },
 			{'\b', 'b' },
@@ -40,13 +38,32 @@ namespace Lad {
 			{'\v', 'v' },
 		};
 
-		public static ConcreteSymbol? operator -(ConcreteSymbol left, ConcreteSymbol right) => left.Difference(right);
+		public static ConcreteSymbol? operator -(ConcreteSymbol left, ConcreteSymbol right) {
+			var rv = left.Difference(right);
+			rv?.UpdateSaveForAcceptance(left, right);
+			return rv;
+		}
 
-		public static ConcreteSymbol? operator &(ConcreteSymbol left, ConcreteSymbol right) => left.Intersect(right);
+		public static ConcreteSymbol? operator &(ConcreteSymbol left, ConcreteSymbol right) {
+			var rv = left.Intersect(right);
+			rv?.UpdateSaveForAcceptance(left, right);
+			return rv;
+		}
 
-		public virtual ConcreteSymbol? Intersect(ConcreteSymbol that) => throw new NotImplementedException();
+		private void UpdateSaveForAcceptance(ConcreteSymbol left, ConcreteSymbol right) {
+			if (left.SaveForAcceptance != 0 && right.SaveForAcceptance != 0) {
+				if (left.SaveForAcceptance != right.SaveForAcceptance) {
+					throw new ApplicationException("differing saves");
+				}
+				SaveForAcceptance = left.SaveForAcceptance;
+			} else {
+				SaveForAcceptance = left.SaveForAcceptance + right.SaveForAcceptance;
+			}
+		}
 
-		public virtual ConcreteSymbol? Difference(ConcreteSymbol that) => throw new NotImplementedException();
+		internal virtual ConcreteSymbol? Intersect(ConcreteSymbol that) => throw new NotImplementedException();
+
+		internal virtual ConcreteSymbol? Difference(ConcreteSymbol that) => throw new NotImplementedException();
 
 		public static string Escape(char ch) {
 			if (ch < ' ') {
@@ -69,8 +86,12 @@ namespace Lad {
 		public static string Escape(int ch) => Escape((char)ch);
 
 		public virtual string MakeExpression(string name) => throw new NotImplementedException();
+		internal virtual string InternalToString() => throw new NotImplementedException();
 
 		public virtual bool IsIn(Symbol that) => false;
+		public override string ToString() {
+			return SaveForAcceptance == 0 ? InternalToString() : $"{InternalToString()} (save {SaveForAcceptance})";
+		}
 	}
 
 	public class AcceptingSymbol : ConcreteSymbol {
@@ -78,12 +99,12 @@ namespace Lad {
 
 		public AcceptingSymbol(int value) => Value = value;
 
-		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			Debug.Assert(Value != (that as AcceptingSymbol)?.Value);
 			return null;
 		}
 
-		public override string ToString() => $"(accept {Value})";
+		internal override string InternalToString() => $"(accept {Value})";
 	}
 
 	public class AnySymbol : ConcreteSymbol {
@@ -94,7 +115,7 @@ namespace Lad {
 
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
-		public override string ToString() => "(any)";
+		internal override string InternalToString() => "(any)";
 
 		public override string MakeExpression(string name) => "true";
 
@@ -108,7 +129,7 @@ namespace Lad {
 			return false;
 		}
 
-		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (this == that) {
 				return this;
 			}
@@ -116,7 +137,7 @@ namespace Lad {
 			return range.Difference(that);
 		}
 
-		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (this == that) {
 				return this;
 			}
@@ -131,7 +152,7 @@ namespace Lad {
 
 		private BolSymbol() { }
 
-		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			return that as BolSymbol;
 		}
 
@@ -145,7 +166,7 @@ namespace Lad {
 
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
-		public override string ToString() => "(bol)";
+		internal override string InternalToString() => "(bol)";
 	}
 
 	public class RangeSymbol : ConcreteSymbol {
@@ -174,7 +195,7 @@ namespace Lad {
 
 		public static RangeSymbol operator ~(RangeSymbol range) => new(range.includedCharacters.Not());
 
-		public override string ToString() {
+		internal override string InternalToString() {
 			if (includedCharacters[0]) {
 				BitArray ba = new(includedCharacters);
 				RangeSymbol complement = new(ba.Not());
@@ -258,7 +279,7 @@ namespace Lad {
 			return false;
 		}
 
-		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return null;
 			} else if (that is RangeSymbol range) {
@@ -280,7 +301,7 @@ namespace Lad {
 			throw new NotImplementedException();
 		}
 
-		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return this;
 			} else if (that is RangeSymbol range) {
@@ -325,9 +346,9 @@ namespace Lad {
 
 		public SimpleSymbol(char ch) => Value = ch;
 
-		public override string ToString() => $"'{Escape(Value)}'";
+		internal override string InternalToString() => $"'{Escape(Value)}'";
 
-		public override string MakeExpression(string name) => $"{name}=={this}";
+		public override string MakeExpression(string name) => $"{name}=={InternalToString()}";
 
 		public override bool IsIn(Symbol that) {
 			if (that == AnySymbol.Value) {
@@ -340,7 +361,7 @@ namespace Lad {
 			return false;
 		}
 
-		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return null;
 			} else if (that is RangeSymbol range) {
@@ -351,7 +372,7 @@ namespace Lad {
 			throw new NotImplementedException();
 		}
 
-		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (that is SimpleSymbol simple) {
 				return Value == simple.Value ? this : null;
 			}

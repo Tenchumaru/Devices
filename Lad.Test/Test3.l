@@ -1,6 +1,6 @@
-// This tests trailing context.
+// This tests trailing context.  See "Lex and Yacc" page 149.
 
 %%
 
-ab/ba		return new Token(tokenValue);
-zx*/yy*		return new Token(tokenValue);
+(a|ab)/ba	return new Token(tokenValue);
+zx*/xy*		return new Token(tokenValue);

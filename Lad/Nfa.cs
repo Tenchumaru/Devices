@@ -23,12 +23,8 @@ namespace Lad {
 		}
 
 		public static Nfa operator /(Nfa left, Nfa right) {
-			Nfa rv = new(left.initialState);
-			right.finalState.AddTarget(rv.finalState);
-			Nfa slash = new(new EpsilonSymbol { IsSavePoint = true });
-			left.finalState.AddTarget(slash.initialState);
-			slash.finalState.AddTarget(right.initialState);
-			return rv;
+			right.initialState.CreateSavePoint();
+			return left + right;
 		}
 
 		public static Nfa operator |(Nfa left, Nfa right) => Or(left, right);
@@ -108,7 +104,7 @@ namespace Lad {
 			return (startState, acceptanceValues);
 		}
 
-		public void SetSavePointValue(int acceptanceValue) => initialState.SetSavePointValue(acceptanceValue, new HashSet<NfaState>());
+		public void SetSavePoint(int acceptanceValue) => initialState.SetSavePoint(acceptanceValue, new HashSet<NfaState>());
 
 		public bool CheckForEmpty() => initialState.CanReachOnEpsilon(finalState);
 
