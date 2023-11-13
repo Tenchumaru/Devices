@@ -12,7 +12,6 @@ namespace Devices {
 
 		// From the input file
 		public List<string> AdditionalUsingDirectives { get; } = new();
-		public List<string> DefineDirectives { get; } = new();
 		protected Adrezdi.CommandLine commandLineParser = new();
 		protected CommandLineBase commandLineBase;
 

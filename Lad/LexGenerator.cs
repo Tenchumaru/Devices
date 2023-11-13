@@ -10,14 +10,12 @@ namespace Lad {
 		private readonly StringBuilder sectionOneCode = new();
 		private readonly StringBuilder moreCode = new();
 		private readonly List<string> startStateNames = new();
-		private readonly List<string> defineDirectives;
 		private readonly List<string> additionalUsingDirectives;
 		private readonly string[] namespaceNames;
 		private readonly string[] classAccesses;
 		private readonly string[] classNames;
 
 		public LexGenerator(Options options) : base(options) {
-			defineDirectives = options.DefineDirectives;
 			additionalUsingDirectives = options.AdditionalUsingDirectives;
 			namespaceNames = options.NamespaceNames;
 			classAccesses = options.ClassAccesses;
@@ -161,9 +159,6 @@ namespace Lad {
 		}
 
 		protected override void WriteHeader(StringWriter writer) {
-			foreach (var directive in defineDirectives) {
-				writer.WriteLine(directive);
-			}
 			writer.Write(sectionOneCode.ToString());
 			foreach (var directive in additionalUsingDirectives) {
 				writer.WriteLine(directive);
