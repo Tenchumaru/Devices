@@ -14,7 +14,7 @@ namespace Lad {
 		protected override void WriteActions(int index, StateMachine stateMachine, StringWriter writer) {
 			writer.WriteLine($"actionMap_[{index}].TryGetValue(longest.Key,out string?pattern);");
 			writer.WriteLine($"var rv={stateMachine.MethodName}(pattern,tokenValue);");
-			writer.WriteLine("if(rv is not null)return rv;");
+			writer.WriteLine("if(rv!=default)return rv;");
 		}
 
 		protected override void WriteFooter(StringWriter writer) {
@@ -112,10 +112,6 @@ namespace Lad {
 		}
 
 		private StateMachine? ProcessMethod(MethodDeclarationSyntax methodDeclaration) {
-			if (methodDeclaration.ReturnType is not NullableTypeSyntax) {
-				Console.Error.WriteLine("return type must be nullable");
-				return default;
-			}
 			bool foundError = false;
 			Dictionary<Nfa, int> rules = new();
 			List<string> codes = new();

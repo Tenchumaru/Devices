@@ -23,6 +23,10 @@ but before any trailing context.
 Lad emits code written in section one in `%{` and `%}` blocks at the beginning of the file.  This is the place for `#define` and
 `using` directives.
 
+The generated scanner uses the return value of the user-provided scanner method to determine whether or not to return that value.
+It will return it if it is not the default (`null` for class types) and loop if it is the default.  This might be problematic for
+integral values since their default is `0`, which might be a valid return value.
+
 ### Lad Operator Precedence
 
 Here is the precedence of operations in Lad from highest to lowest.
