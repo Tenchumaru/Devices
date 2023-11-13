@@ -248,9 +248,8 @@ namespace Pard {
 						// such that goto(I, X) is not empty and not in C do
 						Item.Set g = Goto(itemSet, firsts, symbol, finalItemSets);
 						if (g.Any()) {
-							if (!c.Contains(g)) {
+							if (c.Add(g)) {
 								// add goto(I, X) to C
-								c.Add(g);
 								items.Add(g);
 							}
 

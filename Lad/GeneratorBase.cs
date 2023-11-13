@@ -161,8 +161,7 @@ namespace Lad {
 		}
 
 		private static void WriteTransitions(DfaState dfa, HashSet<string> hashSet, string defaultState, Func<string, string> makeState, StringWriter writer) {
-			if (!hashSet.Contains(dfa.Name)) {
-				hashSet.Add(dfa.Name);
+			if (hashSet.Add(dfa.Name)) {
 				if (dfa.Transitions.Any()) {
 					writer.WriteLine($"case {makeState(dfa.Name)}:");
 					bool needsExit = false;

@@ -84,8 +84,7 @@ namespace Lad {
 			Queue<NfaState> queue = new(new[] { this });
 			while (queue.Any()) {
 				NfaState nfaState = queue.Dequeue();
-				if (!nfaStates.Contains(nfaState)) {
-					nfaStates.Add(nfaState);
+				if (nfaStates.Add(nfaState)) {
 					if (nfaState.transitions.Any(p => p.Key is BolSymbol)) {
 						return true;
 					}
@@ -161,8 +160,7 @@ namespace Lad {
 		}
 
 		public void Dump(StringBuilder sb, HashSet<NfaState> dumpedStates) {
-			if (!dumpedStates.Contains(this)) {
-				dumpedStates.Add(this);
+			if (dumpedStates.Add(this)) {
 				sb.AppendLine($"{Number}:");
 				foreach (KeyValuePair<Symbol, NfaState> transition in transitions) {
 					sb.AppendLine($"\t{transition.Key} -> {transition.Value.Number}");
@@ -200,8 +198,7 @@ namespace Lad {
 		}
 
 		public bool SetSavePointValue(int acceptanceValue, HashSet<NfaState> nfaStates) {
-			if (!nfaStates.Contains(this)) {
-				nfaStates.Add(this);
+			if (nfaStates.Add(this)) {
 				foreach (var pair in transitions) {
 					if (pair.Key is EpsilonSymbol epsilon && epsilon.IsSavePoint) {
 						epsilon.SaveForAcceptance = acceptanceValue;
@@ -220,8 +217,7 @@ namespace Lad {
 		}
 
 		private bool CanReachOnEpsilon(NfaState finalState, HashSet<NfaState> nfaStates) {
-			if (!nfaStates.Contains(this)) {
-				nfaStates.Add(this);
+			if (nfaStates.Add(this)) {
 				return this == finalState || transitions.Any(p => p.Key is EpsilonSymbol && p.Value.CanReachOnEpsilon(finalState, nfaStates));
 			}
 			return false;
@@ -232,8 +228,7 @@ namespace Lad {
 		}
 
 		private void RemoveEpsilonTransitions(HashSet<NfaState> nfaStates) {
-			if (!nfaStates.Contains(this)) {
-				nfaStates.Add(this);
+			if (nfaStates.Add(this)) {
 				if (transitions.Any()) {
 					while (transitions.All(t => t.Key is EpsilonSymbol symbol && !symbol.IsSavePoint)) {
 						var newTransitions = new Multimap<Symbol, NfaState>(transitions.SelectMany(t => t.Value.transitions).Where(t => t.Key is not EpsilonSymbol || t.Value != this));
