@@ -45,9 +45,9 @@ namespace Pard {
 			Grammar grammar = new(productions, startingSymbol);
 
 			// Write the parser.
-			CodeOutput output = new();
+			CodeOutput output = new(terminals, grammar.Actions, codeBlocks, grammar.Gotos, productions, options);
 			using (TextWriter writer = options.OutputFilePath != null ? new StreamWriter(options.OutputFilePath, false, Encoding.UTF8) : Console.Out) {
-				output.Write(terminals, grammar.Actions, codeBlocks, grammar.Gotos, productions, writer, options);
+				output.Write(writer);
 			}
 
 			if (options.StateOutputFilePath != null) {

@@ -1,14 +1,29 @@
 ﻿using System.Text;
 
 namespace Pard {
-	class CodeOutput : IGrammarOutput {
+	class CodeOutput {
 		private static readonly string[] requiredUsingDirectives = {
 			"System",
 			"System.Collections.Generic",
 			"System.Linq",
 		};
+		private readonly IEnumerable<(string, int)> terminals;
+		private readonly IReadOnlyList<Grammar.ActionEntry> actionEntries;
+		private readonly IReadOnlyList<ActionCode> codeBlocks;
+		private readonly IReadOnlyList<Grammar.GotoEntry> gotos;
+		private readonly IReadOnlyList<Production> productions;
+		private readonly Options options;
 
-		public void Write(IEnumerable<(string, int)> namedTerminals, IReadOnlyList<Grammar.ActionEntry> actionEntries, IReadOnlyList<ActionCode> codeBlocks, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, TextWriter writer, Options options) {
+		public CodeOutput(IEnumerable<(string, int)> terminals, IReadOnlyList<Grammar.ActionEntry> actionEntries, IReadOnlyList<ActionCode> codeBlocks, IReadOnlyList<Grammar.GotoEntry> gotos, IReadOnlyList<Production> productions, Options options) {
+			this.terminals = terminals;
+			this.actionEntries = actionEntries;
+			this.codeBlocks = codeBlocks;
+			this.gotos = gotos;
+			this.productions = productions;
+			this.options = options;
+		}
+
+		public void Write(TextWriter writer) {
 			// Emit the define directives.
 			foreach (string defineDirective in options.DefineDirectives) {
 				writer.WriteLine("#define " + defineDirective);
@@ -144,7 +159,7 @@ namespace Pard {
 			EmitSection(skeleton, writer);
 
 			// Emit any terminal definitions.
-			foreach ((string name, int value) in namedTerminals) {
+			foreach ((string name, int value) in terminals) {
 				writer.WriteLine("public const int {0}={1};", name, value);
 			}
 			EmitSection(skeleton, writer);

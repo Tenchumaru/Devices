@@ -9,9 +9,9 @@ namespace Pard {
 
 		public (Nonterminal, IEnumerable<(string, int)>, IReadOnlyList<Production>, IReadOnlyList<ActionCode>) Read(TextReader reader) {
 			XElement xml = XDocument.Load(reader).Element("grammar") ?? throw new ApplicationException("no grammar in file");
-			var defines = xml.Elements("define").Select(u => (string)(u.Attribute("value") ?? throw new ApplicationException("no value for define")));
+			var defines = xml.Elements("define").Select(u => (string?)u.Attribute("value") ?? throw new ApplicationException("no value for define"));
 			options.DefineDirectives.AddRange(defines);
-			var usings = xml.Elements("using").Select(u => (string)(u.Attribute("value") ?? throw new ApplicationException("no value for using")));
+			var usings = xml.Elements("using").Select(u => (string?)u.Attribute("value") ?? throw new ApplicationException("no value for using"));
 			options.AdditionalUsingDirectives.AddRange(usings);
 			List<Production> productions = new();
 			Dictionary<string, Terminal> terminals = new();
