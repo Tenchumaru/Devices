@@ -40,8 +40,9 @@ namespace Lad {
 		/// </summary>
 		/// <returns>The DFA from applying the algorithm to this initial NFA state.</returns>
 		public DfaState MakeDfa() {
-			// If any NFA state transitions on BOL, prepend a Kleened BOL to every other concrete transition.
-			if (CheckForBol()) {
+			// If any NFA state transitions on BOL, prepend a Kleened BOL to every other concrete transition.  Do this because BOL is a
+			// concrete symbol and all transitions must accept it if it is present.
+			if (HasBol()) {
 				AddKleenedBols();
 			}
 
@@ -79,7 +80,7 @@ namespace Lad {
 			return startState;
 		}
 
-		private bool CheckForBol() {
+		private bool HasBol() {
 			HashSet<NfaState> nfaStates = new();
 			Queue<NfaState> queue = new(new[] { this });
 			while (queue.Any()) {
@@ -95,29 +96,21 @@ namespace Lad {
 		}
 
 		private void AddKleenedBols() {
-			Queue<NfaState> queue = new(new[] { this });
-			while (queue.Any()) {
-				NfaState nfaState = queue.Dequeue();
-				List<KeyValuePair<Symbol, NfaState>> preBolTransitions = new();
-				List<KeyValuePair<Symbol, NfaState>> postBolTransitions = new();
-				foreach (KeyValuePair<Symbol, NfaState> transition in nfaState.transitions) {
-					if (transition.Key is EpsilonSymbol) {
-						queue.Enqueue(transition.Value);
-						preBolTransitions.Add(transition);
-					} else if (transition.Key is BolSymbol) {
-						preBolTransitions.Add(transition);
-					} else {
-						Debug.Assert(transition.Key is ConcreteSymbol);
-						postBolTransitions.Add(transition);
-					}
+			var bolableTransitions = transitions.Where(t => t.Key is ConcreteSymbol and not BolSymbol).ToArray();
+			if (bolableTransitions.Any()) {
+				Multimap<Symbol, NfaState> newTransitions = new(transitions.Where(t => t.Key is EpsilonSymbol or BolSymbol));
+				foreach (var transition in newTransitions.Where(t => t.Key is EpsilonSymbol)) {
+					transition.Value.AddKleenedBols();
 				}
-				if (postBolTransitions.Any()) {
-					nfaState.transitions.Clear();
-					nfaState.transitions.AddRange(preBolTransitions);
-					NfaState bolState = new();
-					bolState.transitions.AddRange(postBolTransitions);
-					nfaState.transitions.Add(new EpsilonSymbol(), bolState);
-					nfaState.transitions.Add(BolSymbol.Value, bolState);
+				NfaState nextState = new();
+				nextState.transitions.AddRange(bolableTransitions);
+				newTransitions.Add(BolSymbol.Value, nextState);
+				newTransitions.Add(new EpsilonSymbol(), nextState);
+				transitions.Clear();
+				transitions.AddRange(newTransitions);
+			} else {
+				foreach (var transition in transitions.Where(t => t.Key is EpsilonSymbol)) {
+					transition.Value.AddKleenedBols();
 				}
 			}
 		}
