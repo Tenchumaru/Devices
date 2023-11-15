@@ -53,7 +53,7 @@ EXIT /B
 :stub
 ECHO namespace Pard{ > YaccInputScanner.g.cs
 ECHO public partial class YaccInputScanner{class Reader{public void Write^(string s^){} >> YaccInputScanner.g.cs
-ECHO public string Consume^(int i^){return "";}}Reader reader_=new^(^);int LineNumber=0; >> YaccInputScanner.g.cs
+ECHO public string Consume^(int i^){return "";}}Reader reader_=new^(^);public int LineNumber=0; >> YaccInputScanner.g.cs
 FOR %%I IN (ReadSectionOne IgnoreUnknown ReadSectionTwo ReadCodeBlock) DO (
 	ECHO private YaccInput.Token %%I^(^)=^>default; >> YaccInputScanner.g.cs
 )
@@ -62,6 +62,7 @@ ECHO namespace Pard{public partial class YaccInput{public partial class YaccInpu
 FOR %%I IN (CodeBlock PCCB POCB PP PDefine PStart PToken PUnknown PType PPrec ErrorToken Literal Identifier) DO (
 	ECHO internal const int %%I=0; >> YaccInputParser.g.cs
 )
-ECHO internal YaccInputParser^(YaccInputScanner s^){Environment.Exit^(0^);} >> YaccInputParser.g.cs
+ECHO private YaccInputScanner scanner; >> YaccInputParser.g.cs
+ECHO internal YaccInputParser^(YaccInputScanner s^){scanner=s;Environment.Exit^(0^);} >> YaccInputParser.g.cs
 ECHO internal bool Parse^(^){return true;}}}} >> YaccInputParser.g.cs
 EXIT /B

@@ -21,7 +21,8 @@ namespace Pard {
 				// Issue a warning if there are unreferenced productions.
 				Console.Error.WriteLine("warning: {0} unreferenced productions:", unreferencedProductions.Count);
 				foreach (Production unreferencedProduction in unreferencedProductions) {
-					Console.Error.WriteLine(unreferencedProduction);
+					Console.Error.Write(unreferencedProduction);
+					Console.Error.WriteLine(unreferencedProduction.LineNumber == 0 ? "" : $" in line {unreferencedProduction.LineNumber}");
 				}
 			}
 

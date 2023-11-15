@@ -225,7 +225,8 @@ namespace Pard {
 				// Replace the specifier with the stack accessor.
 				typeName ??= production.Rhs[symbolIndex].TypeName;
 				if (typeName == null) {
-					Console.WriteLine("warning: type name not specified; using object");
+					Console.Write("warning: type name not specified; using object");
+					Console.WriteLine(production.LineNumber == 0 ? "" : $" in line {production.LineNumber}");
 					typeName = "object";
 				}
 				int stackIndex = production.Rhs.Count - symbolIndex;
@@ -257,7 +258,8 @@ namespace Pard {
 					string? lhsTypeName = production.Lhs.TypeName;
 					string? rhsTypeName = production.Rhs.Count == 0 ? null : production.Rhs[0].TypeName;
 					if (lhsTypeName != rhsTypeName) {
-						Console.WriteLine("warning: default action type mismatch; assigning '{0}' from '{1}'", lhsTypeName, rhsTypeName);
+						Console.Write("warning: default action type mismatch; assigning '{0}' from '{1}'", lhsTypeName, rhsTypeName);
+						Console.WriteLine(production.LineNumber == 0 ? "" : $" in line {production.LineNumber}");
 					}
 					sb.AppendFormat("new R_({0},{1}),", nonTerminalIndices[production.Lhs], production.Rhs.Count);
 				}

@@ -6,17 +6,19 @@
 		public readonly ActionCode? ActionCode;
 		public readonly Grammar.Associativity Associativity;
 		public readonly int? Precedence;
+		public readonly int LineNumber;
 
-		public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode, Grammar.Associativity associativity, int? precedence) : this(lhs, rhs, index, actionCode) {
+		public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode, Grammar.Associativity associativity, int? precedence, int lineNumber = 0) : this(lhs, rhs, index, actionCode, lineNumber) {
 			Associativity = associativity;
 			Precedence = precedence;
 		}
 
-		public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode = null) : base(string.Format("{0} -> {1}", lhs, string.Join(" ", rhs))) {
+		public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode = null, int lineNumber = 0) : base($"{lhs} -> {string.Join(" ", rhs)}") {
 			Lhs = lhs;
 			Rhs = new List<Symbol>(rhs);
 			Index = index;
 			ActionCode = actionCode;
+			LineNumber = lineNumber;
 			var precedenceTerminal = (Terminal?)Rhs.LastOrDefault(s => s is Terminal);
 			if (precedenceTerminal != null) {
 				Associativity = precedenceTerminal.Associativity;

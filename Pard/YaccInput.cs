@@ -45,14 +45,14 @@
 
 		private void AddLiteral(char ch) => terminals.Add(Terminal.FormatLiteralName(ch), new Terminal(Terminal.FormatLiteralName(ch), terminalTypeName, terminalAssociativity, precedence, ch));
 
-		private void AddProduction(string ruleName, List<Symbol> rhs, Terminal? terminal) {
+		private void AddProduction(string ruleName, List<Symbol> rhs, Terminal? terminal, int lineNumber) {
 			// Replace code blocks with synthesized non-terminals for rules using those code blocks.
 			for (int i = 0, count = rhs.Count - 1; i < count; ++i) {
 				var innerCodeBlock = rhs[i] as CodeBlockSymbol;
 				if (innerCodeBlock != null) {
 					string subruleName = string.Format("{0}.{1}", ruleName, ++subruleNumber);
 					var subruleSymbol = new Nonterminal(subruleName, null);
-					var subruleProduction = new Production(subruleSymbol, Array.Empty<Symbol>(), productions.Count, innerCodeBlock.ActionCode);
+					var subruleProduction = new Production(subruleSymbol, Array.Empty<Symbol>(), productions.Count, innerCodeBlock.ActionCode, lineNumber);
 					productions.Add(subruleProduction);
 					rhs[i] = subruleSymbol;
 				}
@@ -69,7 +69,7 @@
 			}
 			productions.Add(new Production(nonterminal, rhs, productions.Count, actionCode,
 				terminal != null ? terminal.Associativity : Grammar.Associativity.None,
-				terminal != null ? terminal.Precedence : 0));
+				terminal != null ? terminal.Precedence : 0, lineNumber));
 		}
 
 		private Terminal GetTerminal(string name) {

@@ -23,7 +23,7 @@
 
 			private void AddProductions(string ruleName, List<Rhs> rhss) {
 				foreach (var rhs in rhss) {
-					yaccInput.AddProduction(ruleName, rhs.Symbols, rhs.PrecedenceTerminal);
+					yaccInput.AddProduction(ruleName, rhs.Symbols, rhs.PrecedenceTerminal, scanner.LineNumber);
 				}
 			}
 
