@@ -1,5 +1,5 @@
 ﻿namespace Pard {
-	class Terminal : Symbol {
+	public class Terminal : Symbol {
 		public readonly Grammar.Associativity Associativity;
 		public readonly int? Precedence;
 		public readonly int Value;

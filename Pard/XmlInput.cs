@@ -83,7 +83,7 @@ namespace Pard {
 		}
 	}
 
-	internal static class Extensions {
+	public static class Extensions {
 		private static Terminal GetOrPut(this Dictionary<string, Terminal> dict, string name, Func<Terminal> fn) {
 			if (dict.TryGetValue(name, out Terminal? terminal)) {
 				return terminal;
@@ -94,11 +94,11 @@ namespace Pard {
 			return terminal;
 		}
 
-		internal static Terminal GetOrPutLiteral(this Dictionary<string, Terminal> dict, string name) {
+		public static Terminal GetOrPutLiteral(this Dictionary<string, Terminal> dict, string name) {
 			return GetOrPut(dict, name, () => new Terminal(name, null, Grammar.Associativity.None, 0, name[1]));
 		}
 
-		internal static Terminal GetOrPutNonliteral(this Dictionary<string, Terminal> dict, string name) {
+		public static Terminal GetOrPutNonliteral(this Dictionary<string, Terminal> dict, string name) {
 			return GetOrPut(dict, name, () => new Terminal(name, null, Grammar.Associativity.None, 0));
 		}
 	}

@@ -61,9 +61,9 @@ namespace Lad {
 			}
 		}
 
-		internal virtual ConcreteSymbol? Intersect(ConcreteSymbol that) => throw new NotImplementedException();
+		public virtual ConcreteSymbol? Intersect(ConcreteSymbol that) => throw new NotImplementedException();
 
-		internal virtual ConcreteSymbol? Difference(ConcreteSymbol that) => throw new NotImplementedException();
+		public virtual ConcreteSymbol? Difference(ConcreteSymbol that) => throw new NotImplementedException();
 
 		public static string Escape(char ch) {
 			if (ch < ' ') {
@@ -86,7 +86,7 @@ namespace Lad {
 		public static string Escape(int ch) => Escape((char)ch);
 
 		public virtual string MakeExpression(string name) => throw new NotImplementedException();
-		internal virtual string InternalToString() => throw new NotImplementedException();
+		public virtual string InternalToString() => throw new NotImplementedException();
 
 		public virtual bool IsIn(Symbol that) => false;
 		public override string ToString() {
@@ -99,12 +99,12 @@ namespace Lad {
 
 		public AcceptingSymbol(int value) => Value = value;
 
-		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			Debug.Assert(Value != (that as AcceptingSymbol)?.Value);
 			return null;
 		}
 
-		internal override string InternalToString() => $"(accept {Value})";
+		public override string InternalToString() => $"(accept {Value})";
 	}
 
 	public class AnySymbol : ConcreteSymbol {
@@ -115,7 +115,7 @@ namespace Lad {
 
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
-		internal override string InternalToString() => "(any)";
+		public override string InternalToString() => "(any)";
 
 		public override string MakeExpression(string name) => "true";
 
@@ -129,7 +129,7 @@ namespace Lad {
 			return false;
 		}
 
-		internal override ConcreteSymbol? Difference(ConcreteSymbol that) {
+		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (this == that) {
 				return this;
 			}
@@ -137,7 +137,7 @@ namespace Lad {
 			return range.Difference(that);
 		}
 
-		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (this == that) {
 				return this;
 			}
@@ -152,7 +152,7 @@ namespace Lad {
 
 		private BolSymbol() { }
 
-		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			return that as BolSymbol;
 		}
 
@@ -166,7 +166,7 @@ namespace Lad {
 
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
-		internal override string InternalToString() => "(bol)";
+		public override string InternalToString() => "(bol)";
 	}
 
 	public class EofSymbol : ConcreteSymbol {
@@ -175,7 +175,7 @@ namespace Lad {
 
 		private EofSymbol() { }
 
-		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			return that as EofSymbol;
 		}
 
@@ -189,7 +189,7 @@ namespace Lad {
 
 		public override bool Equals(Symbol? other) => ReferenceEquals(this, other);
 
-		internal override string InternalToString() => "(eof)";
+		public override string InternalToString() => "(eof)";
 	}
 
 	public class RangeSymbol : ConcreteSymbol {
@@ -218,7 +218,7 @@ namespace Lad {
 
 		public static RangeSymbol operator ~(RangeSymbol range) => new(range.includedCharacters.Not());
 
-		internal override string InternalToString() {
+		public override string InternalToString() {
 			if (includedCharacters[0]) {
 				BitArray ba = new(includedCharacters);
 				RangeSymbol complement = new(ba.Not());
@@ -302,7 +302,7 @@ namespace Lad {
 			return false;
 		}
 
-		internal override ConcreteSymbol? Difference(ConcreteSymbol that) {
+		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return null;
 			} else if (that is RangeSymbol range) {
@@ -324,7 +324,7 @@ namespace Lad {
 			throw new NotImplementedException();
 		}
 
-		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return this;
 			} else if (that is RangeSymbol range) {
@@ -369,7 +369,7 @@ namespace Lad {
 
 		public SimpleSymbol(char ch) => Value = ch;
 
-		internal override string InternalToString() => $"'{Escape(Value)}'";
+		public override string InternalToString() => $"'{Escape(Value)}'";
 
 		public override string MakeExpression(string name) => $"{name}=={InternalToString()}";
 
@@ -384,7 +384,7 @@ namespace Lad {
 			return false;
 		}
 
-		internal override ConcreteSymbol? Difference(ConcreteSymbol that) {
+		public override ConcreteSymbol? Difference(ConcreteSymbol that) {
 			if (that == AnySymbol.Value) {
 				return null;
 			} else if (that is RangeSymbol range) {
@@ -395,7 +395,7 @@ namespace Lad {
 			throw new NotImplementedException();
 		}
 
-		internal override ConcreteSymbol? Intersect(ConcreteSymbol that) {
+		public override ConcreteSymbol? Intersect(ConcreteSymbol that) {
 			if (that is SimpleSymbol simple) {
 				return Value == simple.Value ? this : null;
 			}

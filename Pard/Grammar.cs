@@ -1,7 +1,7 @@
 ﻿#pragma warning disable CA1826 // Do not use Enumerable methods on indexable collections
 
 namespace Pard {
-	class Grammar {
+	public class Grammar {
 		public IReadOnlyList<ActionEntry> Actions => actions;
 		public IReadOnlyList<GotoEntry> Gotos => gotos;
 		public IReadOnlyList<Item.Set> States => states;
@@ -150,12 +150,12 @@ namespace Pard {
 		}
 
 		class Augmented {
-			internal IDictionary<int, Production> Productions => productions;
+			public IDictionary<int, Production> Productions => productions;
 			private readonly IDictionary<int, Production> productions;
 			private readonly IDictionary<Nonterminal, List<Production>> productionsByNonterminal;
 			private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets;
 
-			internal Augmented(Production startProduction, IEnumerable<Production> referencedProductions) {
+			public Augmented(Production startProduction, IEnumerable<Production> referencedProductions) {
 				List<Production> productions = new() { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
 				productions.AddRange(referencedProductions);
 				this.productions = productions.ToDictionary(p => p.Index);
@@ -221,7 +221,7 @@ namespace Pard {
 			}
 
 			// items(G'), p. 232
-			internal IReadOnlyList<Item.Set> Items() {
+			public IReadOnlyList<Item.Set> Items() {
 				// Create a collection of symbols used in the grammar.
 				HashSet<Symbol> symbols = new(productions.SelectMany(p => p.Value.Rhs));
 

@@ -3,7 +3,7 @@ using static Pard.YaccInput;
 
 namespace Pard {
 	public partial class YaccInputScanner {
-		internal static readonly Dictionary<char, char> knownEscapes = new() {
+		public static readonly Dictionary<char, char> knownEscapes = new() {
 			{'a', '\a' },
 			{'b', '\b' },
 			{'f', '\f' },
@@ -21,12 +21,12 @@ namespace Pard {
 		private Func<Token?> previousFn;
 		private Func<Token?> fn;
 
-		internal YaccInputScanner(TextReader reader) {
+		public YaccInputScanner(TextReader reader) {
 			this.reader = reader;
 			previousFn = fn = ReadSectionOne;
 		}
 
-		internal Token? Read() => fn();
+		public Token? Read() => fn();
 
 		private Token? ReadSectionThree() {
 			fn = EndParse;

@@ -40,12 +40,12 @@
 			}
 		}
 
-		internal class Rhs {
+		public class Rhs {
 			public List<Symbol> Symbols { get; } = new List<Symbol>();
 			public Terminal? PrecedenceTerminal { get; set; }
 		}
 
-		internal class TokenDefinition {
+		public class TokenDefinition {
 			public Grammar.Associativity Associativity { get; }
 			public int? Precedence { get; }
 			public string? TerminalTypeName { get; }

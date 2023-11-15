@@ -2,7 +2,7 @@
 
 namespace Pard {
 	// LR(1) item, p. 230
-	class Item {
+	public class Item {
 		public readonly int ProductionIndex;
 		public readonly int DotPosition;
 		public readonly Terminal Lookahead;
@@ -25,7 +25,7 @@ namespace Pard {
 
 		public static bool operator !=(Item? left, Item? right) => !(left == right);
 
-		internal class Set {
+		public class Set {
 			public int Count => set.Count;
 			public readonly Dictionary<Symbol, Set> Gotos = new();
 
@@ -42,7 +42,7 @@ namespace Pard {
 
 			public static bool operator !=(Set? left, Set? right) => !(left == right);
 
-			internal Set(IEnumerable<Item> items) {
+			public Set(IEnumerable<Item> items) {
 				set = new HashSet<Item>(items);
 				if (set.Any()) {
 					// Use kernel items (the first item, which has the augmented start symbol, and any item whose dot position is greater
@@ -54,13 +54,13 @@ namespace Pard {
 				}
 			}
 
-			internal bool Any() => set.Any();
+			public bool Any() => set.Any();
 
-			internal IEnumerable<Item> AsEnumerable() => set.AsEnumerable();
+			public IEnumerable<Item> AsEnumerable() => set.AsEnumerable();
 
-			internal void UnionWith(IEnumerable<Item> items) => set.UnionWith(items);
+			public void UnionWith(IEnumerable<Item> items) => set.UnionWith(items);
 
-			internal string ToString(IDictionary<int, Production> productions) {
+			public string ToString(IDictionary<int, Production> productions) {
 				StringBuilder sb = new();
 				foreach (Item item in set) {
 					if (item.ProductionIndex < 0) {

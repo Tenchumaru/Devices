@@ -1,9 +1,9 @@
 ﻿namespace Pard {
 	public class ActionCode {
-		internal readonly string Code;
-		internal readonly int LineNumber;
+		public readonly string Code;
+		public readonly int LineNumber;
 
-		internal ActionCode(string code, int lineNumber) {
+		public ActionCode(string code, int lineNumber) {
 			Code = code;
 			LineNumber = lineNumber;
 		}

@@ -1,18 +1,18 @@
 ﻿namespace Pard {
 	public class Production : NamedObject {
-		internal readonly Nonterminal Lhs;
-		internal readonly IReadOnlyList<Symbol> Rhs;
+		public readonly Nonterminal Lhs;
+		public readonly IReadOnlyList<Symbol> Rhs;
 		public readonly int Index;
-		internal readonly ActionCode? ActionCode;
-		internal readonly Grammar.Associativity Associativity;
+		public readonly ActionCode? ActionCode;
+		public readonly Grammar.Associativity Associativity;
 		public readonly int? Precedence;
 
-		internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode, Grammar.Associativity associativity, int? precedence) : this(lhs, rhs, index, actionCode) {
+		public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode, Grammar.Associativity associativity, int? precedence) : this(lhs, rhs, index, actionCode) {
 			Associativity = associativity;
 			Precedence = precedence;
 		}
 
-		internal Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode = null) : base(string.Format("{0} -> {1}", lhs, string.Join(" ", rhs))) {
+		public Production(Nonterminal lhs, IEnumerable<Symbol> rhs, int index, ActionCode? actionCode = null) : base(string.Format("{0} -> {1}", lhs, string.Join(" ", rhs))) {
 			Lhs = lhs;
 			Rhs = new List<Symbol>(rhs);
 			Index = index;

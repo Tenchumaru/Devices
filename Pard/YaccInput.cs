@@ -102,9 +102,9 @@
 		}
 
 		private class CodeBlockSymbol : Symbol {
-			internal readonly ActionCode ActionCode;
+			public readonly ActionCode ActionCode;
 
-			internal CodeBlockSymbol(ActionCode actionCode) : base(Guid.NewGuid().ToString(), null) {
+			public CodeBlockSymbol(ActionCode actionCode) : base(Guid.NewGuid().ToString(), null) {
 				ActionCode = actionCode;
 			}
 		}
