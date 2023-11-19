@@ -155,6 +155,7 @@ namespace Pard {
 			private readonly IDictionary<int, Production> productions;
 			private readonly IDictionary<Nonterminal, List<Production>> productionsByNonterminal;
 			private readonly IDictionary<Symbol, HashSet<Terminal>> firstSets;
+			private readonly Dictionary<(int i, int d, Terminal t, Nonterminal n), Item[]> itemCache = new();
 
 			public Augmented(Production startProduction, IEnumerable<Production> referencedProductions) {
 				List<Production> productions = new() { new Production(Nonterminal.AugmentedStart, new[] { startProduction.Lhs }, -1) };
@@ -166,6 +167,18 @@ namespace Pard {
 				foreach (Terminal terminal in productions.SelectMany(p => p.Rhs).OfType<Terminal>().Distinct()) {
 					firstSets.Add(terminal, new HashSet<Terminal> { terminal });
 				}
+			}
+
+			private Item[] MakeItems(int i, int d, Terminal t, Nonterminal n, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts) {
+				if (itemCache.TryGetValue((i, d, t, n), out Item[]? items)) {
+					return items;
+				}
+				var q = from p in productionsByNonterminal[n]
+								from f in firsts[(i, d, t)]
+								select new Item(p.Index, 0, f);
+				items = q.ToArray();
+				itemCache.Add((i, d, t, n), items);
+				return items;
 			}
 
 			// closure(I), p. 232
@@ -185,10 +198,8 @@ namespace Pard {
 									where i.DotPosition < ip.Rhs.Count
 									let n = ip.Rhs[i.DotPosition] as Nonterminal
 									where n != null
-									let f = firsts[(i.ProductionIndex, i.DotPosition + 1, i.Lookahead)]
-									from p in productionsByNonterminal[n]
-									from b in f
-									select new Item(p.Index, 0, b);
+									from b in MakeItems(i.ProductionIndex, i.DotPosition + 1, i.Lookahead, n, firsts)
+									select b;
 					HashSet<Item> newSet = new(q);
 					index = list.Count;
 					newSet.ExceptWith(set);
