@@ -169,8 +169,7 @@ namespace Pard {
 			}
 
 			// closure(I), p. 232
-			private Item.Set Closure(IEnumerable<Item> items, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts, Dictionary<Item.Set, Item.Set> finalItemSets) {
-				List<Item> list = new(items);
+			private Item.Set Closure(List<Item> list, Dictionary<(int i, int d, Terminal t), Terminal[]> firsts, Dictionary<Item.Set, Item.Set> finalItemSets) {
 				Item.Set initialItemSet = new(list);
 				if (finalItemSets.TryGetValue(initialItemSet, out Item.Set? finalItemSet)) {
 					return finalItemSet;
@@ -218,7 +217,8 @@ namespace Pard {
 								select new Item(i.ProductionIndex, d + 1, i.Lookahead);
 
 				// return closure(J)
-				return Closure(q, firsts, finalItemSets);
+				var list = q.ToList();
+				return list.Any() ? Closure(list, firsts, finalItemSets) : new Item.Set(Array.Empty<Item>());
 			}
 
 			// items(G'), p. 232
@@ -236,7 +236,7 @@ namespace Pard {
 
 				// Create a list to hold the items added to the closure.  Their indicies will be the state indicies.
 				Dictionary<Item.Set, Item.Set> finalItemSets = new();
-				List<Item.Set> items = new() { Closure(new[] { new Item(-1, 0, Terminal.AugmentedEnd) }, firsts, finalItemSets) };
+				List<Item.Set> items = new() { Closure(new List<Item> { new(-1, 0, Terminal.AugmentedEnd) }, firsts, finalItemSets) };
 
 				// C := {closure({[S' → ∙S, $]})};
 				HashSet<Item.Set> c = new(new[] { items[0] });
