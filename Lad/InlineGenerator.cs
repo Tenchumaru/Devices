@@ -6,6 +6,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Lad {
 	public class InlineGenerator : GeneratorBase, IGenerator {
+		private readonly Dictionary<string, string> namedExpressionValues = new();
+		private readonly string[] stringTypes = new[] { "String", "System.String", "string" };
 		private string[] usingDirectives = Array.Empty<string>();
 		private readonly Regex wsRx = new(@"\s", RegexOptions.Compiled);
 
@@ -54,7 +56,10 @@ namespace Lad {
 				return default;
 			}
 			var r = from f in classDeclaration.DescendantNodes().OfType<FieldDeclarationSyntax>()
-							from v in f.Declaration.Variables
+							where f.Modifiers.Any((m) => m.Text == "const" || m.Text == "readonly")
+							let d = f.Declaration
+							where stringTypes.Any((s) => s == d.Type.ToString())
+							from v in d.Variables
 							let i = v.Initializer
 							where i is not null
 							select (v.Identifier.ToString(), i.Value.ToString());
@@ -63,6 +68,7 @@ namespace Lad {
 				Nfa? nfa = ParseSyntaxValue(rx, $" named '{name}'");
 				if (nfa is not null) {
 					namedExpressions.Add(name, nfa);
+					namedExpressionValues.Add(name, rx);
 				} else {
 					foundError = true;
 				}
@@ -94,7 +100,11 @@ namespace Lad {
 					return ParseSyntaxValue(sb.ToString(), context);
 				}
 			}
-			value = value[1..^1];
+			if (value[0] == '"') {
+				value = value[1..^1];
+			} else {
+				value = $"{{{value}}}";
+			}
 			if (!value.Any()) {
 				Console.Error.WriteLine($"cannot parse empty regular expression{context}");
 				return null;
@@ -128,7 +138,11 @@ namespace Lad {
 				foreach (var switchLabel in switchSection.Labels) {
 					if (switchLabel is CaseSwitchLabelSyntax caseSwitchLabel) {
 						var labelText = caseSwitchLabel.Value.ToString();
-						labelTexts.Add(labelText, codes.Count);
+						if (namedExpressionValues.TryGetValue(labelText, out var value)) {
+							labelTexts.Add(value, codes.Count);
+						} else {
+							labelTexts.Add(labelText, codes.Count);
+						}
 						Nfa? nfa = ParseSyntaxValue(labelText);
 						if (nfa is not null) {
 							rules.Add(nfa, codes.Count);
