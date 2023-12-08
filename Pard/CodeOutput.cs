@@ -144,7 +144,7 @@ namespace Pard {
 			var actions = from p in productionIndices.Keys
 										where p.ActionCode != null
 										select ConstructAction(p, p.ActionCode!, options.LineDirectivesFilePath);
-			foreach (var action in actions) {
+			foreach (string action in actions) {
 				writer.WriteLine("case {1}:{0}{2}{0}goto reduce2;", writer.NewLine, --actionIndex, action);
 			}
 
@@ -278,7 +278,7 @@ namespace Pard {
 			}
 			int goToRowCount = goTos.Max(g => g.Row) + 1;
 			var goToArray = new int[goToRowCount, nonTerminalIndices.Count];
-			foreach (var (Row, Column, Target) in goTos) {
+			foreach ((int Row, int Column, int Target) in goTos) {
 				goToArray[Row, Column] = Target;
 			}
 			StringBuilder sb = new();

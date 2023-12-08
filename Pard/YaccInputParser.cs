@@ -12,7 +12,7 @@
 
 			private void AddTokens(TokenDefinition tokenDefinition, List<IConvertible> names) {
 				yaccInput.SetTerminalParameters(tokenDefinition.Associativity, tokenDefinition.Precedence, tokenDefinition.TerminalTypeName);
-				foreach (var name in names) {
+				foreach (IConvertible name in names) {
 					if (name is char ch) {
 						yaccInput.AddLiteral(ch);
 					} else {

@@ -228,7 +228,7 @@ namespace Pard {
 								select new Item(i.ProductionIndex, d + 1, i.Lookahead);
 
 				// return closure(J)
-				var list = q.ToList();
+				List<Item> list = q.ToList();
 				return list.Any() ? Closure(list, firsts, finalItemSets) : new Item.Set(Array.Empty<Item>());
 			}
 

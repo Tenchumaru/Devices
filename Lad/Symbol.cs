@@ -39,13 +39,13 @@ namespace Lad {
 		};
 
 		public static ConcreteSymbol? operator -(ConcreteSymbol left, ConcreteSymbol right) {
-			var rv = left.Difference(right);
+			ConcreteSymbol? rv = left.Difference(right);
 			rv?.UpdateSaveForAcceptance(left, right);
 			return rv;
 		}
 
 		public static ConcreteSymbol? operator &(ConcreteSymbol left, ConcreteSymbol right) {
-			var rv = left.Intersect(right);
+			ConcreteSymbol? rv = left.Intersect(right);
 			rv?.UpdateSaveForAcceptance(left, right);
 			return rv;
 		}

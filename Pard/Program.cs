@@ -27,7 +27,7 @@ namespace Pard {
 			List<Nonterminal> undefinedSymbols = q.Distinct().OrderBy(n => n.Name).ToList();
 			if (undefinedSymbols.Any()) {
 				Console.Error.WriteLine("error: {0} undefined symbol{1}:", undefinedSymbols.Count, undefinedSymbols.Count == 1 ? "" : "s");
-				foreach (var undefinedSymbol in undefinedSymbols) {
+				foreach (Nonterminal undefinedSymbol in undefinedSymbols) {
 					Console.Error.WriteLine("\t{0}", undefinedSymbol);
 				}
 				Environment.Exit(1);

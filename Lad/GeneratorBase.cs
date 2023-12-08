@@ -68,7 +68,7 @@ namespace Lad {
 			writer.Write(bones[1]);
 			if (stateMachines.All((s) => s.LabelTexts is not null)) {
 				writer.WriteLine("Dictionary<int,string>[]actionMap_=new Dictionary<int,string>[]{");
-				foreach (var stateMachine in stateMachines) {
+				foreach (StateMachine stateMachine in stateMachines) {
 					writer.WriteLine("new(){");
 					foreach (KeyValuePair<int, string> item in stateMachine.LabelTexts!) {
 						writer.WriteLine($"{{{item.Key + 1},{item.Value}}},");
@@ -168,7 +168,7 @@ namespace Lad {
 		}
 
 		private Nfa CombineNfas(IGrouping<int, KeyValuePair<Nfa, int>> groups) {
-			var rv = Nfa.Or(groups.Select(p => p.Key).ToArray());
+			Nfa rv = Nfa.Or(groups.Select(p => p.Key).ToArray());
 			int acceptanceValue = groups.Key + 1;
 			rv += new Nfa(new AcceptingSymbol(acceptanceValue));
 			rv.SetSavePoint(acceptanceValue);

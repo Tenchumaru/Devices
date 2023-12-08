@@ -155,8 +155,8 @@ namespace Lad {
 			var match = namedExpressionRx.Match(line);
 			if (match is not null) {
 				if (match.Groups.Count == 3) {
-					var name = match.Groups[1].Value;
-					var rx = match.Groups[2].Value;
+					string name = match.Groups[1].Value;
+					string rx = match.Groups[2].Value;
 					RegularExpressionParser parser = new(new RegularExpressionScanner(rx), parameters);
 					if (parser.Parse()) {
 						if (parser.Result.CheckForEmpty()) {
@@ -233,7 +233,7 @@ namespace Lad {
 				rules.Add(nfa, -1);
 			} else {
 				int codesIndex = codes.Count;
-				foreach (var pair in rules.Where(p => p.Value == -1).ToArray()) {
+				foreach (KeyValuePair<Nfa, int> pair in rules.Where(p => p.Value == -1).ToArray()) {
 					rules[pair.Key] = codesIndex;
 				}
 				rules.Add(nfa, codesIndex);

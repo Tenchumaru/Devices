@@ -134,11 +134,11 @@ namespace Lad {
 			string methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodName}()";
 			Dictionary<string, int> labelTexts = new();
 			int? defaultIndex = null;
-			foreach (var switchSection in firstSwitch.Sections) {
-				foreach (var switchLabel in switchSection.Labels) {
+			foreach (SwitchSectionSyntax switchSection in firstSwitch.Sections) {
+				foreach (SwitchLabelSyntax switchLabel in switchSection.Labels) {
 					if (switchLabel is CaseSwitchLabelSyntax caseSwitchLabel) {
 						var labelText = caseSwitchLabel.Value.ToString();
-						if (namedExpressionValues.TryGetValue(labelText, out var value)) {
+						if (namedExpressionValues.TryGetValue(labelText, out string? value)) {
 							labelTexts.Add(value, codes.Count);
 						} else {
 							labelTexts.Add(labelText, codes.Count);

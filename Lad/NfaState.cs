@@ -96,10 +96,10 @@ namespace Lad {
 		}
 
 		private void AddKleenedBols() {
-			var bolableTransitions = transitions.Where(t => t.Key is ConcreteSymbol and not BolSymbol).ToArray();
+			KeyValuePair<Symbol, NfaState>[] bolableTransitions = transitions.Where(t => t.Key is ConcreteSymbol and not BolSymbol).ToArray();
 			if (bolableTransitions.Any()) {
 				Multimap<Symbol, NfaState> newTransitions = new(transitions.Where(t => t.Key is EpsilonSymbol or BolSymbol));
-				foreach (var transition in newTransitions.Where(t => t.Key is EpsilonSymbol)) {
+				foreach (KeyValuePair<Symbol, NfaState> transition in newTransitions.Where(t => t.Key is EpsilonSymbol)) {
 					transition.Value.AddKleenedBols();
 				}
 				NfaState nextState = new();
@@ -109,7 +109,7 @@ namespace Lad {
 				transitions.Clear();
 				transitions.AddRange(newTransitions);
 			} else {
-				foreach (var transition in transitions.Where(t => t.Key is EpsilonSymbol)) {
+				foreach (KeyValuePair<Symbol, NfaState> transition in transitions.Where(t => t.Key is EpsilonSymbol)) {
 					transition.Value.AddKleenedBols();
 				}
 			}
@@ -186,7 +186,7 @@ namespace Lad {
 
 		public bool SetSavePoint(int acceptanceValue, HashSet<NfaState> nfaStates) {
 			if (nfaStates.Add(this)) {
-				foreach (var pair in transitions) {
+				foreach (KeyValuePair<Symbol, NfaState> pair in transitions) {
 					if (pair.Key is ConcreteSymbol symbol && symbol.SaveForAcceptance < 0) {
 						symbol.SaveForAcceptance = acceptanceValue;
 						return true;
@@ -222,7 +222,7 @@ namespace Lad {
 						transitions.Clear();
 						transitions.AddRange(newTransitions);
 					}
-					foreach (var item in transitions) {
+					foreach (KeyValuePair<Symbol, NfaState> item in transitions) {
 						item.Value.RemoveEpsilonTransitions(nfaStates);
 					}
 				}
@@ -236,7 +236,7 @@ namespace Lad {
 
 		private void CreateSavePoint(HashSet<NfaState> nfaStates) {
 			if (nfaStates.Add(this)) {
-				foreach (var item in transitions.Where(t => t.Key is EpsilonSymbol).SelectMany(t => t.Value.transitions)) {
+				foreach (KeyValuePair<Symbol, NfaState> item in transitions.Where(t => t.Key is EpsilonSymbol).SelectMany(t => t.Value.transitions)) {
 					item.Value.CreateSavePoint(nfaStates);
 				}
 				foreach (var symbol in transitions.Select(t => t.Key).OfType<ConcreteSymbol>()) {
@@ -249,7 +249,7 @@ namespace Lad {
 		private void CollectAcceptanceValues(HashSet<int> acceptanceValues, HashSet<NfaState> nfaStates) {
 			if (nfaStates.Add(this)) {
 				acceptanceValues.AddRange(transitions.Select(t => t.Key).OfType<ConcreteSymbol>().Select(s => s.SaveForAcceptance).Where(n => n > 0));
-				foreach (var item in transitions.Where(t => t.Key is EpsilonSymbol)) {
+				foreach (KeyValuePair<Symbol, NfaState> item in transitions.Where(t => t.Key is EpsilonSymbol)) {
 					item.Value.CollectAcceptanceValues(acceptanceValues, nfaStates);
 				}
 				Debug.Assert(!acceptanceValues.Contains(-1));

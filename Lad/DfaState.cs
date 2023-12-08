@@ -35,7 +35,7 @@
 					}
 					Transitions.Remove(acceptingSymbol);
 				}
-				foreach (var transition in Transitions) {
+				foreach (KeyValuePair<ConcreteSymbol, DfaState> transition in Transitions) {
 					transition.Value.MarkAcceptingStates(dfaCaseValues);
 				}
 			}
