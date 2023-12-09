@@ -17,6 +17,10 @@ Specifying an initial `$` to signal a literal string results in each of those fo
 Lad has a special escape, `\N`, that denotes a platform-specific newline.  The `\n` escape is specifically the line feed character,
 ASCII value 10.
 
+Lad has named expressions.  Create a variable, either `const` or `readonly`, that holds the named expression and use either that
+variable or the equivalent named expression syntax, `{name}`, as the `case` label.  Lad issues an error if it detects use of both
+the variable and the named expression.  There is no error if the named expression is part of a larger regular expression.
+
 The `Write` method of the scanner's internal `Reader_` class adds a string to its internal buffer after the recognized token text
 but before any trailing context.
 
@@ -25,7 +29,7 @@ Lad emits code written in section one in `%{` and `%}` blocks at the beginning o
 
 The generated scanner uses the return value of the user-provided scanner method to determine whether or not to return that value.
 It will return it if it is not the default (`null` for class types) and loop if it is the default.  This might be problematic for
-integral values since their default is `0`, which might be a valid return value.
+integral values since their default is `0`, which might be a valid return value.  Consider using `int?` in such cases.
 
 ### Lad Operator Precedence
 

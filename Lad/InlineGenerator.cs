@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Lad {
 	public class InlineGenerator : GeneratorBase, IGenerator {
+		private readonly Regex namedExpressionRx = new(@"^""{([A-Z_a-z]\w+)}""");
 		private readonly Dictionary<string, string> namedExpressionValues = new();
 		private readonly string[] stringTypes = new[] { "String", "System.String", "string" };
 		private string[] usingDirectives = Array.Empty<string>();
@@ -100,11 +101,10 @@ namespace Lad {
 					return ParseSyntaxValue(sb.ToString(), context);
 				}
 			}
-			if (value[0] == '"') {
-				value = value[1..^1];
-			} else {
-				value = $"{{{value}}}";
+			if (value.Length < 2 || value[0] != '"' || value[^1] != '"') {
+				throw new InvalidOperationException($"unexpected non-string expression{context}");
 			}
+			value = value[1..^1];
 			if (!value.Any()) {
 				Console.Error.WriteLine($"cannot parse empty regular expression{context}");
 				return null;
@@ -155,6 +155,16 @@ namespace Lad {
 					}
 				}
 				codes.Add(switchSection.Statements.ToFullString());
+			}
+			var q = from s in labelCodes.Keys
+							let m = namedExpressionRx.Match(s)
+							where m.Success
+							select m.Groups[1].Value;
+			foreach (var m in q) {
+				if (namedExpressionValues.TryGetValue(m, out string? value) && labelCodes.ContainsKey(value)) {
+					Console.Error.WriteLine($"may not use both variable `{m}` and named expression `\"{{{m}}}\"`");
+					return default;
+				}
 			}
 			if (!isDebug) {
 				foreach (var item in firstSwitch.DescendantNodes().OfType<GotoStatementSyntax>()) {

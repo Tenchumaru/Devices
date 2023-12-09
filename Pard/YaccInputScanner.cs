@@ -6,11 +6,11 @@ using static Pard.YaccInput;
 
 namespace Pard {
 	public partial class YaccInputScanner {
-		private readonly string ws = "[\a\b\f\n\r\t\v ]+";
-		private readonly string ch = "'([^\\']|\\.)+'";
-		private readonly string str = "\"([^\\\"]|\\.)*\"";
-		private readonly string hex = "[0-9A-Fa-f]";
-		private readonly string id = "[A-Za-z_][0-9A-Za-z_]*";
+		private const string ws = "[\a\b\f\n\r\t\v ]+";
+		private const string ch = "'([^\\']|\\.)+'";
+		private const string str = "\"([^\\\"]|\\.)*\"";
+		private const string hex = "[0-9A-Fa-f]";
+		private const string id = "[A-Za-z_][0-9A-Za-z_]*";
 
 		private Token? ReadSectionOne(string? pattern, string tokenValue) {
 			switch (pattern) {
