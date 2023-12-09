@@ -132,18 +132,19 @@ namespace Lad {
 			}
 			string methodName = methodDeclaration.Identifier.ToString();
 			string methodDeclarationText = $"{methodDeclaration.Modifiers} {methodDeclaration.ReturnType} {methodName}()";
-			Dictionary<string, int> labelTexts = new();
+			Dictionary<string, int> labelCodes = new();
+			Dictionary<int, string> labelTexts = new();
 			int? defaultIndex = null;
 			foreach (SwitchSectionSyntax switchSection in firstSwitch.Sections) {
 				foreach (SwitchLabelSyntax switchLabel in switchSection.Labels) {
 					if (switchLabel is CaseSwitchLabelSyntax caseSwitchLabel) {
 						var labelText = caseSwitchLabel.Value.ToString();
-						if (namedExpressionValues.TryGetValue(labelText, out string? value)) {
-							labelTexts.Add(value, codes.Count);
-						} else {
-							labelTexts.Add(labelText, codes.Count);
+						if (!namedExpressionValues.TryGetValue(labelText, out string? value)) {
+							value = labelText;
 						}
-						Nfa? nfa = ParseSyntaxValue(labelText);
+						labelCodes.Add(value, codes.Count);
+						labelTexts.TryAdd(codes.Count, value);
+						Nfa? nfa = ParseSyntaxValue(value);
 						if (nfa is not null) {
 							rules.Add(nfa, codes.Count);
 						} else {
@@ -158,8 +159,8 @@ namespace Lad {
 			if (!isDebug) {
 				foreach (var item in firstSwitch.DescendantNodes().OfType<GotoStatementSyntax>()) {
 					var expression = item.Expression?.ToString();
-					if (expression is not null && labelTexts.ContainsKey(expression)) {
-						codes = codes.Select(s => s.Replace(item.ToString(), $"goto case {labelTexts[expression] + 1};")).ToList();
+					if (expression is not null && labelCodes.TryGetValue(expression, out int value)) {
+						codes = codes.Select(s => s.Replace(item.ToString(), $"goto case {value + 1};")).ToList();
 					}
 				}
 			}

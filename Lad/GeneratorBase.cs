@@ -10,10 +10,10 @@ namespace Lad {
 			public string[] Codes { get; }
 			public int? DefaultActionIndex { get; }
 
-			public StateMachine(string methodDeclarationText, string? methodName, Dictionary<string, int>? labelTexts, IEnumerable<KeyValuePair<Nfa, int>> rules, IEnumerable<string> codes, int? defaultActionIndex) {
+			public StateMachine(string methodDeclarationText, string? methodName, Dictionary<int, string>? labelTexts, IEnumerable<KeyValuePair<Nfa, int>> rules, IEnumerable<string> codes, int? defaultActionIndex) {
 				MethodDeclarationText = methodDeclarationText;
 				MethodName = methodName;
-				LabelTexts = labelTexts?.ToDictionary(p => p.Value, p => p.Key);
+				LabelTexts = labelTexts;
 				Rules = rules.ToArray();
 				Codes = codes.ToArray();
 				DefaultActionIndex = defaultActionIndex;
